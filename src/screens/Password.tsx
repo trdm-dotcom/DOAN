@@ -8,16 +8,53 @@ import {
   Pressable,
 } from 'react-native';
 import {styles} from '../components/style';
+import { login } from '../reducers/authentications.reducer';
+import { getHash } from '../utils/Crypto';
+import { useAppDispatch } from '../reducers/store';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigators/RootStack';
+import { checkEmpty } from '../utils/Validate';
+import { showError } from '../utils/Toast';
 
-const Password = () => {
+type props = NativeStackScreenProps<RootStackParamList, 'Password'>;
+
+const Password = ({navigation, route}: props) => {
+  const {createAccount, name, phoneNumber} = route.params;
+  const dispatch = useAppDispatch();
   const [password, setPassword] = useState('');
   const [isContinue, setIsContinue] = useState(false);
 
-  const handleOnChangeText = (text: string) => {
-    setIsContinue(text.length > 0);
+  const isValidData = () => {
+    const error = checkEmpty(password, 'Please enter your password');
+    if (error) {
+        showError(error);
+        return false;
+    }
+    return true;
   };
 
-  const handleContinue = () => {};
+  const handleOnChangeText = (text: string) => {
+    const verify: boolean = text.trim().length > 0;
+    setIsContinue(verify);
+    if (verify){
+      setPassword(text.trim());
+    }
+  };
+
+  const handleContinue = () => {
+    if (isValidData()) {
+      if (createAccount) {
+        navigation.navigate('Otp', {
+          name: name,
+          phoneNumber: phoneNumber,
+          password: password,
+        });
+      }
+      else {
+        dispatch(login({username: phoneNumber, password: password, hash: getHash('LOGIN')}));
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
@@ -35,7 +72,7 @@ const Password = () => {
             autoFocus
             secureTextEntry
             textAlign="center"
-            placeholder='Password'
+            placeholder="Password"
           />
           <View style={[styles.fullWidthButton, styles.bottomButton]}>
             <Pressable

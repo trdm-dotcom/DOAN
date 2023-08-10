@@ -1,33 +1,41 @@
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import React from 'react';
-import PhoneNumber from './src/screens/PhoneNumber';
-import Password from './src/screens/Password';
-import Name from './src/screens/Name';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from 'react';
+import RootStack from './src/navigators/RootStack';
+import { SafeAreaView } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
+import { colors, styles } from './src/components/style';
+import { Provider } from 'react-redux';
+import getStore, { useAppDispatch } from './src/reducers/store';
+import { Init } from './src/reducers/authentications.reducer';
 
-const Stack = createNativeStackNavigator();
+const store = getStore();
 
 const Main = () => {
+  const dispatch = useAppDispatch();
+
+  const [loading, setLoading] = useState(true);
+
+  const init = async () => {
+    await dispatch(Init());
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Name"
-          component={Name}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="PhoneNumber"
-          component={PhoneNumber}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="Password"
-          component={Password}
-          options={{headerShown: false}}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Provider store={store}>
+      <RootStack />
+    </Provider>
   );
 };
 

@@ -22,7 +22,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center', // Center the TextInput vertically
     alignItems: 'center', // Center content horizontally
-    padding: 20,
   },
   h1: {
     fontSize: 32,

@@ -9,8 +9,15 @@ import {
 import PhoneInput from 'react-native-phone-number-input';
 import DeviceNumber from 'react-native-device-number';
 import {styles} from '../components/style';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigators/RootStack';
+import { checkEmpty } from '../utils/Validate';
+import { showError } from '../utils/Toast';
 
-const PhoneNumber = () => {
+type props = NativeStackScreenProps<RootStackParamList, 'PhoneNumber'>;
+
+const PhoneNumber = ({navigation, route}: props) => {
+  const {createAccount} = route.params;
   const phoneInput = useRef<PhoneInput>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isContinue, setIsContinue] = useState(false);
@@ -18,6 +25,15 @@ const PhoneNumber = () => {
   useEffect(() => {
     DeviceNumber.get();
   }, []);
+
+  const isValidData = () => {
+    const error = checkEmpty(phoneNumber, 'Please enter your phome number');
+    if (error) {
+        showError(error);
+        return false;
+    }
+    return true;
+  };
 
   const handleOnChangeFormattedText = (text: string) => {
     const isVerified = phoneInput.current?.isValidNumber(text) || false;
@@ -27,7 +43,22 @@ const PhoneNumber = () => {
     }
   };
 
-  const handleContinue = () => {};
+  const handleContinue = () => {
+    if (isValidData()) {
+      if (createAccount){
+        navigation.navigate('Name', {
+          createAccount: createAccount,
+          phoneNumber: phoneNumber,
+        });
+      }
+      else {
+        navigation.navigate('Password', {
+          createAccount: createAccount,
+          phoneNumber: phoneNumber,
+        });
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
