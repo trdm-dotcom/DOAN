@@ -1,6 +1,21 @@
-import {AnyAction, ThunkAction, configureStore} from '@reduxjs/toolkit';
+import {
+  AnyAction,
+  ReducersMapObject,
+  ThunkAction,
+  configureStore,
+} from '@reduxjs/toolkit';
+import authentication from './authentications.reducer';
+import otp from './otp.reducer';
+import user from './user.reducer';
+import friend from './friend.reducer';
 import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
-import {rootReducer} from '.';
+
+export const rootReducer: ReducersMapObject = {
+  authentication,
+  otp,
+  user,
+  friend,
+};
 
 const store = configureStore({
   reducer: rootReducer,
@@ -8,14 +23,15 @@ const store = configureStore({
 
 const getStore = () => store;
 
-export type IRootState = ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-export const useAppSelector: TypedUseSelectorHook<IRootState> = useSelector;
-export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppDispatch: () => AppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
 export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
-  IRootState,
+  RootState,
   unknown,
   AnyAction
 >;

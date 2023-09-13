@@ -1,19 +1,16 @@
 import {
   createAsyncThunk,
   createSlice,
+  isFulfilled,
   isPending,
   isRejected,
 } from '@reduxjs/toolkit';
 import IOtpRequest from '../models/request/IOtpRequest.model';
 import {serializeAxiosError} from './reducer.utils';
 import IVerifyOtpRequest from '../models/request/IVerifyOtprRequest';
-import IOtpResponse from '../models/response/IOtpResponse';
-import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
 import {apiPost} from '../utils/Api';
 
 export const initialState: any = {
-  dataGetOtp: {} as IOtpResponse,
-  dataVerifyOtp: {} as IVerifyOtpResponse,
   loading: false,
   errorMessage: null,
 };
@@ -54,13 +51,8 @@ export const OtpSlice = createSlice({
   },
   extraReducers(builder) {
     builder
-      .addCase(getOtp.fulfilled, (state, action) => {
+      .addMatcher(isFulfilled(getOtp, verifyOtp), state => {
         state.loading = false;
-        state.dataGetOtp = action.payload.data;
-      })
-      .addCase(verifyOtp.fulfilled, (state, action) => {
-        state.loading = false;
-        state.dataVerifyOtp = action.payload.data;
       })
       .addMatcher(isPending(getOtp, verifyOtp), state => {
         state.loading = true;

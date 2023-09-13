@@ -2,7 +2,7 @@ module.exports = {
   root: true,
   extends: '@react-native-community',
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'react-hooks'],
   overrides: [
     {
       files: ['*.ts', '*.tsx'],
@@ -10,7 +10,9 @@ module.exports = {
         '@typescript-eslint/no-shadow': ['error'],
         'no-shadow': 'off',
         'no-undef': 'off',
-        'prettier/prettier': 0,
+        'prettier/prettier': 'off',
+        'react-hooks/rules-of-hooks': 'off',
+        'react-hooks/exhaustive-deps': 'off',
       },
     },
   ],

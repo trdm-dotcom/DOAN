@@ -1,4 +1,5 @@
 export interface IUserInfoResponse {
+  id?: number;
   name?: string;
   username?: string;
   isVerified?: boolean;

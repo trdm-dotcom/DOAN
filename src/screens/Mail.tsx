@@ -1,23 +1,27 @@
-import React, {useRef, useState} from 'react';
-import {KeyboardAvoidingView, SafeAreaView, Text, View} from 'react-native';
-import PhoneInput from 'react-native-phone-number-input';
-import {styles} from '../components/style';
+import React, {useState} from 'react';
+import {
+  KeyboardAvoidingView,
+  SafeAreaView,
+  Text,
+  View,
+  TextInput,
+} from 'react-native';
+import {colors, styles} from '../components/style';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 
-type props = NativeStackScreenProps<RootStackParamList, 'PhoneNumber'>;
+type props = NativeStackScreenProps<RootStackParamList, 'Mail'>;
 
-const PhoneNumber = ({navigation, route}: props) => {
+const Mail = ({navigation, route}: props) => {
   const {createAccount} = route.params;
-  const phoneInput = useRef<PhoneInput>(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [mail, setMail] = useState('');
   const [isContinue, setIsContinue] = useState(false);
 
   const isValidData = () => {
-    const error = checkEmpty(phoneNumber, 'Please enter your phome number');
+    const error = checkEmpty(mail, 'Please enter your email');
     if (error) {
       showError(error);
       return false;
@@ -25,28 +29,25 @@ const PhoneNumber = ({navigation, route}: props) => {
     return true;
   };
 
-  const handleOnChangeFormattedText = (text: string) => {
-    const isVerified = phoneInput.current?.isValidNumber(text) || false;
-    setIsContinue(isVerified);
-    if (isVerified) {
-      setPhoneNumber(
-        phoneInput.current?.getNumberAfterPossiblyEliminatingZero().number ||
-          '',
-      );
+  const handleOnChangeText = (text: string) => {
+    const verify: boolean = text.trim().length > 0;
+    setIsContinue(verify);
+    if (verify) {
+      setMail(text.trim());
     }
   };
 
   const handleContinue = () => {
     if (isValidData()) {
       if (createAccount) {
-        navigation.navigate('Name', {
+        navigation.navigate('PhoneNumber', {
           createAccount: createAccount,
-          phoneNumber: phoneNumber,
+          mail: mail,
         });
       } else {
         navigation.navigate('Password', {
           createAccount: createAccount,
-          phoneNumber: phoneNumber,
+          mail: mail,
         });
       }
     }
@@ -60,37 +61,36 @@ const PhoneNumber = ({navigation, route}: props) => {
           styles.alignItemsCenter,
           styles.justifyContentCenter,
         ]}>
-        <Text style={[styles.boldText, styles.centerText, styles.h2]}>
-          What's your mobile number?
-        </Text>
+        <Text style={[styles.boldText, styles.h2]}>What's your email?</Text>
         <View style={styles.inputContainer}>
-          <PhoneInput
-            ref={phoneInput}
-            defaultValue={phoneNumber}
-            defaultCode="VN"
-            layout="first"
-            onChangeFormattedText={handleOnChangeFormattedText}
-            textInputStyle={[styles.boldText, styles.h2]}
-            codeTextStyle={[styles.boldText, styles.h2]}
-            containerStyle={[styles.phoneNumberView]}
-            textContainerStyle={[styles.inputField, {paddingVertical: 0}]}
+          <TextInput
+            onChangeText={handleOnChangeText}
+            style={[styles.inputField, styles.boldText, styles.h2]}
             autoFocus
+            textAlign="center"
+            placeholder="Your email"
+            placeholderTextColor={colors.dark}
           />
         </View>
         {!createAccount && (
           <PressableOpacity
             onPress={() =>
-              navigation.replace('Mail', {
+              navigation.replace('PhoneNumber', {
                 createAccount: createAccount,
               })
             }
             style={[styles.buttonDark]}>
             <Text style={[styles.boldText, styles.centerText, styles.h4]}>
-              Use email instead
+              Use phone instead
             </Text>
           </PressableOpacity>
         )}
-        <View style={[styles.fullWidth, styles.displayBottom]}>
+        <View
+          style={[
+            styles.fullWidth,
+            styles.displayBottom,
+            styles.alignItemsCenter,
+          ]}>
           <PressableOpacity
             onPress={handleContinue}
             style={[styles.buttonPrimary, styles.fullWidth]}
@@ -106,4 +106,4 @@ const PhoneNumber = ({navigation, route}: props) => {
   );
 };
 
-export default PhoneNumber;
+export default Mail;

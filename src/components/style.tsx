@@ -1,27 +1,31 @@
 import {StyleSheet} from 'react-native';
-const colors = {
-  primary: '#FF565A',
-  secondary: '#008488',
-  tertiary: '#4B4B4B',
-  dark: '#3F3F3F',
+import {CONTENT_SPACING, SAFE_AREA_PADDING, SCREEN_WIDTH} from '../Constants';
+export const colors = {
+  primary: '#F5618B',
+  secondary: '#928899',
+  tertiary: '#1A1B1E',
+  dark: '#242424',
   white: '#FFFFFF',
-  black: '#212225',
+  black: '#000000',
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
   container: {
     flex: 1,
+    marginHorizontal: SAFE_AREA_PADDING.paddingHorizontal,
+    marginVertical: SAFE_AREA_PADDING.paddingVertical,
   },
   defaultBackground: {
     backgroundColor: colors.black,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center', // Center the TextInput vertically
-    alignItems: 'center', // Center content horizontally
+  justifyContentCenter: {
+    justifyContent: 'center',
+  },
+  alignItemsCenter: {
+    alignItems: 'center',
   },
   h1: {
     fontSize: 32,
@@ -41,19 +45,22 @@ const styles = StyleSheet.create({
   h6: {
     fontSize: 12,
   },
-  topText: {
-    position: 'absolute',
-    top: 20, // Adjust this value as needed
+  fullWidth: {
+    width: '100%',
+  },
+  mt20: {
+    marginTop: 20,
   },
   centerText: {
     textAlign: 'center',
   },
-  bottomButton: {
+  displayTop: {
     position: 'absolute',
-    bottom: 20, // Adjust this value as needed
+    top: SAFE_AREA_PADDING.paddingTop,
   },
-  fullWidthButton: {
-    width: '100%',
+  displayBottom: {
+    position: 'absolute',
+    bottom: SAFE_AREA_PADDING.paddingBottom,
   },
   normalText: {
     fontWeight: 'normal',
@@ -69,18 +76,44 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   buttonPrimary: {
-    width: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 7,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonSecondary: {
     backgroundColor: colors.secondary,
-    borderRadius: 25,
-    paddingVertical: 20,
+    borderRadius: 7,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  camButton: {
+    height: 80,
+    width: 80,
+    borderRadius: 80 / 2,
+    backgroundColor: colors.white,
+    alignSelf: 'center',
+    borderWidth: 4,
+    borderColor: colors.secondary,
+  },
+  buttonDark: {
+    backgroundColor: colors.dark,
+    borderRadius: 55,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   inputContainer: {
     width: '100%',
+    borderRadius: 7,
     marginVertical: 15,
-    borderRadius: 15,
+    backgroundColor: colors.tertiary,
   },
   inputField: {
     backgroundColor: 'transparent',
@@ -91,6 +124,38 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'transparent',
   },
+  cameraContainer: {
+    borderRadius: 50,
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH,
+    backgroundColor: colors.dark,
+  },
+  rightButtonRow: {
+    position: 'absolute',
+    right: SAFE_AREA_PADDING.paddingRight,
+    top: SAFE_AREA_PADDING.paddingTop,
+  },
+  buttonCameraOption: {
+    marginBottom: CONTENT_SPACING,
+    width: 40,
+    height: 40,
+    borderRadius: 40 / 2,
+    backgroundColor: colors.dark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  spaceBetween: {
+    justifyContent: 'space-between',
+  },
+  headerStyle: {
+    position: 'absolute',
+    backgroundColor: colors.black,
+    top: SAFE_AREA_PADDING.paddingTop,
+    left: SAFE_AREA_PADDING.paddingLeft,
+  },
 });
-
-export {styles, colors};

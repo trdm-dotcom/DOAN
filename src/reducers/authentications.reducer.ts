@@ -10,6 +10,7 @@ import {ICheckExistResponse} from '../models/response/ICheckExistResponse';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import {apiGet, apiPost} from '../utils/Api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {IBiometricLoginRequest} from '../models/request/IBiometricLoginRequest';
 
 export const initialState: any = {
   userData: {} as IUserData,
@@ -20,14 +21,29 @@ export const initialState: any = {
   isAuthenticated: false,
 };
 
+type AuthenticationType = {
+  type: 'password' | 'biometric';
+  data: ILoginRequest | IBiometricLoginRequest;
+};
+
 export type AuthenticationState = Readonly<typeof initialState>;
 
 export const authenticate = createAsyncThunk(
   'authentication/login',
-  async (body: ILoginRequest) =>
-    await apiPost('/login', body, {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    }),
+  async (body: AuthenticationType) => {
+    switch (body.type) {
+      case 'password':
+        return await apiPost('/login', body.data, {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        });
+      case 'biometric':
+        return await apiPost('/biometric', body.data, {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        });
+      default:
+        return await Promise.reject('Invalid type');
+    }
+  },
   {
     serializeError: serializeAxiosError,
   },
@@ -46,7 +62,7 @@ export const registerNewAccount = createAsyncThunk(
 
 export const getAccount = createAsyncThunk(
   'authentication/get_account',
-  async () => await apiGet('api/v1/user/info'),
+  async () => await apiGet('/user/info'),
   {
     serializeError: serializeAxiosError,
   },
@@ -54,8 +70,7 @@ export const getAccount = createAsyncThunk(
 
 export const checkExist = createAsyncThunk(
   'authentication/check_exist',
-  async (body: ICheckExistRequest) =>
-    axios.post<any>('api/v1/checkExist', body),
+  async (body: ICheckExistRequest) => axios.post<any>('/checkExist', body),
   {
     serializeError: serializeAxiosError,
   },
@@ -64,47 +79,67 @@ export const checkExist = createAsyncThunk(
 export const register: (body: IRegisterRequest) => AppThunk =
   body => async dispatch => {
     await dispatch(registerNewAccount(body));
-    await dispatch(
+    dispatch(
       login({
         username: body.username,
         password: body.password,
         hash: body.hash,
+        grant_type: 'password',
+        client_secret: 'secret',
       }),
     );
   };
 
 export const login: (body: ILoginRequest) => AppThunk =
-  body => async dispatch => {
-    const result = await dispatch(authenticate(body));
-    const response = (result.payload as AxiosResponse).data as ILoginResponse;
-    await AsyncStorage.setItem(
-      'token',
+  (body: ILoginRequest) => async dispatch => {
+    const result = await dispatch(authenticate({type: 'password', data: body}));
+    const response = result.payload.data as ILoginResponse;
+    AsyncStorage.setItem(
+      'loginCredentials',
       JSON.stringify({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        accExpiredTime: response.accExpiredTime,
-        refExpiredTime: response.refExpiredTime,
+        token: {
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          accExpiredTime: response.accExpiredTime,
+          refExpiredTime: response.refExpiredTime,
+        },
+        type: 'password',
+        data: body,
       }),
     );
-    dispatch(getSession());
+    dispatch(getAccount());
   };
 
-export const Init: () => AppThunk = () => async dispatch => {
-  const result = await AsyncStorage.getItem('token');
-  if (result) {
-    const token = JSON.parse(result);
-    if (token.refExpiredTime > Date.now()) {
-      await dispatch(getSession());
-    } else {
-      await AsyncStorage.removeItem('token');
-    }
-  }
+export const biometric: (body: IBiometricLoginRequest) => AppThunk =
+  (body: IBiometricLoginRequest) => async dispatch => {
+    const result = await dispatch(
+      authenticate({type: 'biometric', data: body}),
+    );
+    const response = (result.payload as AxiosResponse).data as ILoginResponse;
+    AsyncStorage.setItem(
+      'loginCredentials',
+      JSON.stringify({
+        token: {
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          accExpiredTime: response.accExpiredTime,
+          refExpiredTime: response.refExpiredTime,
+        },
+        type: 'biometric',
+        data: body,
+      }),
+    );
+    dispatch(getAccount());
+  };
+
+export const clearAuthentication = () => (dispatch: any) => {
+  clearAuthToken();
+  dispatch(clearAuth());
 };
 
-export const getSession: () => AppThunk = () => async dispatch => {
-  const result = await dispatch(getAccount());
-  const response = (result.payload as AxiosResponse).data as IUserInfoResponse;
-  await AsyncStorage.setItem('userInfo', JSON.stringify(response));
+export const clearAuthToken = () => {
+  AsyncStorage.removeItem('token');
+  AsyncStorage.removeItem('userInfo');
 };
 
 export const AuthenticationSlice = createSlice({
@@ -114,6 +149,13 @@ export const AuthenticationSlice = createSlice({
     reset() {
       return {
         ...initialState,
+      };
+    },
+    clearAuth(state) {
+      return {
+        ...state,
+        loading: false,
+        isAuthenticated: false,
       };
     },
   },
@@ -128,12 +170,15 @@ export const AuthenticationSlice = createSlice({
         loading: false,
         userData: (action.payload.data as ILoginResponse).userInfo,
       }))
-      .addCase(getAccount.rejected, (state, action) => ({
-        ...state,
-        loading: false,
-        isAuthenticated: false,
-        errorMessage: action.error.message,
-      }))
+      .addCase(getAccount.rejected, (state, action) => {
+        // showError(action.error.message);
+        return {
+          ...state,
+          loading: false,
+          isAuthenticated: false,
+          errorMessage: action.error.message,
+        };
+      })
       .addCase(getAccount.fulfilled, (state, action) => ({
         ...state,
         loading: false,
@@ -156,7 +201,7 @@ export const AuthenticationSlice = createSlice({
   },
 });
 
-export const {reset} = AuthenticationSlice.actions;
+export const {reset, clearAuth} = AuthenticationSlice.actions;
 
 // Reducer
 export default AuthenticationSlice.reducer;
