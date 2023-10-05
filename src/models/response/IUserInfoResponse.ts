@@ -1,10 +1,9 @@
 export interface IUserInfoResponse {
-  id?: number;
-  name?: string;
-  username?: string;
-  isVerified?: boolean;
+  id: number;
+  name: string;
   status?: string;
-  deviceToken?: string;
   phoneNumber?: string;
-  avatar?: string;
+  email?: string;
+  avatar: string;
+  birthDay?: string;
 }

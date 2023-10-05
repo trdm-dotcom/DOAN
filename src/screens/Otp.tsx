@@ -1,50 +1,72 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 
 import {
   KeyboardAvoidingView,
-  SafeAreaView,
   Text,
   View,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
-import {colors, styles} from '../components/style';
-import {useAppDispatch, useAppSelector} from '../reducers/store';
+import {styles} from '../components/style';
 import {OtpIdType} from '../models/enum/OtpIdType';
 import {OtpTxtType} from '../models/enum/OtpTxtType';
 import IOtpResponse from '../models/response/IOtpResponse';
-import {register} from '../reducers/authentications.reducer';
 import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {getHash} from '../utils/Crypto';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
-import {getOtp, verifyOtp} from '../reducers/otp.reducer';
-import {AxiosResponse} from 'axios';
+import {getFcmTokenFromLocalStorage} from '../utils/PushNotification';
+import {apiPost} from '../utils/Api';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
+import {AppContext} from '../context';
+import {IconSizes} from '../constants/Constants';
+import Typography from '../theme/Typography';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import {ThemeStatic} from '../theme/Colors';
+
+const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
 
 const Otp = ({navigation, route}: props) => {
-  const dispatch = useAppDispatch();
-  const {createAccount, name, phoneNumber, password} = route.params;
-  const [otpValue, setOtpValue] = useState('');
-  const [otpId, setOtpId] = useState('');
-  const [minutes, setMinutes] = useState(1);
-  const [seconds, setSeconds] = useState(30);
-  const [isContinue, setIsContinue] = useState(false);
+  const {theme} = useContext(AppContext);
+  const {createAccount, phoneNumber} = route.params;
+  const [otpValue, setOtpValue] = useState<string>('');
+  const [otpId, setOtpId] = useState<string>('');
+  const [minutes, setMinutes] = useState<number>(1);
+  const [seconds, setSeconds] = useState<number>(30);
+  const [isContinue, setIsContinue] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const loading = useAppSelector(state => state.otp.loading);
+  const getOtp = async () => {
+    try {
+      setLoading(true);
+      const fcmToken = await getFcmTokenFromLocalStorage();
+      const body = {
+        id: fcmToken,
+        idType: OtpIdType.FIREBASE,
+        txtType: OtpTxtType.VERIFY,
+      };
+      const response: IOtpResponse = await apiPost<IOtpResponse>(
+        '/otp',
+        {data: body},
+        {
+          'Content-Type': 'application/json',
+        },
+      );
+      setOtpId(response.otpId);
+    } catch (error: any) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(
-      getOtp({id: '', idType: OtpIdType.FIREBASE, txtType: OtpTxtType.VERIFY}),
-    )
-      .unwrap()
-      .then((response: AxiosResponse<IOtpResponse>) => {
-        setOtpId(response.data.otpId);
-      });
+    getOtp();
   }, []);
 
   useEffect(() => {
@@ -52,7 +74,6 @@ const Otp = ({navigation, route}: props) => {
       if (seconds > 0) {
         setSeconds(seconds - 1);
       }
-
       if (seconds === 0) {
         if (minutes === 0) {
           setIsContinue(false);
@@ -89,72 +110,176 @@ const Otp = ({navigation, route}: props) => {
   const resendOtp = () => {
     setOtpValue('');
     setOtpId('');
+    setMinutes(1);
+    setSeconds(30);
+    setLoading(true);
+    getOtp();
   };
 
   const handleContinue = async () => {
     if (isValidData()) {
-      const response: AxiosResponse<IVerifyOtpResponse> = await dispatch(
-        verifyOtp({otpId: otpId, otpValue: otpValue}),
-      ).unwrap();
-      if (createAccount) {
-        dispatch(
-          register({
-            username: phoneNumber,
-            password: password,
-            name: name,
-            otpKey: response.data.otpKey,
-            hash: getHash('REGISTER'),
-          }),
+      const body = {otpId: otpId, otpValue: otpValue};
+      try {
+        const response: IVerifyOtpResponse = await apiPost<IVerifyOtpResponse>(
+          '/otp/verify',
+          {data: body},
+          {
+            'Content-Type': 'application/json',
+          },
         );
+        if (createAccount) {
+          navigation.navigate('Mail', {
+            phoneNumber: phoneNumber!,
+            otpKey: response.otpKey,
+          });
+        } else {
+          navigation.goBack();
+        }
+      }
+      catch (error: any) {
+        showError(error.message);
       }
     }
   };
 
   return (
-    <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
+    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <View style={{height: 24}}>
+        <HeaderBar
+          firstChilden={
+            <TouchableOpacity
+              onPress={() => {
+                navigation.goBack();
+              }}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Ionicons
+                name="chevron-back-outline"
+                size={IconSizes.x6}
+                color={theme.text01}
+              />
+            </TouchableOpacity>
+          }
+        />
+      </View>
       <KeyboardAvoidingView
-        style={[
-          styles.container,
-          styles.alignItemsCenter,
-          styles.justifyContentCenter,
-        ]}>
-        <Text style={[styles.boldText, styles.centerText, styles.h2]}>
-          Waiting for OTP
+        style={[styles(theme).container, styles(theme).mt40]}>
+        <Text
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.SubHeading,
+              color: theme.text01,
+            },
+          ]}>
+          OTP sent
         </Text>
-        <View style={[styles.inputContainer]}>
+        <Text
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.Caption,
+              color: theme.text02,
+            },
+          ]}>
+          Enter the code sent to your phone
+        </Text>
+        <View style={[styles(theme).inputContainer]}>
           <TextInput
             onChangeText={handleOnChangeText}
-            style={[styles.inputField, styles.boldText, styles.h2]}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+            ]}
             autoFocus
             textAlign="center"
             placeholder="Code"
-            placeholderTextColor={colors.dark}
+            placeholderTextColor={theme.text02}
           />
         </View>
-        {seconds > 0 || minutes > 0 ? (
-          <Text style={[styles.normalText, styles.centerText]}>
-            Time Remaining: {minutes < 10 ? `0${minutes}` : minutes}:
-          </Text>
-        ) : (
-          <PressableOpacity onPress={resendOtp}>
-            <Text style={[styles.normalText, styles.centerText]}>
-              Resend OTP
+        <Text
+          style={[
+            {
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: theme.text01,
+            },
+          ]}>
+          Didn't receive the code?{' '}
+          {seconds > 0 || minutes > 0 ? (
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Caption,
+                  color: theme.text01,
+                },
+              ]}>
+              Resend in: {minutes < 10 ? `0${minutes}` : minutes}:
+              {seconds < 10 ? `0${seconds}` : seconds}
             </Text>
-          </PressableOpacity>
-        )}
-        <View style={[styles.fullWidth, styles.displayBottom]}>
+          ) : (
+            <TouchableOpacity onPress={resendOtp}>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Caption,
+                    color: theme.text01,
+                  },
+                ]}>
+                Resend OTP
+              </Text>
+            </TouchableOpacity>
+          )}
+        </Text>
+        <View
+          style={[
+            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
+            styles(theme).mt20,
+          ]}>
           <PressableOpacity
             onPress={handleContinue}
-            style={[styles.buttonPrimary, styles.fullWidth]}
+            style={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+              {width: 150},
+            ]}
             disabled={!isContinue || loading}
             disabledOpacity={0.4}>
-            <Text style={[styles.boldText, styles.centerText, styles.h4]}>
-              Continue
-            </Text>
+            {loading ? (
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+            ) : (
+              <>
+                {createAccount && isContinue && (
+                  <Text
+                    style={[
+                      styles(theme).centerText,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                      },
+                    ]}>
+                    Next step
+                  </Text>
+                )}
+                <Ionicons
+                  name="arrow-forward-outline"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+              </>
+            )}
           </PressableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 

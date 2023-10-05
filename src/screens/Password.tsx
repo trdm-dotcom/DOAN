@@ -1,28 +1,40 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   KeyboardAvoidingView,
-  SafeAreaView,
   Text,
   View,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
-import {colors, styles} from '../components/style';
-import {login} from '../reducers/authentications.reducer';
+import {styles} from '../components/style';
 import {getHash} from '../utils/Crypto';
-import {useAppDispatch} from '../reducers/store';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
+import {IconSizes} from '../constants/Constants';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {register} from '../reducers/action/authentications';
+import {useAppDispatch} from '../reducers/redux/store';
+import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
+import {AppContext} from '../context';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import {ThemeStatic} from '../theme/Colors';
+import Typography from '../theme/Typography';
+
+const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Password'>;
 
 const Password = ({navigation, route}: props) => {
-  const {createAccount, name, phoneNumber} = route.params;
+  const {theme} = useContext(AppContext);
   const dispatch = useAppDispatch();
-  const [password, setPassword] = useState('');
-  const [isContinue, setIsContinue] = useState(false);
+  const {name, phoneNumber, mail, otpKey} = route.params;
+  const [password, setPassword] = useState<string>('');
+  const [isContinue, setIsContinue] = useState<boolean>(false);
+  const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const isValidData = () => {
     const error = checkEmpty(password, 'Please enter your password');
@@ -41,72 +53,137 @@ const Password = ({navigation, route}: props) => {
     }
   };
 
-  const resetPassword = () => {};
-
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (isValidData()) {
-      if (createAccount) {
-        navigation.navigate('Otp', {
-          name: name,
-          phoneNumber: phoneNumber,
-          password: password,
-        });
-      } else {
+      try {
+        setLoading(true);
         dispatch(
-          login({
+          register({
             username: phoneNumber,
             password: password,
-            hash: getHash('LOGIN'),
-            grant_type: 'password',
-            client_secret: 'iW4rurIrZJ',
+            name: name,
+            otpKey: otpKey,
+            mail: mail,
+            hash: getHash('REGISTER'),
           }),
         );
+      } catch (error: any) {
+        showError(error.message);
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   return (
-    <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
+    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <View style={{height: 24}}>
+        <HeaderBar
+          firstChilden={
+            <TouchableOpacity
+              onPress={() => {
+                navigation.goBack();
+              }}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Ionicons
+                name="chevron-back-outline"
+                size={IconSizes.x8}
+                color={theme.text01}
+              />
+            </TouchableOpacity>
+          }
+        />
+      </View>
       <KeyboardAvoidingView
-        style={[
-          styles.container,
-          styles.alignItemsCenter,
-          styles.justifyContentCenter,
-        ]}>
-        <Text style={[styles.boldText, styles.centerText, styles.h2]}>
-          Choose your password
+        style={[styles(theme).container, styles(theme).mt40]}>
+        <Text
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.SubHeading,
+              color: theme.text01,
+            },
+          ]}>
+          Password
         </Text>
-        <View style={styles.inputContainer}>
+        <Text
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.Caption,
+              color: theme.text02,
+            },
+          ]}>
+          Help secure your account
+        </Text>
+        <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
             onChangeText={handleOnChangeText}
-            style={[styles.inputField, styles.boldText, styles.h2]}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+              },
+              {flex: 1},
+            ]}
             autoFocus
-            secureTextEntry
-            textAlign="center"
+            secureTextEntry={!isPasswordVisible}
             placeholder="Password"
-            placeholderTextColor={colors.dark}
+            placeholderTextColor={theme.text02}
           />
         </View>
-        {!createAccount && (
-          <PressableOpacity onPress={resetPassword} style={[styles.buttonDark]}>
-            <Text style={[styles.boldText, styles.centerText, styles.h4]}>
-              Forget password
-            </Text>
-          </PressableOpacity>
-        )}
-        <View style={[styles.fullWidth, styles.displayBottom]}>
+        <View style={[styles(theme).inputContainer, styles(theme).row]}>
+          <TextInput
+            onChangeText={handleOnChangeText}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+              },
+              {flex: 1},
+            ]}
+            autoFocus
+            secureTextEntry={!isPasswordVisible}
+            placeholder="Confirm Password"
+            placeholderTextColor={theme.text02}
+          />
+        </View>
+        <View
+          style={[
+            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
+            styles(theme).mt20,
+          ]}>
           <PressableOpacity
             onPress={handleContinue}
-            style={[styles.buttonPrimary, styles.fullWidth]}
-            disabled={!isContinue}
+            style={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+            ]}
+            disabled={!isContinue || loading}
             disabledOpacity={0.4}>
-            <Text style={[styles.boldText, styles.centerText, styles.h4]}>
-              Continue
-            </Text>
+            {loading ? (
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+            ) : (
+              <Text
+                style={[
+                  styles(theme).centerText,
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                  },
+                ]}>
+                Create my account
+              </Text>
+            )}
           </PressableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 

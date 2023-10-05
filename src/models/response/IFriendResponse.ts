@@ -1,8 +1,5 @@
-export default interface IFriendResponse {
-  friend?: string;
-  name?: string;
-  status?: string;
-  avatar?: string;
-};
+import {IUserInfoResponse} from './IUserInfoResponse';
 
-
+export default interface IFriendResponse extends IUserInfoResponse {
+  statusFriend?: string;
+}

@@ -1,9 +1,9 @@
 export interface ILoginResponse {
   accessToken: string;
   refreshToken: string;
-  userInfo?: IUserData;
-  accExpiredTime?: number;
-  refExpiredTime?: number;
+  userInfo: IUserData;
+  accExpiredTime: number;
+  refExpiredTime: number;
 }
 
 export interface IUserData {

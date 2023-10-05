@@ -5,4 +5,4 @@ export default interface IOtpRequest {
   id?: string;
   idType?: OtpIdType;
   txtType?: OtpTxtType;
-}
+};

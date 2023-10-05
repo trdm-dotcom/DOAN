@@ -1,16 +1,11 @@
-import React from 'react';
-import {SafeAreaView, View} from 'react-native';
+import React, {useContext} from 'react';
+import {View} from 'react-native';
 import {styles} from '../components/style';
+import {AppContext} from '../context';
 
-export const Loading = () => {
-  return (
-    <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
-      <View
-        style={[
-          styles.container,
-          styles.alignItemsCenter,
-          styles.justifyContentCenter,
-        ]}></View>
-    </SafeAreaView>
-  );
+const Loading = () => {
+  const {theme} = useContext(AppContext);
+  return <View style={[styles(theme).container]}></View>;
 };
+
+export default Loading;

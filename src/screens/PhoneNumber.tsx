@@ -1,20 +1,33 @@
-import React, {useRef, useState} from 'react';
-import {KeyboardAvoidingView, SafeAreaView, Text, View} from 'react-native';
+import React, {useContext, useRef, useState} from 'react';
+import {KeyboardAvoidingView, Text, TouchableOpacity, View} from 'react-native';
 import PhoneInput from 'react-native-phone-number-input';
 import {styles} from '../components/style';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
+import {AppContext} from '../context';
+import {ICheckExistRequest} from '../models/request/ICheckExistRequest';
+import {ICheckExistResponse} from '../models/response/ICheckExistResponse';
+import {ThemeStatic} from '../theme/Colors';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import {IconSizes} from '../constants/Constants';
+import Typography from '../theme/Typography';
+import {checkExist} from '../reducers/action/authentications';
+
+const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'PhoneNumber'>;
 
-const PhoneNumber = ({navigation, route}: props) => {
-  const {createAccount} = route.params;
+const PhoneNumber = ({navigation}: props) => {
+  const {theme} = useContext(AppContext);
   const phoneInput = useRef<PhoneInput>(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isContinue, setIsContinue] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [isContinue, setIsContinue] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const isValidData = () => {
     const error = checkEmpty(phoneNumber, 'Please enter your phome number');
@@ -26,83 +39,150 @@ const PhoneNumber = ({navigation, route}: props) => {
   };
 
   const handleOnChangeFormattedText = (text: string) => {
-    const isVerified = phoneInput.current?.isValidNumber(text) || false;
-    setIsContinue(isVerified);
-    if (isVerified) {
-      setPhoneNumber(
-        phoneInput.current?.getNumberAfterPossiblyEliminatingZero().number ||
-          '',
-      );
-    }
+    setIsContinue(phoneInput.current?.isValidNumber(text) || false);
   };
 
-  const handleContinue = () => {
+  const handleOnChangePhoneNumber = (text: string) => {
+    setPhoneNumber(text);
+  };
+
+  const handleContinue = async () => {
     if (isValidData()) {
-      if (createAccount) {
-        navigation.navigate('Name', {
-          createAccount: createAccount,
-          phoneNumber: phoneNumber,
-        });
-      } else {
-        navigation.navigate('Password', {
-          createAccount: createAccount,
-          phoneNumber: phoneNumber,
-        });
+      try {
+        setLoading(true);
+        const body: ICheckExistRequest = {
+          value: phoneNumber,
+        };
+        const responseCheckExist: ICheckExistResponse = await checkExist(body);
+        if (!responseCheckExist.isExist) {
+          navigation.navigate('Otp', {
+            createAccount: true,
+            phoneNumber: phoneNumber,
+          });
+        } else {
+          showError('This phone number is already in use');
+        }
+      } catch (error: any) {
+        showError(error.message);
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   return (
-    <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
+    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <View style={{height: 24}}>
+        <HeaderBar
+          firstChilden={
+            <TouchableOpacity
+              onPress={() => {
+                navigation.goBack();
+              }}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Ionicons
+                name="chevron-back-outline"
+                size={IconSizes.x8}
+                color={theme.text01}
+              />
+            </TouchableOpacity>
+          }
+        />
+      </View>
       <KeyboardAvoidingView
-        style={[
-          styles.container,
-          styles.alignItemsCenter,
-          styles.justifyContentCenter,
-        ]}>
-        <Text style={[styles.boldText, styles.centerText, styles.h2]}>
-          What's your mobile number?
+        style={[styles(theme).container, styles(theme).mt40]}>
+        <Text
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.SubHeading,
+              color: theme.text01,
+            },
+          ]}>
+          Phone
         </Text>
-        <View style={styles.inputContainer}>
+        <Text
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.Caption,
+              color: theme.text02,
+            },
+          ]}>
+          Enter your phone number
+        </Text>
+        <View style={[styles(theme).inputContainer, styles(theme).mt20]}>
           <PhoneInput
             ref={phoneInput}
             defaultValue={phoneNumber}
             defaultCode="VN"
             layout="first"
+            onChangeText={handleOnChangePhoneNumber}
             onChangeFormattedText={handleOnChangeFormattedText}
-            textInputStyle={[styles.boldText, styles.h2]}
-            codeTextStyle={[styles.boldText, styles.h2]}
-            containerStyle={[styles.phoneNumberView]}
-            textContainerStyle={[styles.inputField, {paddingVertical: 0}]}
+            textInputStyle={[
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+            ]}
+            codeTextStyle={[
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+            ]}
+            containerStyle={[styles(theme).phoneNumberView]}
+            textContainerStyle={[
+              styles(theme).inputField,
+              {paddingVertical: 0},
+            ]}
             autoFocus
           />
         </View>
-        {!createAccount && (
-          <PressableOpacity
-            onPress={() =>
-              navigation.replace('Mail', {
-                createAccount: createAccount,
-              })
-            }
-            style={[styles.buttonDark]}>
-            <Text style={[styles.boldText, styles.centerText, styles.h4]}>
-              Use email instead
-            </Text>
-          </PressableOpacity>
-        )}
-        <View style={[styles.fullWidth, styles.displayBottom]}>
+        <View
+          style={[
+            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
+            styles(theme).mt20,
+          ]}>
           <PressableOpacity
             onPress={handleContinue}
-            style={[styles.buttonPrimary, styles.fullWidth]}
-            disabled={!isContinue}
+            style={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+              {width: 150},
+            ]}
+            disabled={!isContinue || loading}
             disabledOpacity={0.4}>
-            <Text style={[styles.boldText, styles.centerText, styles.h4]}>
-              Continue
-            </Text>
+            {loading ? (
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+            ) : (
+              <>
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                    },
+                    styles(theme).centerText,
+                  ]}>
+                  Next
+                </Text>
+                <Ionicons
+                  name="arrow-forward-outline"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+              </>
+            )}
           </PressableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 

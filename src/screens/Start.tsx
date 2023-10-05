@@ -1,40 +1,49 @@
-import React from 'react';
-import { SafeAreaView, View, Text } from 'react-native';
-import { styles } from '../components/style';
-import { RootStackParamList } from '../navigators/RootStack';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { PressableOpacity } from 'react-native-pressable-opacity';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, {useContext} from 'react';
+import {View, Text, TouchableOpacity} from 'react-native';
+import {styles} from '../components/style';
+import {RootStackParamList} from '../navigators/RootStack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {CONTENT_SPACING} from '../constants/Constants';
+import {AppContext} from '../context';
+import AppButton from '../components/control/AppButton';
+import Typography from '../theme/Typography';
+
+const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Start'>;
 
-const Start = ({navigation}: props) => {
-  const handlePress = (createAccount: boolean) => {
-    console.log('createAccount', createAccount);
-    navigation.navigate('Mail', {
-      createAccount: createAccount,
-    });
-  };
+const Start = ({navigation, route}: props) => {
+  const {theme} = useContext(AppContext);
 
   return (
-    <SafeAreaView style={[styles.defaultBackground, styles.safeArea]}>
-      <View style={[styles.container, styles.alignItemsCenter, styles.justifyContentCenter]}>
-        <View>
-          
-        </View>
-        <View style={[styles.displayBottom, styles.fullWidth]}>
-          <PressableOpacity
-            style={[styles.buttonPrimary, styles.fullWidth, {marginBottom: 20}]}
-            onPress={() => handlePress(true)}>
-            <Text style={[styles.centerText, styles.boldText, styles.h4]}>Create account</Text>
-          </PressableOpacity>
-          <PressableOpacity
-            style={[styles.buttonSecondary, styles.fullWidth]}
-            onPress={() => handlePress(false)}>
-            <Text style={[styles.centerText, styles.boldText, styles.h4]}>Sign in</Text>
-          </PressableOpacity>
-        </View>
+    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <View style={[styles(theme).displayBottom, styles(theme).fullWidth]}>
+        <AppButton
+          label="Create account"
+          loading={false}
+          onPress={() => navigation.navigate('PhoneNumber')}
+          containerStyle={[
+            styles(theme).buttonPrimary,
+            {marginBottom: CONTENT_SPACING},
+          ]}
+          labelStyle={{
+            ...FontWeights.Bold,
+            ...FontSizes.Body,
+          }}
+        />
+        <AppButton
+          label="Sign in"
+          loading={false}
+          onPress={() => navigation.navigate('SignIn')}
+          containerStyle={[styles(theme).buttonSecondary]}
+          labelStyle={{
+            ...FontWeights.Bold,
+            ...FontSizes.Body,
+          }}
+        />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
