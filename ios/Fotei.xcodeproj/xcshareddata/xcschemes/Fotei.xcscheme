@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "DOAN.app"
-               BlueprintName = "DOAN"
-               ReferencedContainer = "container:DOAN.xcodeproj">
+               BuildableName = "Fotei.app"
+               BlueprintName = "Fotei"
+               ReferencedContainer = "container:Fotei.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "DOANTests.xctest"
-               BlueprintName = "DOANTests"
-               ReferencedContainer = "container:DOAN.xcodeproj">
+               BuildableName = "FoteiTests.xctest"
+               BlueprintName = "FoteiTests"
+               ReferencedContainer = "container:Fotei.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "DOAN.app"
-            BlueprintName = "DOAN"
-            ReferencedContainer = "container:DOAN.xcodeproj">
+            BuildableName = "Fotei.app"
+            BlueprintName = "Fotei"
+            ReferencedContainer = "container:Fotei.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "DOAN.app"
-            BlueprintName = "DOAN"
-            ReferencedContainer = "container:DOAN.xcodeproj">
+            BuildableName = "Fotei.app"
+            BlueprintName = "Fotei"
+            ReferencedContainer = "container:Fotei.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
