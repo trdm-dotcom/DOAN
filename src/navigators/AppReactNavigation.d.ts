@@ -6,4 +6,4 @@ declare global {
   }
 }
 
-export function useAppNavigation<T extends NavigationProp>(): T;
+export function useNavigation<T extends NavigationProp>(): T;

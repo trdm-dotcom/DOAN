@@ -1,5 +1,5 @@
 import {IParam} from '../../models/IParam';
-import {apiDelete, apiPost, apiPut} from '../../utils/Api';
+import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 
 export const deleteComment = async (params: IParam) =>
   await apiDelete<any>('/social/comment', {params: params});
@@ -51,3 +51,9 @@ export const disablePost = async (params: IParam) =>
       'Content-Type': 'application/json',
     },
   );
+
+export const getCommentsOfPost = async (postId: string, params: IParam) =>
+  await apiGet<any>(`/social/post/${postId}/comments`, {params: params});
+
+export const getReactionsOfPost = async (postId: string, params: IParam) =>
+  await apiGet<any>(`/social/post/${postId}/reactions`, {params: params});

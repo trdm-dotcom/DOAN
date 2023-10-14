@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext, useEffect, useState} from 'react';
 import {StyleSheet, Switch, View} from 'react-native';
 import {Modalize} from 'react-native-modalize';
@@ -11,7 +10,7 @@ import AppOption from '../shared/AppOption';
 import {ThemeVariant} from '../../theme/Colors';
 import {signOut} from '../../reducers/action/authentications';
 import {useAppDispatch} from '../../reducers/redux/store';
-import {useAppNavigation} from '../../navigators/AppReactNavigation';
+import { useNavigation } from '@react-navigation/native';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -26,7 +25,7 @@ const SettingsBottomSheet: React.FC<SettingsBottomSheetProps> =
     const dispatch = useAppDispatch();
     const {toggleTheme, theme, themeType} = useContext(AppContext);
     const [isActive, setIsActive] = useState(false);
-    const navigation = useAppNavigation();
+    const navigation = useNavigation();
 
     useEffect(() => {
       setIsActive(themeType === ThemeVariant.dark);

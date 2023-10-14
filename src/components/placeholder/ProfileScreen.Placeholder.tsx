@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {Placeholder, PlaceholderLine, PlaceholderMedia} from 'rn-placeholder';
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   postPlaceholder: {
-    borderRadius: 5,
+    borderRadius: 10,
   },
 });
 

@@ -1,66 +1,67 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {TouchableOpacity, View, Text} from 'react-native';
 import {useAppSelector} from '../../reducers/redux/store';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {NativeImage} from '../shared/NativeImage';
-import {styles} from '../style';
+import {space, styles} from '../style';
 import {parseTimeElapsed} from '../../utils/shared';
-import {CONTENT_SPACING, IconSizes} from '../../constants/Constants';
+import {IconSizes} from '../../constants/Constants';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {AppContext} from '../../context';
 import Typography from '../../theme/Typography';
-import {useAppNavigation} from '../../navigators/AppReactNavigation';
+import {useNavigation} from '@react-navigation/native';
 
 const {FontWeights, FontSizes} = Typography;
 
 type CommentCardProps = {
-  postId: string;
-  commentId: string;
-  authorId: number;
+  userId: number;
   avatar: string;
-  handle: string;
-  body: string;
+  name: string;
+  comment: string;
   time: string;
+  onPressOption: () => void;
 };
 
 const CommentCard = ({
-  postId,
-  commentId,
-  authorId,
+  userId,
   avatar,
-  handle,
-  body,
+  name,
+  comment,
   time,
+  onPressOption,
 }: CommentCardProps) => {
   const {theme} = useContext(AppContext);
   const userInfo: IUserInfoResponse = useAppSelector(
     state => state.auth.userInfo,
   );
   const {parsedTime} = parseTimeElapsed(time);
-  const navigation = useAppNavigation();
+  const navigation = useNavigation();
 
   const navigateToProfile = () => {
-    if (authorId === userInfo.id) {
+    if (userId === userInfo.id) {
       return;
     }
-    navigation.navigate('Profile', {userId: authorId});
+    navigation.navigate('Profile', {userId: userId});
   };
 
   return (
     <View
-      style={{
-        flexDirection: 'row',
-        borderRadius: 7,
-        margin: 7,
-      }}>
+      style={[
+        {
+          flexDirection: 'row',
+          borderRadius: 10,
+        },
+        space(10).m,
+      ]}>
       <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
       <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          paddingLeft: CONTENT_SPACING,
-        }}>
+        style={[
+          {
+            flex: 1,
+            justifyContent: 'center',
+          },
+          space(IconSizes.x4).pl,
+        ]}>
         <Text
           style={[
             {
@@ -69,45 +70,24 @@ const CommentCard = ({
             },
           ]}>
           <TouchableOpacity activeOpacity={0.95} onPress={navigateToProfile}>
-            <Text
-              style={[
-                [
-                  {
-                    ...FontWeights.Regular,
-                    ...FontSizes.Body,
-                  },
-                ],
-              ]}>
-              {handle}{' '}
-            </Text>
+            <Text style={[styles(theme).nameText]}>{name} </Text>
           </TouchableOpacity>
-          {body}
+          {comment}
         </Text>
         <View
           style={[
             styles(theme).row,
             styles(theme).alignItemsCenter,
-            {marginTop: 5},
+            space(IconSizes.x5).mt,
           ]}>
-          <Text
-            style={[
-              {
-                ...FontWeights.Light,
-                ...FontSizes.Caption,
-              },
-              {color: theme.text02},
-            ]}>
-            {parsedTime}
-          </Text>
-          {authorId === userInfo.id && (
-            <TouchableOpacity onPress={() =>{}}>
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={IconSizes.x2}
-                color={theme.text01}
-              />
-            </TouchableOpacity>
-          )}
+          <Text style={[styles(theme).timeText]}>{parsedTime}</Text>
+          <TouchableOpacity onPress={onPressOption}>
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={IconSizes.x2}
+              color={theme.text01}
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </View>

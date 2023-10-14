@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import {checkEmpty} from '../utils/Validate';
@@ -16,7 +16,6 @@ import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {ThemeStatic} from '../theme/Colors';
 import {ICheckExistResponse} from '../models/response/ICheckExistResponse';
 import {ICheckExistRequest} from '../models/request/ICheckExistRequest';
 import {IconSizes} from '../constants/Constants';
@@ -108,7 +107,7 @@ const Mail = ({navigation, route}: props) => {
         />
       </View>
       <KeyboardAvoidingView
-        style={[styles(theme).container, styles(theme).mt40]}>
+        style={[styles(theme).container, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -162,7 +161,7 @@ const Mail = ({navigation, route}: props) => {
         <View
           style={[
             {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
-            styles(theme).mt20,
+            space(IconSizes.x5).mt,
           ]}>
           <PressableOpacity
             onPress={handleContinue}
@@ -174,7 +173,7 @@ const Mail = ({navigation, route}: props) => {
             disabled={!isContinue || loading}
             disabledOpacity={0.4}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
               <>
                 {isContinue && (

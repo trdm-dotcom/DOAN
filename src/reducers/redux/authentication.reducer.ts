@@ -1,5 +1,6 @@
-import {createSlice} from '@reduxjs/toolkit';
+import {Dispatch, createSlice} from '@reduxjs/toolkit';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
+import {removeToken} from '../../utils/Storage';
 
 const initialState: any = {
   userInfo: {} as IUserInfoResponse,
@@ -7,6 +8,11 @@ const initialState: any = {
 };
 
 export type AuthenticateState = Readonly<typeof initialState>;
+
+export const clearAuthentication = () => async (dispatch: Dispatch) => {
+  await removeToken();
+  dispatch(logout());
+};
 
 export const AuthenticationSlice = createSlice({
   name: 'auth',

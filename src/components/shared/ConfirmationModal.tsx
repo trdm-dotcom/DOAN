@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {AppContext} from '../../context';
 import {View, Text, StyleSheet} from 'react-native';

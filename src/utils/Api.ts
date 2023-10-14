@@ -1,5 +1,4 @@
 import axios, {
-  AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
@@ -27,17 +26,22 @@ const fetchToken = async () => {
   }
 };
 
-const setupAxiosInterceptors = () => {
+const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
   const refreshToken = (): Promise<IRefreshTokenResponse> => {
-    if (!token) {
-      return Promise.reject('No token');
-    }
-    return apiPost<IRefreshTokenResponse>('/refreshToken', {
-      data: {
-        grant_type: 'refresh_token',
-        refresh_token: token.refreshToken,
-        client_secret: 'iW4rurIrZJ',
-      },
+    return new Promise((resolve, reject) => {
+      if (!token) {
+        return reject();
+      } else {
+        apiPost<IRefreshTokenResponse>('/refreshToken', {
+          data: {
+            grant_type: 'refresh_token',
+            refresh_token: token.refreshToken,
+            client_secret: 'iW4rurIrZJ',
+          },
+        })
+          .then((response: IRefreshTokenResponse) => resolve(response))
+          .catch((error: any) => reject(error));
+      }
     });
   };
 
@@ -75,13 +79,13 @@ const setupAxiosInterceptors = () => {
           originalRequest.headers.Authorization = `jwt ${tokenResponse.accessToken}`;
           return await instance(originalRequest);
         } catch (err: any) {
-          return Promise.reject(err);
+          onUnauthenticated();
         }
       } else {
         return Promise.reject(error);
       }
     } else if (error.response && error.response.status === 400) {
-      return Promise.reject((error.response.code));
+      return Promise.reject(error.response.code);
     }
     return Promise.reject(error);
   };

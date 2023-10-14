@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import {checkEmpty} from '../utils/Validate';
@@ -16,7 +16,6 @@ import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {ThemeStatic} from '../theme/Colors';
 import {CONTENT_SPACING, IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
 import {password as loginPassword} from '../reducers/action/authentications';
@@ -106,7 +105,7 @@ const SignIn = ({navigation}: props) => {
         />
       </View>
       <KeyboardAvoidingView
-        style={[styles(theme).container, styles(theme).mt40]}>
+        style={[styles(theme).container, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -183,7 +182,7 @@ const SignIn = ({navigation}: props) => {
             disabled={loading}
             disabledOpacity={0.4}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
               <Text
                 style={[
@@ -199,7 +198,7 @@ const SignIn = ({navigation}: props) => {
           </PressableOpacity>
           <PressableOpacity
             onPress={() => {}}
-            style={[styles(theme).button, styles(theme).ml10]}
+            style={[styles(theme).button, space(IconSizes.x5).ml]}
             disabled={loading}
             disabledOpacity={0.4}>
             <Ionicons

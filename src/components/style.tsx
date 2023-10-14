@@ -7,6 +7,55 @@ import {
 import {ThemeColors} from '../constants/Types';
 import Typography from '../theme/Typography';
 import {ThemeStatic} from '../theme/Colors';
+import {responsiveHeight} from 'react-native-responsive-dimensions';
+
+const {FontWeights, FontSizes} = Typography;
+
+export const space = (spacing = CONTENT_SPACING) =>
+  StyleSheet.create({
+    mt: {
+      marginTop: spacing,
+    },
+    mb: {
+      marginBottom: spacing,
+    },
+    ml: {
+      marginLeft: spacing,
+    },
+    mr: {
+      marginRight: spacing,
+    },
+    mv: {
+      marginVertical: spacing,
+    },
+    mh: {
+      marginHorizontal: spacing,
+    },
+    m: {
+      margin: spacing,
+    },
+    pt: {
+      paddingTop: spacing,
+    },
+    pb: {
+      paddingBottom: spacing,
+    },
+    pl: {
+      paddingLeft: spacing,
+    },
+    pr: {
+      paddingRight: spacing,
+    },
+    p: {
+      padding: spacing,
+    },
+    pv: {
+      paddingVertical: spacing,
+    },
+    ph: {
+      paddingHorizontal: spacing,
+    },
+  });
 
 export const styles = (theme = {} as ThemeColors) =>
   StyleSheet.create({
@@ -38,31 +87,23 @@ export const styles = (theme = {} as ThemeColors) =>
     fullWidth: {
       width: '100%',
     },
-    mt20: {
-      marginTop: 20,
-    },
-    mt40: {
-      marginTop: 40,
-    },
-    ml10: {
-      marginLeft: 10,
-    },
     centerText: {
       textAlign: 'center',
-    },
-    displayTop: {
-      position: 'absolute',
-      top: SAFE_AREA_PADDING.paddingTop,
     },
     displayBottom: {
       position: 'absolute',
       bottom: SAFE_AREA_PADDING.paddingBottom,
     },
+    row: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+    },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 7,
+      borderRadius: 10,
     },
     buttonPrimary: {
       backgroundColor: theme.accent,
@@ -70,22 +111,15 @@ export const styles = (theme = {} as ThemeColors) =>
     },
     buttonSecondary: {
       flexDirection: 'row',
-      borderRadius: 7,
+      borderRadius: 10,
       padding: CONTENT_SPACING,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    camButton: {
-      height: 80,
-      width: 80,
-      borderRadius: 40,
-      backgroundColor: theme.placeholder,
-      alignSelf: 'center',
-      borderWidth: 4,
-      borderColor: theme.accent,
-    },
+
+    // form field
     inputContainer: {
-      borderRadius: 7,
+      borderRadius: 10,
       marginVertical: CONTENT_SPACING,
       backgroundColor: theme.placeholder,
     },
@@ -98,15 +132,12 @@ export const styles = (theme = {} as ThemeColors) =>
     phoneNumberView: {
       backgroundColor: 'transparent',
     },
+
+    // camera screen
     cameraContainer: {
       height: SCREEN_WIDTH - CONTENT_SPACING,
       borderRadius: 27,
       backgroundColor: theme.placeholder,
-    },
-    rightButtonRow: {
-      position: 'absolute',
-      right: SAFE_AREA_PADDING.paddingRight,
-      top: SAFE_AREA_PADDING.paddingTop,
     },
     buttonCameraOption: {
       marginBottom: CONTENT_SPACING,
@@ -117,35 +148,27 @@ export const styles = (theme = {} as ThemeColors) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
-    row: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-    },
-    searchContainer: {
-      height: 50,
-      flexDirection: 'row',
-      marginVertical: CONTENT_SPACING,
-      borderRadius: 7,
+    captureButton: {
+      height: 80,
+      width: 80,
+      borderRadius: 40,
       backgroundColor: theme.placeholder,
-    },
-    search: {
-      flexDirection: 'row',
-    },
-    cancelSearch: {
-      position: 'absolute',
-      textAlign: 'center',
-      justifyContent: 'center',
       alignSelf: 'center',
+      borderWidth: 4,
+      borderColor: theme.accent,
     },
-    searchInput: {
-      color: theme.text01,
-      paddingVertical: 10,
+    captureButtonContainer: {
+      position: 'absolute',
+      alignSelf: 'center',
+      bottom: SAFE_AREA_PADDING.paddingBottom,
     },
+
+    // friend list
     tinyAvatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 25,
+      height: 50,
+      width: 50,
+      borderRadius: 50,
+      backgroundColor: theme.placeholder,
     },
     friendListItem: {
       margin: 10,
@@ -155,5 +178,58 @@ export const styles = (theme = {} as ThemeColors) =>
       flex: 1,
       alignSelf: 'center',
       flexDirection: 'row',
+    },
+
+    // modalize
+    modalizeContainer: {
+      marginTop: 40,
+      padding: 20,
+      backgroundColor: theme.base,
+    },
+    modalizeContent: {
+      flex: 1,
+      paddingBottom: responsiveHeight(5),
+    },
+    listContainer: {
+      flex: 1,
+    },
+    listItemContainer: {
+      width: '100%',
+    },
+    listContentContainer: {
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+
+    // user card
+    userCardContainer: {
+      flexDirection: 'row',
+      borderRadius: 10,
+      width: '100%',
+    },
+    info: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingLeft: 10,
+    },
+    handleText: {
+      ...FontWeights.Regular,
+      ...FontSizes.Body,
+      color: theme.text01,
+    },
+    nameText: {
+      ...FontWeights.Light,
+      ...FontSizes.Caption,
+      color: theme.text01,
+    },
+    timeText: {
+      ...FontWeights.Light,
+      ...FontSizes.Caption,
+      color: theme.text02,
+    },
+    // messages
+    messagesList: {
+      flex: 1,
+      paddingHorizontal: 4,
     },
   });

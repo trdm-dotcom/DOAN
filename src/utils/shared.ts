@@ -79,3 +79,6 @@ export const createAsyncDelay = (duration: number) => {
     }, duration),
   );
 };
+
+export const filterChatParticipants = (userId: string, participants: any[]) =>
+  participants.filter(participant => userId !== participant.id);

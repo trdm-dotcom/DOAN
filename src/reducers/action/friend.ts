@@ -1,18 +1,11 @@
 import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 import {IParam} from '../../models/IParam';
 import IFriendResponse from '../../models/response/IFriendResponse';
-import {AppThunk} from '../redux/store';
-import {friendsList, friendsRequest} from '../redux/friend.reducer';
 
-export const getSuggestFriend =
-  (queryParams: IParam): AppThunk =>
-  async dispatch => {
-    const response: IFriendResponse[] = await apiGet<IFriendResponse[]>(
-      '/user/friend/suggestByContact',
-      {params: queryParams},
-    );
-    dispatch(friendsList(response));
-  };
+export const getSuggestFriend = async (queryParams: IParam) =>
+  await apiGet<IFriendResponse[]>('/user/friend/suggestByContact', {
+    params: queryParams,
+  });
 
 export const requestAddFriend = async (id: number) =>
   await apiPost<any>(
@@ -23,12 +16,8 @@ export const requestAddFriend = async (id: number) =>
     },
   );
 
-export const getFriendRequest = (): AppThunk => async dispatch => {
-  const response: IFriendResponse[] = await apiGet<IFriendResponse[]>(
-    '/user/friend/request',
-  );
-  dispatch(friendsRequest(response));
-};
+export const getFriendRequest = async () =>
+  await apiGet<IFriendResponse[]>('/user/friend/request');
 
 export const acceptFriendRequest = async (id: number) =>
   await apiPut<any>(
@@ -44,12 +33,8 @@ export const acceptFriendRequest = async (id: number) =>
 export const rejectFriend = async (id: number) =>
   await apiDelete<any>('user/friend', {params: {friend: id}});
 
-export const getFriendList = (): AppThunk => async dispatch => {
-  const response: IFriendResponse[] = await apiGet<IFriendResponse[]>(
-    '/user/friend',
-  );
-  dispatch(friendsList(response));
-};
+export const getFriendList = async () =>
+  await apiGet<IFriendResponse[]>('/user/friend');
 
 export const blockUser = async (id: number) =>
   await apiPost<any>(
@@ -62,3 +47,5 @@ export const blockUser = async (id: number) =>
 
 export const unblockUser = async (id: number) =>
   await apiDelete<any>('/user/block', {params: {block: id}});
+
+export const getBlockList = async () => await apiGet<any[]>('/user/block');

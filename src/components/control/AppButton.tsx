@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import {
   TouchableOpacity,
@@ -6,23 +5,24 @@ import {
   StyleProp,
   ViewStyle,
   TextStyle,
-  StyleSheet,
 } from 'react-native';
 import LoadingIndicator from '../shared/LoadingIndicator';
 import Typography from '../../theme/Typography';
 import {ThemeStatic} from '../../theme/Colors';
 import {IconSizes} from '../../constants/Constants';
+import {styles} from '../style';
 
 const {FontWeights, FontSizes} = Typography;
 
 type ButtonProps = {
   Icon?: React.FC;
   label: string;
-  onPress: any;
-  loading: boolean;
+  onPress: () => any | Promise<any>;
+  loading?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
   indicatorColor?: string;
+  disabled?: boolean;
 };
 
 const AppButton = ({
@@ -33,6 +33,7 @@ const AppButton = ({
   containerStyle,
   labelStyle,
   indicatorColor,
+  disabled,
 }: ButtonProps) => {
   let content = (
     <LoadingIndicator
@@ -40,11 +41,23 @@ const AppButton = ({
       color={indicatorColor || ThemeStatic.white}
     />
   );
+
   if (!loading) {
     content = (
       <>
         {Icon && <Icon />}
-        <Text style={[styles.label, labelStyle]}>{label}</Text>
+        <Text
+          style={[
+            {
+              ...FontWeights.Regular,
+              ...FontSizes.Body,
+              marginLeft: 5,
+              color: ThemeStatic.white,
+            },
+            labelStyle,
+          ]}>
+          {label}
+        </Text>
       </>
     );
   }
@@ -53,25 +66,11 @@ const AppButton = ({
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={onPress}
-      style={[styles.button, containerStyle]}>
+      style={[styles().button, containerStyle]}
+      disabled={disabled}>
       {content}
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 7,
-  },
-  label: {
-    ...FontWeights.Light,
-    ...FontSizes.Body,
-    marginLeft: 5,
-    color: ThemeStatic.white,
-  },
-});
 
 export default AppButton;

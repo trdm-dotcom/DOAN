@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import LoadingIndicator from '../shared/LoadingIndicator';

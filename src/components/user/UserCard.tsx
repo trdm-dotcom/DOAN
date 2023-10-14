@@ -1,22 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, {useContext} from 'react';
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
-import Typography from '../../theme/Typography';
+import React, {ReactNode, useContext} from 'react';
+import {StyleProp, Text, TouchableOpacity, View, ViewStyle} from 'react-native';
 import {AppContext} from '../../context';
 import {NativeImage} from '../shared/NativeImage';
-import {ThemeColors} from '../../constants/Types';
 import {useAppSelector} from '../../reducers/redux/store';
+import {space, styles} from '../style';
+import {useNavigation} from '@react-navigation/native';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {useAppNavigation} from '../../navigators/AppReactNavigation';
-
-const {FontWeights, FontSizes} = Typography;
+import {IconSizes} from '../../constants/Constants';
 
 type UserCardProps = {
   userId: number;
@@ -25,6 +15,7 @@ type UserCardProps = {
   name: string;
   style?: StyleProp<ViewStyle>;
   onPress?: any;
+  childen?: ReactNode;
 };
 
 const UserCard = ({
@@ -34,10 +25,11 @@ const UserCard = ({
   name,
   onPress,
   style,
+  childen,
 }: UserCardProps) => {
   const {theme} = useContext(AppContext);
   const user: IUserInfoResponse = useAppSelector(state => state.auth.userInfo);
-  const navigation = useAppNavigation();
+  const navigation = useNavigation();
 
   const navigateToProfile = () => {
     if (userId === user.id) {
@@ -50,50 +42,20 @@ const UserCard = ({
     <TouchableOpacity
       activeOpacity={0.95}
       onPress={onPress || navigateToProfile}
-      style={[styles().container, style]}>
-      <NativeImage uri={avatar} style={styles(theme).avatarImage} />
+      style={[styles(theme).userCardContainer, style]}>
+      <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
       <View style={styles().info}>
         <Text style={styles(theme).handleText}>{handle}</Text>
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={styles(theme).nameText}>
+          style={[styles(theme).nameText, space(IconSizes.x0).mt]}>
           {name}
         </Text>
       </View>
+      {childen}
     </TouchableOpacity>
   );
 };
-
-const styles = (theme = {} as ThemeColors) =>
-  StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      borderRadius: 5,
-      width: '100%',
-    },
-    avatarImage: {
-      height: 50,
-      width: 50,
-      borderRadius: 50,
-      backgroundColor: theme.placeholder,
-    },
-    info: {
-      flex: 1,
-      justifyContent: 'center',
-      paddingLeft: 10,
-    },
-    handleText: {
-      ...FontWeights.Regular,
-      ...FontSizes.Body,
-      color: theme.text01,
-    },
-    nameText: {
-      ...FontWeights.Light,
-      ...FontSizes.Caption,
-      color: theme.text02,
-      marginTop: 5,
-    },
-  });
 
 export default UserCard;

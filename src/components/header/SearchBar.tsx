@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {Platform, StyleSheet, TextInput} from 'react-native';
 import Typography from '../../theme/Typography';

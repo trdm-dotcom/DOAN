@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext, useState} from 'react';
 import {View, Text} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -58,6 +57,7 @@ export const ItemFriend = ({
         label={titleButton}
         onPress={handleOnPress}
         loading={loading}
+        disabled={loading}
         Icon={() => (
           <Ionicons
             name="add-outline"

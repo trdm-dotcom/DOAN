@@ -3,6 +3,8 @@ import StaticSafeAreaInsets from 'react-native-static-safe-area-insets';
 import {
   AssetType,
   IconSizesType,
+  NotificationTextType,
+  OnlineDotColorType,
   PaginationType,
   PollIntervalsType,
   PostDimensionsType,
@@ -31,6 +33,7 @@ export const SCREEN_HEIGHT = Platform.select<number>({
 // The maximum zoom _factor_ you should be able to zoom in
 export const MAX_ZOOM_FACTOR = 20;
 export const SCALE_FULL_ZOOM = 3;
+export const CAPTURE_BUTTON_SIZE = 78;
 
 export const IconSizes: IconSizesType = {
   x00: 4,
@@ -78,4 +81,15 @@ export const PostDimensions: PostDimensionsType = {
   Small: {height: responsiveWidth(29), width: responsiveWidth(29)},
   Medium: {height: responsiveWidth(43), width: responsiveWidth(43)},
   Large: {height: responsiveWidth(90), width: responsiveWidth(90)},
+};
+
+export const NotificationType: NotificationTextType = {
+  FOLLOW: 'FOLLOW',
+  COMMENT: 'COMMENT',
+  LIKE: 'LIKE',
+};
+
+export const OnlineDotColor: OnlineDotColorType = {
+  true: '#4caf50',
+  false: '#BBBBBB',
 };

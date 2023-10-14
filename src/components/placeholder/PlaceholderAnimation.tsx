@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {Shine, ShineOverlay} from 'rn-placeholder';
 import {AppContext} from '../../context';

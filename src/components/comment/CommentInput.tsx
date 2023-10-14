@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext, useState} from 'react';
 import {Keyboard, Platform, StyleSheet, TextInput, View} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';

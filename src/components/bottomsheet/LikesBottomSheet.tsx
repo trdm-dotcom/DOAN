@@ -1,12 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext, useEffect, useState} from 'react';
-import {StyleSheet, View} from 'react-native';
-import {
-  responsiveHeight,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
+import {View} from 'react-native';
+import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {AppContext} from '../../context';
-import {ThemeColors} from '../../constants/Types';
 import {Modalize} from 'react-native-modalize';
 import UserCard from '../user/UserCard';
 import SvgBanner from '../SvgBanner';
@@ -17,6 +12,7 @@ import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {getUserInfo} from '../../reducers/action/user';
 import {showError} from '../../utils/Toast';
+import {styles} from '../style';
 
 type LikesBottomSheetProps = {
   ref: React.Ref<any>;
@@ -52,15 +48,14 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = React.forwardRef(
       />
     );
 
-    const renderItem = ({item}: any) => {
-      const {id, avatar, handle, name} = item;
+    const renderItem = (item: any) => {
       return (
         <UserCard
-          userId={id}
-          avatar={avatar}
-          handle={handle}
-          name={name}
-          onPress={() => onUserPress(id)}
+          userId={item.id}
+          avatar={item.avatar}
+          handle={item.handle}
+          name={item.name}
+          onPress={() => onUserPress(item.id)}
         />
       );
     };
@@ -86,38 +81,15 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = React.forwardRef(
       <Modalize
         ref={ref}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={styles(theme).container}>
+        modalStyle={[styles(theme).modalizeContainer]}>
         <BottomSheetHeader
           heading="Likes"
           subHeading="Users who liked this post"
         />
-        <View style={styles(theme).content}>{content}</View>
+        <View style={[styles(theme).modalizeContent]}>{content}</View>
       </Modalize>
     );
   },
 );
-
-const styles = (theme = {} as ThemeColors) =>
-  StyleSheet.create({
-    container: {
-      marginTop: 40,
-      padding: 20,
-      backgroundColor: theme.base,
-    },
-    content: {
-      flex: 1,
-      paddingBottom: responsiveHeight(5),
-    },
-    listContainer: {
-      flex: 1,
-    },
-    listItemContainer: {
-      width: '106%',
-    },
-    listContentContainer: {
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-    },
-  });
 
 export default LikesBottomSheet;

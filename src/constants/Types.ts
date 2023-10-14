@@ -83,3 +83,14 @@ export type ThemeStaticType = {
   delete: string;
   badge: string;
 };
+
+export type NotificationTextType = {
+  FOLLOW: string;
+  COMMENT: string;
+  LIKE: string;
+};
+
+export type OnlineDotColorType = {
+  true: string;
+  false: string;
+};

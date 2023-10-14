@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useState} from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';

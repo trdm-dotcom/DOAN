@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {StyleProp, StyleSheet, Text, TextStyle, View} from 'react-native';
 import {responsiveHeight} from 'react-native-responsive-dimensions';

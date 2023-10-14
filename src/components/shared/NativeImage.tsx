@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import {View} from 'react-native';
 import FastImage from 'react-native-fast-image';

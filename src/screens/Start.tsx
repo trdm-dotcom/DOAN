@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View} from 'react-native';
 import {styles} from '../components/style';
 import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -13,7 +12,7 @@ const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Start'>;
 
-const Start = ({navigation, route}: props) => {
+const Start = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
 
   return (

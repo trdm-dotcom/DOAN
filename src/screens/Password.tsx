@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {getHash} from '../utils/Crypto';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
@@ -20,8 +20,8 @@ import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {ThemeStatic} from '../theme/Colors';
 import Typography from '../theme/Typography';
+import CheckBox from 'react-native-check-box';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -98,7 +98,7 @@ const Password = ({navigation, route}: props) => {
         />
       </View>
       <KeyboardAvoidingView
-        style={[styles(theme).container, styles(theme).mt40]}>
+        style={[styles(theme).container, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -153,21 +153,36 @@ const Password = ({navigation, route}: props) => {
             placeholderTextColor={theme.text02}
           />
         </View>
+        <View style={{alignItems: 'flex-end'}}>
+          <CheckBox
+            style={{flex: 1, padding: 10}}
+            onClick={() => {
+              setPasswordVisible(!isPasswordVisible);
+            }}
+            isChecked={isPasswordVisible}
+            leftText="Show"
+            leftTextStyle={[
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body, // Add some margin for spacing
+              },
+              {color: theme.text01},
+              space(IconSizes.x1).mr,
+            ]}
+          />
+        </View>
         <View
           style={[
             {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
-            styles(theme).mt20,
+            space(IconSizes.x5).mt,
           ]}>
           <PressableOpacity
             onPress={handleContinue}
-            style={[
-              styles(theme).button,
-              styles(theme).buttonPrimary,
-            ]}
+            style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}
             disabledOpacity={0.4}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
               <Text
                 style={[

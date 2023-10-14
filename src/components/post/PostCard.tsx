@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {useAppSelector} from '../../reducers/redux/store';
 import {parseLikes, parseTimeElapsed} from '../../utils/shared';
-import {useAppNavigation} from '../../navigators/AppReactNavigation';
 import {NativeImage} from '../shared/NativeImage';
 import {IconSizes, PostDimensions} from '../../constants/Constants';
 import {ThemeStatic} from '../../theme/Colors';
 import Typography from '../../theme/Typography';
+import { useNavigation } from '@react-navigation/native';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -28,7 +27,7 @@ type PostCardProps = {
 };
 
 const PostCard = ({id, author, time, uri, likes, caption}: PostCardProps) => {
-  const navigation = useAppNavigation();
+  const navigation = useNavigation();
 
   const user = useAppSelector(state => state.auth.userInfo);
 

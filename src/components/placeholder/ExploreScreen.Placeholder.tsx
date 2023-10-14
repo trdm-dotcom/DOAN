@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {Fragment, useContext} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {responsiveWidth} from 'react-native-responsive-dimensions';

@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {OtpIdType} from '../models/enum/OtpIdType';
 import {OtpTxtType} from '../models/enum/OtpTxtType';
 import IOtpResponse from '../models/response/IOtpResponse';
@@ -16,7 +16,6 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
-import {getFcmTokenFromLocalStorage} from '../utils/PushNotification';
 import {apiPost} from '../utils/Api';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderBar from '../components/header/HeaderBar';
@@ -25,17 +24,16 @@ import {AppContext} from '../context';
 import {IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
 
 const Otp = ({navigation, route}: props) => {
-  const {theme} = useContext(AppContext);
-  const {createAccount, phoneNumber} = route.params;
+  const {theme, fcmToken} = useContext(AppContext);
+  const {phoneNumber, otpId} = route.params;
   const [otpValue, setOtpValue] = useState<string>('');
-  const [otpId, setOtpId] = useState<string>('');
+  const [otp, setOtp] = useState<string>(otpId);
   const [minutes, setMinutes] = useState<number>(1);
   const [seconds, setSeconds] = useState<number>(30);
   const [isContinue, setIsContinue] = useState<boolean>(false);
@@ -44,10 +42,9 @@ const Otp = ({navigation, route}: props) => {
   const getOtp = async () => {
     try {
       setLoading(true);
-      const fcmToken = await getFcmTokenFromLocalStorage();
       const body = {
-        id: fcmToken,
-        idType: OtpIdType.FIREBASE,
+        id: phoneNumber ? phoneNumber : fcmToken,
+        idType: phoneNumber ? OtpIdType.SMS : OtpIdType.FIREBASE,
         txtType: OtpTxtType.VERIFY,
       };
       const response: IOtpResponse = await apiPost<IOtpResponse>(
@@ -57,17 +54,13 @@ const Otp = ({navigation, route}: props) => {
           'Content-Type': 'application/json',
         },
       );
-      setOtpId(response.otpId);
+      setOtp(response.otpId);
     } catch (error: any) {
       showError(error.message);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    getOtp();
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -109,7 +102,7 @@ const Otp = ({navigation, route}: props) => {
 
   const resendOtp = () => {
     setOtpValue('');
-    setOtpId('');
+    setOtp('');
     setMinutes(1);
     setSeconds(30);
     setLoading(true);
@@ -118,7 +111,7 @@ const Otp = ({navigation, route}: props) => {
 
   const handleContinue = async () => {
     if (isValidData()) {
-      const body = {otpId: otpId, otpValue: otpValue};
+      const body = {otpId: otp, otpValue: otpValue};
       try {
         const response: IVerifyOtpResponse = await apiPost<IVerifyOtpResponse>(
           '/otp/verify',
@@ -127,16 +120,11 @@ const Otp = ({navigation, route}: props) => {
             'Content-Type': 'application/json',
           },
         );
-        if (createAccount) {
-          navigation.navigate('Mail', {
-            phoneNumber: phoneNumber!,
-            otpKey: response.otpKey,
-          });
-        } else {
-          navigation.goBack();
-        }
-      }
-      catch (error: any) {
+        navigation.replace('Mail', {
+          phoneNumber: phoneNumber,
+          otpKey: response.otpKey,
+        });
+      } catch (error: any) {
         showError(error.message);
       }
     }
@@ -165,7 +153,7 @@ const Otp = ({navigation, route}: props) => {
         />
       </View>
       <KeyboardAvoidingView
-        style={[styles(theme).container, styles(theme).mt40]}>
+        style={[styles(theme).container, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -242,7 +230,7 @@ const Otp = ({navigation, route}: props) => {
         <View
           style={[
             {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
-            styles(theme).mt20,
+            space(IconSizes.x5).mt,
           ]}>
           <PressableOpacity
             onPress={handleContinue}
@@ -254,10 +242,10 @@ const Otp = ({navigation, route}: props) => {
             disabled={!isContinue || loading}
             disabledOpacity={0.4}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
               <>
-                {createAccount && isContinue && (
+                {isContinue && (
                   <Text
                     style={[
                       styles(theme).centerText,

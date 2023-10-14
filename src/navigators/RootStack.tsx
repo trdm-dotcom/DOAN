@@ -4,16 +4,18 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {AuthStack} from './AuthStack';
 import {MainStack} from './MainStack';
 import {useAppSelector} from '../reducers/redux/store';
+import {PhotoFile} from 'react-native-vision-camera';
 
 export type RootStackParamList = {
   Feed: undefined;
   Start: undefined;
-  Friend: undefined;
   Camera: undefined;
   Setting: undefined;
   Name: undefined;
   PhoneNumber: undefined;
   SignIn: undefined;
+  Notification: undefined;
+  Photo: {photo: PhotoFile};
   Mail: {
     phoneNumber: string;
     otpKey: string;
@@ -25,8 +27,8 @@ export type RootStackParamList = {
     otpKey: string;
   };
   Otp: {
-    createAccount: boolean;
-    phoneNumber?: string;
+    phoneNumber: string;
+    otpId: string;
   };
 };
 
@@ -38,7 +40,7 @@ const RootStack = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={isAuthenticated ? 'Friend' : 'Start'}
+        initialRouteName={isAuthenticated ? 'Camera' : 'Start'}
         screenOptions={{
           headerShown: false,
         }}>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {useContext} from 'react';
 import {View, Text} from 'react-native';
 import {styles} from '../components/style';
@@ -11,10 +10,10 @@ const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Feed'>;
 
-const Feed = ({navigation, route}: props) => {
+const Feed = ({}: props) => {
   const {theme} = useContext(AppContext);
   return (
-    <View style={[styles(theme).container]}>
+    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <Text
         style={[
           {

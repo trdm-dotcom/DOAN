@@ -1,7 +1,7 @@
 import React, {useContext, useRef, useState} from 'react';
 import {KeyboardAvoidingView, Text, TouchableOpacity, View} from 'react-native';
 import PhoneInput from 'react-native-phone-number-input';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import {checkEmpty} from '../utils/Validate';
@@ -12,11 +12,14 @@ import {PressableOpacity} from 'react-native-pressable-opacity';
 import {AppContext} from '../context';
 import {ICheckExistRequest} from '../models/request/ICheckExistRequest';
 import {ICheckExistResponse} from '../models/response/ICheckExistResponse';
-import {ThemeStatic} from '../theme/Colors';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
 import {checkExist} from '../reducers/action/authentications';
+import IOtpResponse from '../models/response/IOtpResponse';
+import {apiPost} from '../utils/Api';
+import {OtpIdType} from '../models/enum/OtpIdType';
+import {OtpTxtType} from '../models/enum/OtpTxtType';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -55,9 +58,21 @@ const PhoneNumber = ({navigation}: props) => {
         };
         const responseCheckExist: ICheckExistResponse = await checkExist(body);
         if (!responseCheckExist.isExist) {
+          const bodyGetOtp = {
+            id: phoneNumber,
+            idType: OtpIdType.SMS,
+            txtType: OtpTxtType.VERIFY,
+          };
+          const responseGetOtp: IOtpResponse = await apiPost<IOtpResponse>(
+            '/otp',
+            {data: bodyGetOtp},
+            {
+              'Content-Type': 'application/json',
+            },
+          );
           navigation.navigate('Otp', {
-            createAccount: true,
             phoneNumber: phoneNumber,
+            otpId: responseGetOtp.otpId,
           });
         } else {
           showError('This phone number is already in use');
@@ -93,7 +108,7 @@ const PhoneNumber = ({navigation}: props) => {
         />
       </View>
       <KeyboardAvoidingView
-        style={[styles(theme).container, styles(theme).mt40]}>
+        style={[styles(theme).container, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -114,7 +129,7 @@ const PhoneNumber = ({navigation}: props) => {
           ]}>
           Enter your phone number
         </Text>
-        <View style={[styles(theme).inputContainer, styles(theme).mt20]}>
+        <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
           <PhoneInput
             ref={phoneInput}
             defaultValue={phoneNumber}
@@ -147,7 +162,7 @@ const PhoneNumber = ({navigation}: props) => {
         <View
           style={[
             {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
-            styles(theme).mt20,
+            space(IconSizes.x5).mt,
           ]}>
           <PressableOpacity
             onPress={handleContinue}
@@ -159,7 +174,7 @@ const PhoneNumber = ({navigation}: props) => {
             disabled={!isContinue || loading}
             disabledOpacity={0.4}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
               <>
                 <Text

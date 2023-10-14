@@ -1,35 +1,22 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../navigators/RootStack';
 import {
-  SafeAreaView,
-  View,
-  StyleSheet,
-  Linking,
-  TouchableOpacity,
-} from 'react-native';
-import {styles} from '../components/style';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
+  CameraDevices,
   Camera as CameraVision,
-  CameraPermissionStatus,
+  PhotoFile,
   useCameraDevices,
-  CameraPermissionRequestResult,
 } from 'react-native-vision-camera';
-import {useIsFocused} from '@react-navigation/native';
-import Reanimated, {
-  Extrapolate,
-  interpolate,
-  useAnimatedGestureHandler,
-  useAnimatedProps,
-  useSharedValue,
-} from 'react-native-reanimated';
+import {AppContext} from '../context';
+import {Linking, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {space, styles} from '../components/style';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   IconSizes,
   MAX_ZOOM_FACTOR,
@@ -40,71 +27,124 @@ import {
   PinchGestureHandler,
   PinchGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
-import {RootStackParamList} from '../navigators/RootStack';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {AppContext} from '../context';
-import HeaderBar from '../components/header/HeaderBar';
+import {useIsFocused} from '@react-navigation/core';
+import {useIsForeground} from '../hook/useIsForeground';
+import Reanimated, {
+  Extrapolate,
+  interpolate,
+  useAnimatedGestureHandler,
+  useAnimatedProps,
+  useSharedValue,
+} from 'react-native-reanimated';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import SettingsBottomSheet from '../components/bottomsheet/SettingsBottomSheet';
+import FriendBottomSheet from '../components/bottomsheet/FriendBottomSheet';
+import BlockListBottomSheet from '../components/bottomsheet/BlockListBottomSheet';
 
 const ReanimatedCamera = Reanimated.createAnimatedComponent(CameraVision);
-
 Reanimated.addWhitelistedNativeProps({
   zoom: true,
 });
 
 type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 
-const Camera = ({navigation, route}: props) => {
+const Camera = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
-  const camera = useRef<CameraVision>(null);
+  const cameraRef = useRef<CameraVision>(null);
+
+  const settingsBottomSheetRef = useRef();
+  const friendBottomSheetRef = useRef();
+  const blockListBottomSheetRef = useRef();
+
+  // @ts-ignore
+  const onSettingsOpen = () => settingsBottomSheetRef.current.open();
+  // @ts-ignore
+  const onSettingsClose = () => settingsBottomSheetRef.current.close();
+  // @ts-ignore
+  const onFriendOpen = () => friendBottomSheetRef.current.open();
+  // @ts-ignore
+  const onFriendClose = () => friendBottomSheetRef.current.close();
+  // @ts-ignore
+  const onBlockListOpen = () => blockListBottomSheetRef.current.open();
+
+  const onBlockListPress = () => {
+    onSettingsClose();
+    onBlockListOpen();
+  };
+
+  const onAboutPress = () => {
+    onSettingsClose();
+  };
+
+  const onUserPress = () => {
+    onFriendClose();
+  };
+
+  const [loading, setLoading] = useState<any>(null);
+  const [flashToggle, setFlashToggle] = useState<boolean>(false);
+  const [cameraView, setCameraView] = useState('back');
+  const [torch, setTorch] = useState<'on' | 'off' | 'auto'>('off');
   const [isCameraInitialized, setIsCameraInitialized] = useState(false);
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
-  const [cameraPermission, setCameraPermission] =
-    useState<CameraPermissionStatus>();
-  const [microphonePermission, setMicrophonePermission] =
-    useState<CameraPermissionStatus>();
-  const [cameraPosition, setCameraPosition] = useState<'front' | 'back'>(
-    'back',
-  );
-  const [flash, setFlash] = useState<'off' | 'on'>('off');
 
-  const isFocussed = useIsFocused();
-  const isActive = isFocussed;
-  const devices = useCameraDevices();
-  const device = devices[cameraPosition];
-  const supportsCameraFlipping = useMemo(
-    () => devices.back != null && devices.front != null,
-    [devices.back, devices.front],
-  );
-  const supportsFlash = device?.hasFlash ?? false;
+  const devices: CameraDevices = useCameraDevices();
+  const device = cameraView === 'back' ? devices.back : devices.front;
   const zoom = useSharedValue(0);
-  const minZoom = device?.minZoom ?? 1;
-  const maxZoom = Math.min(device?.maxZoom ?? 1, MAX_ZOOM_FACTOR);
-  const neutralZoom = device?.neutralZoom ?? 1;
+
+  // check if camera page is active
+  const isFocussed = useIsFocused();
+  const isForeground = useIsForeground();
+  const isActive = isFocussed && isForeground;
+
+  const cameraPermission = useCallback(async () => {
+    const permission = await CameraVision.requestCameraPermission();
+    if (permission === 'denied') {
+      await Linking.openSettings();
+    }
+    setLoading(devices);
+    const microMicrophonePermission =
+      await CameraVision.requestMicrophonePermission();
+    if (microMicrophonePermission === 'denied') {
+      await Linking.openSettings();
+    }
+    setHasMicrophonePermission(microMicrophonePermission === 'authorized');
+  }, [devices]);
 
   useEffect(() => {
-    const requestPermission = async () => {
-      const cameraPermissionStatus: CameraPermissionStatus =
-        await CameraVision.getCameraPermissionStatus();
-      setCameraPermission(cameraPermissionStatus);
-      console.log(`Camera permission status: ${cameraPermissionStatus}`);
-      if (cameraPermissionStatus !== 'authorized') {
-        requestCameraPermission();
-      }
+    cameraPermission();
+  }, [cameraPermission, devices]);
 
-      const microphonePermissionStatus: CameraPermissionStatus =
-        await CameraVision.getCameraPermissionStatus();
-      setMicrophonePermission(microphonePermissionStatus);
-      setHasMicrophonePermission(microphonePermissionStatus === 'authorized');
-      console.log(`Microphone permission status: ${microphonePermission}`);
-      if (microphonePermissionStatus === 'not-determined') {
-        console.log(`Camera permission status: ${microphonePermissionStatus}`);
-        requestMicrophonePermission();
+  const takePhoto = async () => {
+    setLoading(true);
+    try {
+      if (cameraRef.current == null) {
+        throw new Error('Camera Ref is Null');
       }
-    };
+      const photo: PhotoFile = await cameraRef.current.takePhoto({
+        qualityPrioritization: 'balanced',
+        flash: `${torch}`,
+        enableAutoRedEyeReduction: true,
+        enableAutoStabilization: true,
+        skipMetadata: true,
+      });
+      navigation.navigate('Photo', {photo: photo});
+    } catch (err: any) {
+      console.log(err);
+    }
+  };
 
-    requestPermission();
+  const onInitialized = useCallback(() => {
+    console.log('Camera initialized!');
+    setIsCameraInitialized(true);
   }, []);
 
+  //#region Animated Zoom
+  // This just maps the zoom factor to a percentage value.
+  // so e.g. for [min, neutr., max] values [1, 2, 128] this would result in [0, 0.0081, 1]
+  const minZoom = device?.minZoom ?? 1;
+  const maxZoom = Math.min(device?.maxZoom ?? 1, MAX_ZOOM_FACTOR);
+
+  const neutralZoom = device?.neutralZoom ?? 1;
   useEffect(() => {
     // Run everytime the neutralZoomScaled value changes. (reset zoom when device changes)
     zoom.value = neutralZoom;
@@ -116,42 +156,6 @@ const Camera = ({navigation, route}: props) => {
       zoom: z,
     };
   }, [maxZoom, minZoom, zoom]);
-
-  const onInitialized = useCallback(() => {
-    console.log('Camera initialized!');
-    setIsCameraInitialized(true);
-  }, []);
-
-  const requestMicrophonePermission = useCallback(async () => {
-    console.log('Requesting microphone permission...');
-    const permission: CameraPermissionRequestResult =
-      await CameraVision.requestMicrophonePermission();
-    console.log(`Microphone permission status: ${permission}`);
-    if (permission === 'denied') {
-      await Linking.openSettings();
-    }
-    setMicrophonePermission(permission);
-    setHasMicrophonePermission(permission === 'authorized');
-  }, []);
-
-  const requestCameraPermission = useCallback(async () => {
-    console.log('Requesting camera permission...');
-    const permission: CameraPermissionRequestResult =
-      await CameraVision.requestCameraPermission();
-    console.log(`Camera permission status: ${permission}`);
-    if (permission === 'denied') {
-      await Linking.openSettings();
-    }
-    setCameraPermission(permission);
-  }, []);
-
-  const onFlipCameraPressed = useCallback(() => {
-    setCameraPosition(p => (p === 'back' ? 'front' : 'back'));
-  }, []);
-
-  const onFlashPressed = useCallback(() => {
-    setFlash(f => (f === 'off' ? 'on' : 'off'));
-  }, []);
 
   // The gesture handler maps the linear pinch gesture (0 - 1) to an exponential curve since a camera's zoom
   // function does not appear linear to the user. (aka zoom 0.1 -> 0.2 does not look equal in difference as 0.8 -> 0.9)
@@ -181,74 +185,110 @@ const Camera = ({navigation, route}: props) => {
   });
 
   return (
-    <>
-      <View style={{height: 24}}>
-        <HeaderBar
-          firstChilden={
-            <TouchableOpacity
-              onPress={() => {
-                navigation.goBack();
-              }}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Ionicons
-                name="chevron-back-outline"
-                size={IconSizes.x6}
-                color={theme.text01}
-              />
-            </TouchableOpacity>
-          }
-        />
-      </View>
-      <GestureHandlerRootView style={[styles(theme).container]}>
-        <View style={[styles(theme).cameraContainer, styles(theme).mt20]}>
-          {device != null && (
-            <PinchGestureHandler
-              onGestureEvent={onPinchGesture}
-              enabled={isActive}>
-              <Reanimated.View style={StyleSheet.absoluteFill}>
-                <ReanimatedCamera
-                  ref={camera}
-                  device={device}
-                  isActive={isActive}
-                  animatedProps={cameraAnimatedProps}
-                  photo={true}
-                  video={true}
-                  audio={hasMicrophonePermission}
-                  onInitialized={onInitialized}
-                  orientation="portrait"
-                />
-              </Reanimated.View>
-            </PinchGestureHandler>
-          )}
-        </View>
-        <View
-          style={[
-            styles(theme).row,
-            styles(theme).spaceBetween,
-            {marginTop: 40, marginBottom: 30, marginHorizontal: 20},
-          ]}>
-          <TouchableOpacity onPress={onFlashPressed} disabled={!supportsFlash}>
-            <Ionicons
-              name="flash-outline"
-              size={IconSizes.x9}
-              color={flash === 'on' ? theme.accent : theme.text01}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles(theme).camButton}
-            disabled={!isCameraInitialized || !isActive}
+    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <View style={[styles(theme).row, styles(theme).spaceBetween]}>
+        <TouchableOpacity
+          onPress={() => {
+            onFriendOpen();
+          }}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <Ionicons
+            name="chevron-back-outline"
+            size={IconSizes.x8}
+            color={theme.text01}
           />
-          <TouchableOpacity
-            onPress={onFlipCameraPressed}
-            disabled={!supportsCameraFlipping}>
-            <Ionicons name="sync" size={IconSizes.x9} color={theme.text01} />
-          </TouchableOpacity>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onSettingsOpen();
+          }}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <Ionicons
+            name="chevron-back-outline"
+            size={IconSizes.x8}
+            color={theme.text01}
+          />
+        </TouchableOpacity>
+      </View>
+      {loading ? (
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+          <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
         </View>
-      </GestureHandlerRootView>
-    </>
+      ) : (
+        <>
+          {device != null && (
+            <GestureHandlerRootView style={[{flex: 1}, space(IconSizes.x5).mt]}>
+              <View style={[styles(theme).cameraContainer]}>
+                <PinchGestureHandler
+                  onGestureEvent={onPinchGesture}
+                  enabled={isActive}>
+                  <Reanimated.View style={StyleSheet.absoluteFill}>
+                    <ReanimatedCamera
+                      ref={cameraRef}
+                      device={device}
+                      isActive={isActive}
+                      animatedProps={cameraAnimatedProps}
+                      photo={true}
+                      video={true}
+                      audio={hasMicrophonePermission}
+                      onInitialized={onInitialized}
+                      orientation="portrait"
+                    />
+                  </Reanimated.View>
+                </PinchGestureHandler>
+              </View>
+            </GestureHandlerRootView>
+          )}
+          <View style={[styles(theme).captureButtonContainer]}>
+            <View style={[styles(theme).row, styles(theme).spaceBetween]}>
+              <TouchableOpacity
+                onPress={() => {
+                  setFlashToggle(!flashToggle);
+                  torch === 'off' ? setTorch('on') : setTorch('off');
+                }}
+                disabled={!isCameraInitialized || !isActive}>
+                <Ionicons
+                  name="flash-outline"
+                  size={IconSizes.x9}
+                  color={torch === 'on' ? theme.accent : theme.text01}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles(theme).captureButton]}
+                onPress={takePhoto}
+                disabled={!isCameraInitialized || !isActive}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  cameraView === 'back'
+                    ? setCameraView('front')
+                    : setCameraView('back');
+                }}
+                disabled={!isCameraInitialized || !isActive}>
+                <Ionicons
+                  name="sync"
+                  size={IconSizes.x9}
+                  color={theme.text01}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </>
+      )}
+      <SettingsBottomSheet
+        ref={settingsBottomSheetRef}
+        onBlockListPress={onBlockListPress}
+        onAboutPress={onAboutPress}
+      />
+      <FriendBottomSheet ref={friendBottomSheetRef} onUserPress={onUserPress} />
+      <BlockListBottomSheet ref={blockListBottomSheetRef} />
+    </View>
   );
 };
 
