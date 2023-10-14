@@ -153,7 +153,6 @@ const Mail = ({navigation, route}: props) => {
                 ...FontSizes.Body,
               },
             ]}
-            autoFocus
             placeholder="Email Address"
             placeholderTextColor={theme.text02}
           />

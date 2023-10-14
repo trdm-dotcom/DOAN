@@ -1,8 +1,14 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import {AppContext} from '../../context';
 import IFriendResponse from '../../models/response/IFriendResponse';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
-import EmptySearchUserBanner from '@app/assets/svg/search-users.svg';
+import EmptySearchUserBanner from '../../../assets/svg/search-users.svg';
 import SvgBanner from '../SvgBanner';
 import {PermissionsAndroid, Platform, View, Text} from 'react-native';
 import Contacts, {Contact} from 'react-native-contacts';
@@ -14,7 +20,7 @@ import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {space, styles} from '../style';
 import UserCard from '../user/UserCard';
 import {Modalize} from 'react-native-modalize';
-import BottomSheetHeader from './BottomSheetHeader';
+import BottomSheetHeader from '../header/BottomSheetHeader';
 import AnimatedSearchBar from '../control/AnimatedSearchBar';
 import AppButton from '../control/AppButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -23,11 +29,10 @@ import Typography from '../../theme/Typography';
 const {FontWeights, FontSizes} = Typography;
 
 type FriendBottomSheetProps = {
-  ref: React.Ref<any>;
   onUserPress: (userId: number) => void;
 };
 
-const FriendBottomSheet: React.FC<FriendBottomSheetProps> = React.forwardRef(
+const FriendBottomSheet = forwardRef<Modalize, FriendBottomSheetProps>(
   ({onUserPress}, ref) => {
     const {theme} = useContext(AppContext);
     const [pageNumber, setPageNumber] = useState(0);
@@ -198,7 +203,6 @@ const FriendBottomSheet: React.FC<FriendBottomSheetProps> = React.forwardRef(
 
     return (
       <Modalize
-        //@ts-ignore
         ref={ref}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={styles(theme).modalizeContainer}>

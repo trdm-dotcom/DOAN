@@ -5,8 +5,8 @@ import {AppContext} from '../../context';
 import {Modalize} from 'react-native-modalize';
 import UserCard from '../user/UserCard';
 import SvgBanner from '../SvgBanner';
-import BottomSheetHeader from './BottomSheetHeader';
-import EmptyLikesBanner from '@app/assets/svg/empty-likes.svg';
+import BottomSheetHeader from '../header/BottomSheetHeader';
+import EmptyLikesBanner from '../../../assets/svg/empty-likes.svg';
 import {FlatGrid} from 'react-native-super-grid';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
@@ -15,12 +15,11 @@ import {showError} from '../../utils/Toast';
 import {styles} from '../style';
 
 type LikesBottomSheetProps = {
-  ref: React.Ref<any>;
   userIds: number[];
   onUserPress: (userId: number) => void;
 };
 
-const LikesBottomSheet: React.FC<LikesBottomSheetProps> = React.forwardRef(
+const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
   ({userIds, onUserPress}, ref) => {
     const {theme} = useContext(AppContext);
     const [users, setUsers] = useState<IUserInfoResponse[]>([]);

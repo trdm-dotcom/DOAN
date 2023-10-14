@@ -36,10 +36,10 @@ import Reanimated, {
   useAnimatedProps,
   useSharedValue,
 } from 'react-native-reanimated';
-import LoadingIndicator from '../components/shared/LoadingIndicator';
 import SettingsBottomSheet from '../components/bottomsheet/SettingsBottomSheet';
 import FriendBottomSheet from '../components/bottomsheet/FriendBottomSheet';
 import BlockListBottomSheet from '../components/bottomsheet/BlockListBottomSheet';
+import {Modalize} from 'react-native-modalize';
 
 const ReanimatedCamera = Reanimated.createAnimatedComponent(CameraVision);
 Reanimated.addWhitelistedNativeProps({
@@ -51,21 +51,20 @@ type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 const Camera = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
   const cameraRef = useRef<CameraVision>(null);
+  const settingsBottomSheetRef = useRef<Modalize>(null);
+  const friendBottomSheetRef = useRef<Modalize>(null);
+  const blockListBottomSheetRef = useRef<Modalize>(null);
 
-  const settingsBottomSheetRef = useRef();
-  const friendBottomSheetRef = useRef();
-  const blockListBottomSheetRef = useRef();
-
   // @ts-ignore
-  const onSettingsOpen = () => settingsBottomSheetRef.current.open();
+  const onSettingsOpen = () => settingsBottomSheetRef.current?.open();
   // @ts-ignore
-  const onSettingsClose = () => settingsBottomSheetRef.current.close();
+  const onSettingsClose = () => settingsBottomSheetRef.current?.close();
   // @ts-ignore
-  const onFriendOpen = () => friendBottomSheetRef.current.open();
+  const onFriendOpen = () => friendBottomSheetRef.current?.open();
   // @ts-ignore
-  const onFriendClose = () => friendBottomSheetRef.current.close();
+  const onFriendClose = () => friendBottomSheetRef.current?.close();
   // @ts-ignore
-  const onBlockListOpen = () => blockListBottomSheetRef.current.open();
+  const onBlockListOpen = () => blockListBottomSheetRef.current?.open();
 
   const onBlockListPress = () => {
     onSettingsClose();
@@ -80,7 +79,6 @@ const Camera = ({navigation}: props) => {
     onFriendClose();
   };
 
-  const [loading, setLoading] = useState<any>(null);
   const [flashToggle, setFlashToggle] = useState<boolean>(false);
   const [cameraView, setCameraView] = useState('back');
   const [torch, setTorch] = useState<'on' | 'off' | 'auto'>('off');
@@ -101,7 +99,6 @@ const Camera = ({navigation}: props) => {
     if (permission === 'denied') {
       await Linking.openSettings();
     }
-    setLoading(devices);
     const microMicrophonePermission =
       await CameraVision.requestMicrophonePermission();
     if (microMicrophonePermission === 'denied') {
@@ -115,7 +112,6 @@ const Camera = ({navigation}: props) => {
   }, [cameraPermission, devices]);
 
   const takePhoto = async () => {
-    setLoading(true);
     try {
       if (cameraRef.current == null) {
         throw new Error('Camera Ref is Null');
@@ -186,17 +182,28 @@ const Camera = ({navigation}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <View style={[styles(theme).row, styles(theme).spaceBetween]}>
+      <View
+        style={[
+          styles(theme).row,
+          {
+            justifyContent: 'space-between',
+          },
+        ]}>
         <TouchableOpacity
           onPress={() => {
             onFriendOpen();
           }}
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+          style={[
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              padding: IconSizes.x1,
+              borderRadius: 50,
+            },
+          ]}>
           <Ionicons
-            name="chevron-back-outline"
+            name="people-circle-outline"
             size={IconSizes.x8}
             color={theme.text01}
           />
@@ -205,89 +212,88 @@ const Camera = ({navigation}: props) => {
           onPress={() => {
             onSettingsOpen();
           }}
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+          style={[
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              padding: IconSizes.x1,
+              borderRadius: 50,
+            },
+          ]}>
           <Ionicons
-            name="chevron-back-outline"
+            name="person-circle-outline"
             size={IconSizes.x8}
             color={theme.text01}
           />
         </TouchableOpacity>
       </View>
-      {loading ? (
-        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
-          <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
-        </View>
-      ) : (
-        <>
-          {device != null && (
-            <GestureHandlerRootView style={[{flex: 1}, space(IconSizes.x5).mt]}>
-              <View style={[styles(theme).cameraContainer]}>
-                <PinchGestureHandler
-                  onGestureEvent={onPinchGesture}
-                  enabled={isActive}>
-                  <Reanimated.View style={StyleSheet.absoluteFill}>
-                    <ReanimatedCamera
-                      ref={cameraRef}
-                      device={device}
-                      isActive={isActive}
-                      animatedProps={cameraAnimatedProps}
-                      photo={true}
-                      video={true}
-                      audio={hasMicrophonePermission}
-                      onInitialized={onInitialized}
-                      orientation="portrait"
-                    />
-                  </Reanimated.View>
-                </PinchGestureHandler>
-              </View>
-            </GestureHandlerRootView>
-          )}
-          <View style={[styles(theme).captureButtonContainer]}>
-            <View style={[styles(theme).row, styles(theme).spaceBetween]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setFlashToggle(!flashToggle);
-                  torch === 'off' ? setTorch('on') : setTorch('off');
-                }}
-                disabled={!isCameraInitialized || !isActive}>
-                <Ionicons
-                  name="flash-outline"
-                  size={IconSizes.x9}
-                  color={torch === 'on' ? theme.accent : theme.text01}
+      {device != null && (
+        <GestureHandlerRootView style={[space(IconSizes.x8).mt]}>
+          <View style={[styles(theme).cameraContainer]}>
+            <PinchGestureHandler
+              onGestureEvent={onPinchGesture}
+              enabled={isActive}>
+              <Reanimated.View style={StyleSheet.absoluteFill}>
+                <ReanimatedCamera
+                  ref={cameraRef}
+                  device={device}
+                  isActive={isActive}
+                  animatedProps={cameraAnimatedProps}
+                  photo={true}
+                  video={true}
+                  audio={hasMicrophonePermission}
+                  onInitialized={onInitialized}
+                  orientation="portrait"
                 />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles(theme).captureButton]}
-                onPress={takePhoto}
-                disabled={!isCameraInitialized || !isActive}
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  cameraView === 'back'
-                    ? setCameraView('front')
-                    : setCameraView('back');
-                }}
-                disabled={!isCameraInitialized || !isActive}>
-                <Ionicons
-                  name="sync"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              </TouchableOpacity>
-            </View>
+              </Reanimated.View>
+            </PinchGestureHandler>
           </View>
-        </>
+        </GestureHandlerRootView>
       )}
-      <SettingsBottomSheet
+      <View
+        style={[
+          styles(theme).row,
+          {
+            justifyContent: 'space-around',
+            alignItems: 'center',
+          },
+          space(IconSizes.x8).mv,
+        ]}>
+        <TouchableOpacity
+          onPress={() => {
+            setFlashToggle(!flashToggle);
+            torch === 'off' ? setTorch('on') : setTorch('off');
+          }}
+          disabled={!isCameraInitialized || !isActive}>
+          <Ionicons
+            name={torch === 'on' ? 'flash' : 'flash-outline'}
+            size={IconSizes.x9}
+            color={torch === 'on' ? theme.accent : theme.text01}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles(theme).captureButton]}
+          onPress={takePhoto}
+          disabled={!isCameraInitialized || !isActive}
+        />
+        <TouchableOpacity
+          onPress={() => {
+            cameraView === 'back'
+              ? setCameraView('front')
+              : setCameraView('back');
+          }}
+          disabled={!isCameraInitialized || !isActive}>
+          <Ionicons name="sync" size={IconSizes.x9} color={theme.text01} />
+        </TouchableOpacity>
+      </View>
+      {/* <FriendBottomSheet ref={friendBottomSheetRef} onUserPress={onUserPress} /> */}
+      {/* <SettingsBottomSheet
         ref={settingsBottomSheetRef}
         onBlockListPress={onBlockListPress}
         onAboutPress={onAboutPress}
       />
-      <FriendBottomSheet ref={friendBottomSheetRef} onUserPress={onUserPress} />
-      <BlockListBottomSheet ref={blockListBottomSheetRef} />
+      <BlockListBottomSheet ref={blockListBottomSheetRef} /> */}
     </View>
   );
 };

@@ -1,27 +1,26 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {forwardRef, useContext, useEffect, useState} from 'react';
 import {StyleSheet, Switch, View} from 'react-native';
 import {Modalize} from 'react-native-modalize';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import Typography from '../../theme/Typography';
 import {AppContext} from '../../context';
-import BottomSheetHeader from './BottomSheetHeader';
+import BottomSheetHeader from '../header/BottomSheetHeader';
 import {ThemeColors} from '../../constants/Types';
 import AppOption from '../shared/AppOption';
 import {ThemeVariant} from '../../theme/Colors';
 import {signOut} from '../../reducers/action/authentications';
 import {useAppDispatch} from '../../reducers/redux/store';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 const {FontWeights, FontSizes} = Typography;
 
 interface SettingsBottomSheetProps {
-  ref: React.Ref<any>;
   onBlockListPress: () => void;
   onAboutPress: () => void;
 }
 
-const SettingsBottomSheet: React.FC<SettingsBottomSheetProps> =
-  React.forwardRef(({onBlockListPress, onAboutPress}, ref) => {
+const SettingsBottomSheet = forwardRef<Modalize, SettingsBottomSheetProps>(
+  ({onBlockListPress, onAboutPress}, ref) => {
     const dispatch = useAppDispatch();
     const {toggleTheme, theme, themeType} = useContext(AppContext);
     const [isActive, setIsActive] = useState(false);
@@ -79,7 +78,8 @@ const SettingsBottomSheet: React.FC<SettingsBottomSheetProps> =
         </View>
       </Modalize>
     );
-  });
+  },
+);
 
 const styles = (theme = {} as ThemeColors) =>
   StyleSheet.create({

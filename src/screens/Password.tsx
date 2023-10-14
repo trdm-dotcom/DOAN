@@ -14,7 +14,10 @@ import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import {IconSizes} from '../constants/Constants';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {register} from '../reducers/action/authentications';
+import {
+  register,
+  password as loginPassword,
+} from '../reducers/action/authentications';
 import {useAppDispatch} from '../reducers/redux/store';
 import HeaderBar from '../components/header/HeaderBar';
 import {PressableOpacity} from 'react-native-pressable-opacity';
@@ -22,6 +25,7 @@ import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import Typography from '../theme/Typography';
 import CheckBox from 'react-native-check-box';
+import {authenticated} from '../reducers/redux/authentication.reducer';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -57,16 +61,22 @@ const Password = ({navigation, route}: props) => {
     if (isValidData()) {
       try {
         setLoading(true);
-        dispatch(
-          register({
-            username: phoneNumber,
-            password: password,
-            name: name,
-            otpKey: otpKey,
-            mail: mail,
-            hash: getHash('REGISTER'),
-          }),
-        );
+        await register({
+          username: phoneNumber,
+          password: password,
+          name: name,
+          otpKey: otpKey,
+          mail: mail,
+          hash: getHash('REGISTER'),
+        });
+        await loginPassword({
+          username: phoneNumber,
+          password: password,
+          grant_type: 'password',
+          client_secret: 'iW4rurIrZJ',
+          hash: getHash('LOGIN'),
+        });
+        dispatch(authenticated());
       } catch (error: any) {
         showError(error.message);
       } finally {
@@ -147,7 +157,6 @@ const Password = ({navigation, route}: props) => {
               },
               {flex: 1},
             ]}
-            autoFocus
             secureTextEntry={!isPasswordVisible}
             placeholder="Confirm Password"
             placeholderTextColor={theme.text02}

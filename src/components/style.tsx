@@ -70,15 +70,6 @@ export const styles = (theme = {} as ThemeColors) =>
     container: {
       flex: 1,
     },
-    justifyContentCenter: {
-      justifyContent: 'center',
-    },
-    spaceBetween: {
-      justifyContent: 'space-between',
-    },
-    alignItemsCenter: {
-      alignItems: 'center',
-    },
     flashMessageTitle: {
       ...Typography.FontWeights.Light,
       ...Typography.FontSizes.Body,

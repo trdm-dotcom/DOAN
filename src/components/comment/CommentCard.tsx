@@ -77,7 +77,9 @@ const CommentCard = ({
         <View
           style={[
             styles(theme).row,
-            styles(theme).alignItemsCenter,
+            {
+              alignItems: 'center',
+            },
             space(IconSizes.x5).mt,
           ]}>
           <Text style={[styles(theme).timeText]}>{parsedTime}</Text>

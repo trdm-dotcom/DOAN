@@ -23,6 +23,7 @@ import {ILoginRequest} from '../models/request/ILoginRequest.model';
 import {getHash} from '../utils/Crypto';
 import {useAppDispatch} from '../reducers/redux/store';
 import IconButton from '../components/control/IconButton';
+import {authenticated} from '../reducers/redux/authentication.reducer';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -73,8 +74,10 @@ const SignIn = ({navigation}: props) => {
           client_secret: 'iW4rurIrZJ',
           hash: getHash('LOGIN'),
         };
-        dispatch(loginPassword(body));
+        await loginPassword(body);
+        dispatch(authenticated());
       } catch (error: any) {
+        console.log(error);
         showError(error.message);
       } finally {
         setLoading(false);
@@ -152,7 +155,6 @@ const SignIn = ({navigation}: props) => {
               },
               {flex: 1},
             ]}
-            autoFocus
             secureTextEntry={!isPasswordVisible}
             placeholder="Password"
             placeholderTextColor={theme.text02}

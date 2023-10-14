@@ -84,57 +84,47 @@ export const checkExist = async (
 ): Promise<ICheckExistResponse> =>
   apiPost<ICheckExistResponse>('/user/checkExist', {data: body});
 
-export const register =
-  (body: IRegisterRequest): AppThunk =>
-  async dispatch => {
-    await registerNewAccount(body);
-    dispatch(
-      password({
-        username: body.username,
-        password: body.password,
-        hash: body.hash,
-        grant_type: 'password',
-        client_secret: 'secret',
-      }),
-    );
-  };
+export const register = async (body: IRegisterRequest) => {
+  await registerNewAccount(body);
+  await password({
+    username: body.username,
+    password: body.password,
+    hash: body.hash,
+    grant_type: 'password',
+    client_secret: 'secret',
+  });
+};
 
-export const password =
-  (body: ILoginRequest): AppThunk =>
-  async dispatch => {
-    const response = await authenticate({type: 'password', data: body});
-    await saveToken({
-      token: {
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        accExpiredTime: response.accExpiredTime,
-        refExpiredTime: response.refExpiredTime,
-      },
-      type: 'password',
-      data: body,
-    });
-    dispatch(getSession());
-  };
+export const password = async (body: ILoginRequest) => {
+  const response = await authenticate({type: 'password', data: body});
+  await saveToken({
+    token: {
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+      accExpiredTime: response.accExpiredTime,
+      refExpiredTime: response.refExpiredTime,
+    },
+    type: 'password',
+    data: body,
+  });
+};
 
-export const biometric =
-  (body: IBiometricLoginRequest): AppThunk =>
-  async dispatch => {
-    const response: ILoginResponse = await authenticate({
-      type: 'biometric',
-      data: body,
-    });
-    await saveToken({
-      token: {
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        accExpiredTime: response.accExpiredTime,
-        refExpiredTime: response.refExpiredTime,
-      },
-      type: 'biometric',
-      data: body,
-    });
-    dispatch(getSession());
-  };
+export const biometric = async (body: IBiometricLoginRequest) => {
+  const response: ILoginResponse = await authenticate({
+    type: 'biometric',
+    data: body,
+  });
+  await saveToken({
+    token: {
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+      accExpiredTime: response.accExpiredTime,
+      refExpiredTime: response.refExpiredTime,
+    },
+    type: 'biometric',
+    data: body,
+  });
+};
 
 export const signOut = (): AppThunk => async dispatch => {
   await apiPost<any>(

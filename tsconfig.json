@@ -16,10 +16,10 @@
     "noImplicitAny": false,
     "paths": {
       "*": [
-        "./app/*",
+        "./src/*",
       ],
       "@app/*": [
-        "./app/*"
+        "./src/*"
       ],
       "@app/assets/*": [
         "./assets/*"

@@ -20,6 +20,7 @@
     "@types/react-native-indicators": "^0.16.3",
     "axios": "^1.4.0",
     "crypto-js": "^4.1.1",
+    "deprecated-react-native-prop-types": "^5.0.0",
     "react": "18.1.0",
     "react-native": "0.70.6",
     "react-native-biometrics": "^3.0.1",

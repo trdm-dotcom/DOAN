@@ -20,6 +20,7 @@ import {clearAuthentication} from './src/reducers/redux/authentication.reducer';
 import {useNavigation} from '@react-navigation/native';
 
 const SafeAreaApp = () => {
+  const dispatch = useAppDispatch();
   const {theme, toggleTheme, setFcmToken} = useContext(AppContext);
   const [loading, setLoading] = React.useState(true);
 
@@ -33,7 +34,6 @@ const SafeAreaApp = () => {
   const checkLoginCredentials = async () => {
     const credentials: CredentialType | null = await loadToken();
     if (credentials) {
-      const dispatch = useAppDispatch();
       const token = credentials.token;
       if (token.refExpiredTime > Date.now()) {
         dispatch(getSession());
@@ -51,8 +51,8 @@ const SafeAreaApp = () => {
       setLoading(true);
       await Promise.all([
         initializeTheme(),
-        checkLoginCredentials(),
         getFcmtoken(),
+        checkLoginCredentials(),
       ]);
     } finally {
       setLoading(false);
