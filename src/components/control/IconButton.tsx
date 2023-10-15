@@ -29,7 +29,7 @@ const IconButton = ({
 }: IconButtonProps) => (
   <TouchableOpacity
     onPress={onPress}
-    activeOpacity={0.95}
+    activeOpacity={0.9}
     style={[styles.container, style]}>
     <Icon />
     {hasBadge && (

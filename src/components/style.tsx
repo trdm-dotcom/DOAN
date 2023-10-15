@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 import {
   CONTENT_SPACING,
   SAFE_AREA_PADDING,
@@ -61,14 +61,14 @@ export const styles = (theme = {} as ThemeColors) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
-      paddingHorizontal: SAFE_AREA_PADDING.paddingHorizontal,
-      paddingVertical: SAFE_AREA_PADDING.paddingVertical,
     },
     defaultBackground: {
       backgroundColor: theme.base,
     },
     container: {
       flex: 1,
+      paddingHorizontal: SAFE_AREA_PADDING.paddingHorizontal,
+      paddingVertical: SAFE_AREA_PADDING.paddingVertical,
     },
     flashMessageTitle: {
       ...Typography.FontWeights.Light,
@@ -122,6 +122,18 @@ export const styles = (theme = {} as ThemeColors) =>
     },
     phoneNumberView: {
       backgroundColor: 'transparent',
+    },
+    inputSearchcontainer: {
+      ...FontWeights.Regular,
+      ...FontSizes.Body,
+      width: '90%',
+      alignSelf: 'center',
+      paddingVertical: Platform.select({ios: 10, android: 5}),
+      paddingHorizontal: 20,
+      backgroundColor: theme.placeholder,
+      color: theme.text01,
+      borderRadius: 20,
+      marginVertical: 5,
     },
 
     // camera screen

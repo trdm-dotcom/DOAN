@@ -11,7 +11,6 @@ import {IconSizes} from '../../constants/Constants';
 type UserCardProps = {
   userId: number;
   avatar: string;
-  handle: string;
   name: string;
   style?: StyleProp<ViewStyle>;
   onPress?: any;
@@ -21,7 +20,6 @@ type UserCardProps = {
 const UserCard = ({
   userId,
   avatar,
-  handle,
   name,
   onPress,
   style,
@@ -40,12 +38,11 @@ const UserCard = ({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.95}
+      activeOpacity={0.9}
       onPress={onPress || navigateToProfile}
       style={[styles(theme).userCardContainer, style]}>
       <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
       <View style={styles().info}>
-        <Text style={styles(theme).handleText}>{handle}</Text>
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"

@@ -1,4 +1,4 @@
-import React, {forwardRef, useContext, useEffect, useState} from 'react';
+import React, {forwardRef, useContext} from 'react';
 import {StyleSheet, Switch, View} from 'react-native';
 import {Modalize} from 'react-native-modalize';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
@@ -10,7 +10,7 @@ import AppOption from '../shared/AppOption';
 import {ThemeVariant} from '../../theme/Colors';
 import {signOut} from '../../reducers/action/authentications';
 import {useAppDispatch} from '../../reducers/redux/store';
-import {useNavigation} from '@react-navigation/native';
+import {logout} from '../../reducers/redux/authentication.reducer';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -23,25 +23,21 @@ const SettingsBottomSheet = forwardRef<Modalize, SettingsBottomSheetProps>(
   ({onBlockListPress, onAboutPress}, ref) => {
     const dispatch = useAppDispatch();
     const {toggleTheme, theme, themeType} = useContext(AppContext);
-    const [isActive, setIsActive] = useState(false);
-    const navigation = useNavigation();
-
-    useEffect(() => {
-      setIsActive(themeType === ThemeVariant.dark);
-    }, []);
 
     const handleSwitch = () => {
-      if (isActive) {
+      if (themeType === ThemeVariant.dark) {
         toggleTheme(ThemeVariant.dark);
       } else {
         toggleTheme(ThemeVariant.light);
       }
-      setIsActive(previousState => !previousState);
     };
 
     const logOut = async () => {
-      dispatch(signOut());
-      navigation.navigate('Start');
+      try {
+        await signOut();
+      } finally {
+        dispatch(logout());
+      }
     };
 
     return (
@@ -54,27 +50,30 @@ const SettingsBottomSheet = forwardRef<Modalize, SettingsBottomSheetProps>(
         <View style={styles().content}>
           <AppOption
             label="Blocked users"
-            iconName="ios-list"
+            iconName="list-outline"
             onPress={onBlockListPress}
           />
-          <AppOption iconName="ios-color-palette">
+          <AppOption iconName="color-palette-outline">
             <Switch
-              value={isActive}
+              value={themeType === ThemeVariant.dark}
               onValueChange={handleSwitch}
-              thumbColor={isActive ? theme.accent : theme.placeholder}
+              thumbColor={
+                themeType === ThemeVariant.dark
+                  ? theme.accent
+                  : theme.placeholder
+              }
             />
           </AppOption>
           <AppOption
             label="About"
-            iconName="ios-information-circle-outline"
+            iconName="information-circle-outline"
             onPress={onAboutPress}
           />
           <AppOption
-            label="About"
-            iconName="ios-information-circle-outline"
-            onPress={onAboutPress}
+            label="Logout"
+            iconName="log-out-outline"
+            onPress={logOut}
           />
-          <AppOption label="Logout" iconName="ios-log-out" onPress={logOut} />
         </View>
       </Modalize>
     );

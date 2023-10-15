@@ -26,6 +26,8 @@ import {
   GestureHandlerRootView,
   PinchGestureHandler,
   PinchGestureHandlerGestureEvent,
+  State,
+  TapGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
 import {useIsFocused} from '@react-navigation/core';
 import {useIsForeground} from '../hook/useIsForeground';
@@ -116,7 +118,7 @@ const Camera = ({navigation}: props) => {
       if (cameraRef.current == null) {
         throw new Error('Camera Ref is Null');
       }
-      const photo: PhotoFile = await cameraRef.current.takePhoto({
+      const photo: PhotoFile = await cameraRef.current?.takePhoto({
         qualityPrioritization: 'balanced',
         flash: `${torch}`,
         enableAutoRedEyeReduction: true,
@@ -180,8 +182,18 @@ const Camera = ({navigation}: props) => {
     },
   });
 
+  const onSingleTapGesture =
+    useAnimatedGestureHandler<TapGestureHandlerGestureEvent>({
+      onActive: async event => {
+        if (event.state === State.ACTIVE) {
+          await cameraRef.current?.focus({x: event.x, y: event.y});
+        }
+      },
+    });
+
   return (
-    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+    <GestureHandlerRootView
+      style={[styles(theme).container, styles(theme).defaultBackground]}>
       <View
         style={[
           styles(theme).row,
@@ -203,8 +215,8 @@ const Camera = ({navigation}: props) => {
             },
           ]}>
           <Ionicons
-            name="people-circle-outline"
-            size={IconSizes.x8}
+            name="people-outline"
+            size={IconSizes.x6}
             color={theme.text01}
           />
         </TouchableOpacity>
@@ -222,35 +234,33 @@ const Camera = ({navigation}: props) => {
             },
           ]}>
           <Ionicons
-            name="person-circle-outline"
-            size={IconSizes.x8}
+            name="person-outline"
+            size={IconSizes.x6}
             color={theme.text01}
           />
         </TouchableOpacity>
       </View>
-      {device != null && (
-        <GestureHandlerRootView style={[space(IconSizes.x8).mt]}>
-          <View style={[styles(theme).cameraContainer]}>
-            <PinchGestureHandler
-              onGestureEvent={onPinchGesture}
-              enabled={isActive}>
-              <Reanimated.View style={StyleSheet.absoluteFill}>
-                <ReanimatedCamera
-                  ref={cameraRef}
-                  device={device}
-                  isActive={isActive}
-                  animatedProps={cameraAnimatedProps}
-                  photo={true}
-                  video={true}
-                  audio={hasMicrophonePermission}
-                  onInitialized={onInitialized}
-                  orientation="portrait"
-                />
-              </Reanimated.View>
-            </PinchGestureHandler>
-          </View>
-        </GestureHandlerRootView>
-      )}
+      <View style={[styles(theme).cameraContainer, space(IconSizes.x8).mt]}>
+        {device != null && (
+          <PinchGestureHandler
+            onGestureEvent={onPinchGesture}
+            enabled={isActive}>
+            <Reanimated.View style={StyleSheet.absoluteFill}>
+              <ReanimatedCamera
+                ref={cameraRef}
+                device={device}
+                isActive={isActive}
+                animatedProps={cameraAnimatedProps}
+                photo={true}
+                video={true}
+                audio={hasMicrophonePermission}
+                onInitialized={onInitialized}
+                orientation="portrait"
+              />
+            </Reanimated.View>
+          </PinchGestureHandler>
+        )}
+      </View>
       <View
         style={[
           styles(theme).row,
@@ -287,14 +297,14 @@ const Camera = ({navigation}: props) => {
           <Ionicons name="sync" size={IconSizes.x9} color={theme.text01} />
         </TouchableOpacity>
       </View>
-      {/* <FriendBottomSheet ref={friendBottomSheetRef} onUserPress={onUserPress} /> */}
-      {/* <SettingsBottomSheet
+      <FriendBottomSheet ref={friendBottomSheetRef} onUserPress={onUserPress} />
+      <SettingsBottomSheet
         ref={settingsBottomSheetRef}
         onBlockListPress={onBlockListPress}
         onAboutPress={onAboutPress}
       />
-      <BlockListBottomSheet ref={blockListBottomSheetRef} /> */}
-    </View>
+      {/* <BlockListBottomSheet ref={blockListBottomSheetRef} /> */}
+    </GestureHandlerRootView>
   );
 };
 

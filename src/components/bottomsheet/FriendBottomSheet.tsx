@@ -15,7 +15,6 @@ import Contacts, {Contact} from 'react-native-contacts';
 import {getSuggestFriend, requestAddFriend} from '../../reducers/action/friend';
 import {showError} from '../../utils/Toast';
 import {IconSizes, Pagination} from '../../constants/Constants';
-import {FlatGrid} from 'react-native-super-grid';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {space, styles} from '../style';
 import UserCard from '../user/UserCard';
@@ -25,6 +24,7 @@ import AnimatedSearchBar from '../control/AnimatedSearchBar';
 import AppButton from '../control/AppButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../../theme/Typography';
+import {FlatGrid} from 'react-native-super-grid';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -139,28 +139,28 @@ const FriendBottomSheet = forwardRef<Modalize, FriendBottomSheetProps>(
       />
     );
 
-    const renderItem = (item: any) => {
+    const renderItem = ({item}: any) => {
       return (
-        <UserCard
-          userId={item.id}
-          avatar={item.avatar}
-          handle={item.handle}
-          name={item.name}
-          onPress={onUserPress}
-          childen={
-            <AppButton
-              label="Follow"
-              onPress={() => requestAddFriend(item.id)}
-              Icon={() => (
-                <Ionicons
-                  name="add-outline"
-                  size={IconSizes.x4}
-                  color={theme.accent}
-                />
-              )}
-            />
-          }
-        />
+        <></>
+        // <UserCard
+        //   userId={item.id}
+        //   avatar={item.avatar}
+        //   name={item.name}
+        //   onPress={onUserPress}
+        //   childen={
+        //     <AppButton
+        //       label="Follow"
+        //       onPress={() => requestAddFriend(item.id)}
+        //       Icon={() => (
+        //         <Ionicons
+        //           name="add-outline"
+        //           size={IconSizes.x4}
+        //           color={theme.accent}
+        //         />
+        //       )}
+        //     />
+        //   }
+        // />
       );
     };
 
@@ -193,6 +193,7 @@ const FriendBottomSheet = forwardRef<Modalize, FriendBottomSheetProps>(
             contentContainerStyle={styles(theme).listContentContainer}
             ListEmptyComponent={ListEmptyComponent}
             style={styles(theme).listContainer}
+            keyExtractor={item => item.id.toString()}
             spacing={20}
             renderItem={renderItem}
             onEndReached={() => setPageNumber(pageNumber + 1)}

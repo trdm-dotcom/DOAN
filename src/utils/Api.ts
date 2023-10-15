@@ -26,6 +26,11 @@ const fetchToken = async () => {
   }
 };
 
+const getToken = async () => {
+  await fetchToken();
+  return token;
+};
+
 const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
   const refreshToken = (): Promise<IRefreshTokenResponse> => {
     return new Promise((resolve, reject) => {
@@ -82,10 +87,8 @@ const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
           onUnauthenticated();
         }
       } else {
-        return Promise.reject(error);
+        onUnauthenticated();
       }
-    } else if (error.response && error.response.status === 400) {
-      return Promise.reject(error.response.code);
     }
     return Promise.reject(error);
   };
@@ -123,7 +126,7 @@ function apiReq<T>(
         resolve(logResponseAndReturnJson(result, endPoint, rId));
       })
       .catch(error => {
-        reject(new Error(error.response.data.code));
+        reject(new Error(error.response.data.code || error.message));
       });
   });
 }
@@ -181,4 +184,4 @@ function apiPut<T>(
   return apiReq(endPoint, 'put', requestOptions, headers);
 }
 
-export {apiDelete, apiGet, apiPut, apiPost, setupAxiosInterceptors};
+export {apiDelete, apiGet, apiPut, apiPost, setupAxiosInterceptors, getToken};

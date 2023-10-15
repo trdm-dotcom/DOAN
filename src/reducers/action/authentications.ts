@@ -4,14 +4,10 @@ import {IRegisterRequest} from '../../models/request/IRegisterRequest';
 import {ICheckExistRequest} from '../../models/request/ICheckExistRequest';
 import {ICheckExistResponse} from '../../models/response/ICheckExistResponse';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {apiPost, apiPut} from '../../utils/Api';
+import {apiPost, apiPut, getToken} from '../../utils/Api';
 import {IBiometricLoginRequest} from '../../models/request/IBiometricLoginRequest';
 import {AppThunk} from '../redux/store';
-import {
-  authenticated,
-  getAccountInfo,
-  logout,
-} from '../redux/authentication.reducer';
+import {authenticated, getAccountInfo} from '../redux/authentication.reducer';
 import {getUserInfo} from './user';
 import {removeToken, saveToken} from '../../utils/Storage';
 import {IUpdateUserInfoRequest} from '../../models/request/IUpdateUserInfoRequest';
@@ -69,10 +65,10 @@ export const updateUserInfo = async (
   );
 };
 
-export const getAccount = (): AppThunk => async dispatch => {
-  const response: IUserInfoResponse[] = await getUserInfo();
-  dispatch(getAccountInfo(response[0]));
-};
+export const getAccount = (): AppThunk => dispatch =>
+  getUserInfo().then((response: IUserInfoResponse) =>
+    dispatch(getAccountInfo(response)),
+  );
 
 export const getSession = (): AppThunk => async dispatch => {
   dispatch(getAccount());
@@ -126,14 +122,14 @@ export const biometric = async (body: IBiometricLoginRequest) => {
   });
 };
 
-export const signOut = (): AppThunk => async dispatch => {
+export const signOut = async () => {
+  const token = await getToken();
   await apiPost<any>(
     '/revokeToken',
-    {data: {refresh_token: ''}},
+    {data: {refresh_token: token.refreshToken}},
     {
       'Content-Type': 'application/json',
     },
   );
   await removeToken();
-  dispatch(logout());
 };

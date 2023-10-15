@@ -47,7 +47,7 @@ const NotificationCard = ({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.95}
+      activeOpacity={0.9}
       onPress={navigateAction}
       style={styles().container}>
       <NativeImage uri={avatar} style={styles(theme).avatarImage} />

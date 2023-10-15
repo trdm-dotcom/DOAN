@@ -65,7 +65,7 @@ const SafeAreaApp = () => {
 
   return (
     <SafeAreaView
-      style={[styles(theme).safeArea, styles(theme).defaultBackground]}>
+      style={[styles(theme).safeArea]}>
       {loading ? <Loading /> : <RootStack />}
       <FlashMessage
         titleStyle={styles(theme).flashMessageTitle}

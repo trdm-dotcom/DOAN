@@ -41,7 +41,9 @@ export const ItemFriend = ({
   return (
     <View style={[styles(theme).friendListItem]}>
       <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
-      <View style={styles(theme).container}>
+      <View style={[{
+        flex: 1,
+      }]}>
         <Text
           style={[
             styles(theme).centerText,

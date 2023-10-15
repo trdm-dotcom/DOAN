@@ -44,7 +44,7 @@ const AppOption = ({
       onPress={onPress}>
       <Ionicons
         name={iconName}
-        size={IconSizes.x5}
+        size={IconSizes.x6}
         color={color || theme.text01}
       />
       <Text style={[styles().label, {color: color || theme.text01}]}>
@@ -62,7 +62,7 @@ const styles = () =>
       marginVertical: 8,
     },
     label: {
-      ...FontWeights.Light,
+      ...FontWeights.Regular,
       ...FontSizes.Body,
       marginLeft: 10,
     },

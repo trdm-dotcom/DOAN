@@ -1,9 +1,9 @@
 import React, {useContext} from 'react';
 import {View} from 'react-native';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {CONTENT_SPACING} from '../constants/Constants';
+import {IconSizes} from '../constants/Constants';
 import {AppContext} from '../context';
 import AppButton from '../components/control/AppButton';
 import Typography from '../theme/Typography';
@@ -17,30 +17,38 @@ const Start = ({navigation}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <View style={[styles(theme).displayBottom, styles(theme).fullWidth]}>
-        <AppButton
-          label="Create account"
-          loading={false}
-          onPress={() => navigation.navigate('PhoneNumber')}
-          containerStyle={[
-            styles(theme).buttonPrimary,
-            {marginBottom: CONTENT_SPACING},
-          ]}
-          labelStyle={{
-            ...FontWeights.Bold,
-            ...FontSizes.Body,
-          }}
-        />
-        <AppButton
-          label="Sign in"
-          loading={false}
-          onPress={() => navigation.navigate('SignIn')}
-          containerStyle={[styles(theme).buttonSecondary]}
-          labelStyle={{
-            ...FontWeights.Bold,
-            ...FontSizes.Body,
-          }}
-        />
+      <View style={[{flex: 1}]}>
+        <View style={[styles(theme).displayBottom, styles(theme).fullWidth]}>
+          <AppButton
+            label="Create account"
+            loading={false}
+            onPress={() => navigation.navigate('PhoneNumber')}
+            containerStyle={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+              space(IconSizes.x4).mb,
+              {flex: 1},
+            ]}
+            labelStyle={{
+              ...FontWeights.Bold,
+              ...FontSizes.Body,
+            }}
+          />
+          <AppButton
+            label="Sign in"
+            loading={false}
+            onPress={() => navigation.navigate('SignIn')}
+            containerStyle={[
+              styles(theme).button,
+              styles(theme).buttonSecondary,
+              {flex: 1},
+            ]}
+            labelStyle={{
+              ...FontWeights.Bold,
+              ...FontSizes.Body,
+            }}
+          />
+        </View>
       </View>
     </View>
   );

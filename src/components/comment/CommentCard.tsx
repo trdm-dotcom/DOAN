@@ -69,7 +69,7 @@ const CommentCard = ({
               ...FontSizes.Body,
             },
           ]}>
-          <TouchableOpacity activeOpacity={0.95} onPress={navigateToProfile}>
+          <TouchableOpacity activeOpacity={0.9} onPress={navigateToProfile}>
             <Text style={[styles(theme).nameText]}>{name} </Text>
           </TouchableOpacity>
           {comment}

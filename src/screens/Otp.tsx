@@ -19,7 +19,6 @@ import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
 import {apiPost} from '../utils/Api';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderBar from '../components/header/HeaderBar';
-import {PressableOpacity} from 'react-native-pressable-opacity';
 import {AppContext} from '../context';
 import {IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
@@ -152,8 +151,7 @@ const Otp = ({navigation, route}: props) => {
           }
         />
       </View>
-      <KeyboardAvoidingView
-        style={[styles(theme).container, space(IconSizes.x10).mt]}>
+      <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -232,15 +230,15 @@ const Otp = ({navigation, route}: props) => {
             {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
             space(IconSizes.x5).mt,
           ]}>
-          <PressableOpacity
+          <TouchableOpacity
+            activeOpacity={0.9}
             onPress={handleContinue}
             style={[
               styles(theme).button,
               styles(theme).buttonPrimary,
               {width: 150},
             ]}
-            disabled={!isContinue || loading}
-            disabledOpacity={0.4}>
+            disabled={!isContinue || loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
@@ -264,7 +262,7 @@ const Otp = ({navigation, route}: props) => {
                 />
               </>
             )}
-          </PressableOpacity>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </View>

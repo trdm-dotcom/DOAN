@@ -13,7 +13,6 @@ import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderBar from '../components/header/HeaderBar';
-import {PressableOpacity} from 'react-native-pressable-opacity';
 import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {CONTENT_SPACING, IconSizes} from '../constants/Constants';
@@ -77,7 +76,6 @@ const SignIn = ({navigation}: props) => {
         await loginPassword(body);
         dispatch(authenticated());
       } catch (error: any) {
-        console.log(error);
         showError(error.message);
       } finally {
         setLoading(false);
@@ -107,8 +105,7 @@ const SignIn = ({navigation}: props) => {
           }
         />
       </View>
-      <KeyboardAvoidingView
-        style={[styles(theme).container, space(IconSizes.x10).mt]}>
+      <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
         <Text
           style={[
             {
@@ -174,15 +171,15 @@ const SignIn = ({navigation}: props) => {
           />
         </View>
         <View style={[styles(theme).row, styles(theme).displayBottom]}>
-          <PressableOpacity
+          <TouchableOpacity
+            activeOpacity={0.9}
             onPress={handleContinue}
             style={[
               styles(theme).button,
               styles(theme).buttonPrimary,
               {flex: 1},
             ]}
-            disabled={loading}
-            disabledOpacity={0.4}>
+            disabled={loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
@@ -197,18 +194,18 @@ const SignIn = ({navigation}: props) => {
                 Done
               </Text>
             )}
-          </PressableOpacity>
-          <PressableOpacity
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.9}
             onPress={() => {}}
             style={[styles(theme).button, space(IconSizes.x5).ml]}
-            disabled={loading}
-            disabledOpacity={0.4}>
+            disabled={loading}>
             <Ionicons
               name="finger-print-outline"
               size={IconSizes.x9}
               color={theme.text01}
             />
-          </PressableOpacity>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </View>

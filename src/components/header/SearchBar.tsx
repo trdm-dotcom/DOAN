@@ -1,10 +1,7 @@
 import React, {useContext} from 'react';
-import {Platform, StyleSheet, TextInput} from 'react-native';
-import Typography from '../../theme/Typography';
+import {TextInput} from 'react-native';
 import {AppContext} from '../../context';
-import {ThemeColors} from '../../constants/Types';
-
-const {FontWeights, FontSizes} = Typography;
+import {styles} from 'components/style';
 
 interface SearchBarProps {
   value: string;
@@ -29,7 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     <TextInput
       onFocus={onFocus}
       onBlur={onBlur}
-      style={[styles(theme).container, style]}
+      style={[styles(theme).inputSearchcontainer, style]}
       value={value}
       placeholder={placeholder}
       placeholderTextColor={theme.text02}
@@ -37,21 +34,5 @@ const SearchBar: React.FC<SearchBarProps> = ({
     />
   );
 };
-
-const styles = (theme = {} as ThemeColors) =>
-  StyleSheet.create({
-    container: {
-      ...FontWeights.Regular,
-      ...FontSizes.Body,
-      width: '90%',
-      alignSelf: 'center',
-      paddingVertical: Platform.select({ios: 10, android: 5}),
-      paddingHorizontal: 20,
-      backgroundColor: theme.placeholder,
-      color: theme.text01,
-      borderRadius: 20,
-      marginVertical: 5,
-    },
-  });
 
 export default SearchBar;
