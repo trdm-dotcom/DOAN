@@ -9,7 +9,7 @@ export const getSuggestFriend = async (queryParams: IParam) =>
 
 export const requestAddFriend = async (id: number) =>
   await apiPost<any>(
-    '/user/friend',
+    '/user/friend/request',
     {data: {friend: id}},
     {
       'Content-Type': 'application/json',

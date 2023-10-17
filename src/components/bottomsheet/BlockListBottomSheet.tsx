@@ -51,7 +51,6 @@ const BlockListBottomSheet = forwardRef<Modalize>(ref => {
       <UserCard
         userId={item.id}
         avatar={item.avatar}
-        handle={item.handle}
         name={item.name}
         onPress={() => null}
       />

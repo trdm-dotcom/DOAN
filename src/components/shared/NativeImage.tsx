@@ -8,7 +8,7 @@ type NativeImageProps = {
 };
 
 export const NativeImage = ({uri, style}: NativeImageProps) => {
-  if (!uri || !uri.includes('http')) {
+  if (!uri) {
     return <View style={style} />;
   }
   return (

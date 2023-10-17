@@ -8,7 +8,7 @@ const {FontWeights, FontSizes} = Typography;
 
 type BottomSheetHeaderProps = {
   heading: string;
-  subHeading: string;
+  subHeading?: string;
 };
 
 const BottomSheetHeader = ({heading, subHeading}: BottomSheetHeaderProps) => {
@@ -16,7 +16,7 @@ const BottomSheetHeader = ({heading, subHeading}: BottomSheetHeaderProps) => {
   return (
     <View style={styles().container}>
       <Text style={styles(theme).heading}>{heading}</Text>
-      <Text style={styles(theme).subHeading}>{subHeading}</Text>
+      {subHeading && <Text style={styles(theme).subHeading}>{subHeading}</Text>}
     </View>
   );
 };
@@ -26,12 +26,12 @@ const styles = (theme = {} as ThemeColors) =>
     container: {},
     heading: {
       ...FontWeights.Bold,
-      ...FontSizes.Label,
+      ...FontSizes.Heading,
       color: theme.text01,
     },
     subHeading: {
       ...FontWeights.Regular,
-      ...FontSizes.Body,
+      ...FontSizes.SubHeading,
       marginTop: 2,
       color: theme.text02,
     },

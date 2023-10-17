@@ -178,6 +178,7 @@ const Password = ({navigation, route}: props) => {
             ]}
           />
         </View>
+        <Text>Your password must be at least 8 characters</Text>
         <View
           style={[
             {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},

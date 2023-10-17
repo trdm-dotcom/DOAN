@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -11,6 +11,7 @@ import Typography from '../../theme/Typography';
 import {ThemeStatic} from '../../theme/Colors';
 import {IconSizes} from '../../constants/Constants';
 import {styles} from '../style';
+import {AppContext} from '../../context';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -35,6 +36,7 @@ const AppButton = ({
   indicatorColor,
   disabled,
 }: ButtonProps) => {
+  const {theme} = useContext(AppContext);
   let content = (
     <LoadingIndicator
       size={IconSizes.x1}
@@ -52,7 +54,7 @@ const AppButton = ({
               ...FontWeights.Regular,
               ...FontSizes.Body,
               marginLeft: 5,
-              color: ThemeStatic.white,
+              color: theme.text01,
             },
             labelStyle,
           ]}>

@@ -43,7 +43,6 @@ const IconButton = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-end',
-    width: 40,
   },
   badge: {
     position: 'absolute',
@@ -53,11 +52,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     top: -10,
     right: -10,
-    borderRadius: 20,
-    backgroundColor: ThemeStatic.badge,
+    borderRadius: 10,
+    backgroundColor: ThemeStatic.accent,
   },
   badgeText: {
-    ...FontWeights.Regular,
+    ...FontWeights.Bold,
     ...FontSizes.Caption,
     color: ThemeStatic.white,
   },

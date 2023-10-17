@@ -41,12 +41,9 @@ const UserCard = ({
       activeOpacity={0.9}
       onPress={onPress || navigateToProfile}
       style={[styles(theme).userCardContainer, style]}>
-      <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
-      <View style={styles().info}>
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={[styles(theme).nameText, space(IconSizes.x0).mt]}>
+      <View style={[styles(theme).row]}>
+        <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
+        <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
           {name}
         </Text>
       </View>

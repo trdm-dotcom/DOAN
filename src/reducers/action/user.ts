@@ -17,6 +17,9 @@ export type UserState = Readonly<typeof initialState>;
 export const getUserInfo = async (queryParams?: IParam) =>
   await apiGet<IUserInfoResponse>('/user/info', {params: queryParams});
 
+export const getUserInfos = async (queryParams?: IParam) =>
+  await apiGet<IUserInfoResponse[]>('/user/infos', {params: queryParams});
+
 export const putUserInfo = async (body: IUpdateUserInfoRequest) =>
   await apiPut<any>(
     '/user/info',

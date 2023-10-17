@@ -163,30 +163,24 @@ const Mail = ({navigation, route}: props) => {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
-            style={[
-              styles(theme).button,
-              styles(theme).buttonPrimary,
-              {width: 150},
-            ]}
+            style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
               <>
-                {isContinue && (
-                  <Text
-                    style={[
-                      styles(theme).centerText,
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                      },
-                    ]}>
-                    Next
-                  </Text>
-                )}
+                <Text
+                  style={[
+                    styles(theme).centerText,
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                    },
+                  ]}>
+                  Next
+                </Text>
                 <Ionicons
-                  name="arrow-forward-outline"
+                  name="arrow-forward"
                   size={IconSizes.x6}
                   color={theme.text01}
                 />

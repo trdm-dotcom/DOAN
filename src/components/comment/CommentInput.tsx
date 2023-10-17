@@ -105,7 +105,7 @@ const styles = (theme = {} as ThemeColors) =>
       paddingHorizontal: 20,
       backgroundColor: theme.placeholder,
       color: theme.text01,
-      borderRadius: 20,
+      borderRadius: 10,
       marginVertical: 5,
     },
     loading: {

@@ -4,18 +4,17 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {AuthStack} from './AuthStack';
 import {MainStack} from './MainStack';
 import {useAppSelector} from '../reducers/redux/store';
-import {PhotoFile} from 'react-native-vision-camera';
 
 export type RootStackParamList = {
   Feed: undefined;
   Start: undefined;
   Camera: undefined;
   Setting: undefined;
-  Name: undefined;
   PhoneNumber: undefined;
   SignIn: undefined;
   Notification: undefined;
-  Photo: {photo: PhotoFile};
+  Friend: undefined;
+  Profile: {userId: number};
   Mail: {
     phoneNumber: string;
     otpKey: string;

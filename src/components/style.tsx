@@ -132,21 +132,22 @@ export const styles = (theme = {} as ThemeColors) =>
       paddingHorizontal: 20,
       backgroundColor: theme.placeholder,
       color: theme.text01,
-      borderRadius: 20,
+      borderRadius: 10,
       marginVertical: 5,
     },
 
     // camera screen
     cameraContainer: {
       height: SCREEN_WIDTH - CONTENT_SPACING,
-      borderRadius: 27,
+      borderRadius: 40,
       backgroundColor: theme.placeholder,
+      overflow: 'hidden',
     },
     buttonCameraOption: {
       marginBottom: CONTENT_SPACING,
       width: 40,
       height: 40,
-      borderRadius: 40 / 2,
+      borderRadius: 40,
       backgroundColor: theme.placeholder,
       justifyContent: 'center',
       alignItems: 'center',
@@ -200,7 +201,7 @@ export const styles = (theme = {} as ThemeColors) =>
       width: '100%',
     },
     listContentContainer: {
-      alignItems: 'center',
+      // alignItems: 'center',
       justifyContent: 'flex-start',
     },
 
@@ -208,12 +209,7 @@ export const styles = (theme = {} as ThemeColors) =>
     userCardContainer: {
       flexDirection: 'row',
       borderRadius: 10,
-      width: '100%',
-    },
-    info: {
-      flex: 1,
-      justifyContent: 'center',
-      paddingLeft: 10,
+      justifyContent: 'space-between',
     },
     handleText: {
       ...FontWeights.Regular,
@@ -221,9 +217,10 @@ export const styles = (theme = {} as ThemeColors) =>
       color: theme.text01,
     },
     nameText: {
-      ...FontWeights.Light,
-      ...FontSizes.Caption,
+      ...FontWeights.Bold,
+      ...FontSizes.Body,
       color: theme.text01,
+      alignItems: 'center',
     },
     timeText: {
       ...FontWeights.Light,

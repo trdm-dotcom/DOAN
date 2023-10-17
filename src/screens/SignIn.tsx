@@ -201,7 +201,7 @@ const SignIn = ({navigation}: props) => {
             style={[styles(theme).button, space(IconSizes.x5).ml]}
             disabled={loading}>
             <Ionicons
-              name="finger-print-outline"
+              name="finger-print"
               size={IconSizes.x9}
               color={theme.text01}
             />

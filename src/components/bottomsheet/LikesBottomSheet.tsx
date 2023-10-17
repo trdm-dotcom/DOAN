@@ -10,7 +10,7 @@ import EmptyLikesBanner from '../../../assets/svg/empty-likes.svg';
 import {FlatGrid} from 'react-native-super-grid';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {getUserInfo} from '../../reducers/action/user';
+import {getUserInfos} from '../../reducers/action/user';
 import {showError} from '../../utils/Toast';
 import {styles} from '../style';
 
@@ -30,7 +30,7 @@ const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
 
     useEffect(() => {
       setLoading(true);
-      getUserInfo({userIds: userIds})
+      getUserInfos({userIds: userIds})
         .then(res => setUsers(res))
         .catch((err: any) => {
           setError(true);
@@ -52,7 +52,6 @@ const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
         <UserCard
           userId={item.id}
           avatar={item.avatar}
-          handle={item.handle}
           name={item.name}
           onPress={() => onUserPress(item.id)}
         />
