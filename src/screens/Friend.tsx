@@ -1,16 +1,17 @@
 import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
-import IFriendResponse from 'models/response/IFriendResponse';
 import {
-  FlatList,
   PermissionsAndroid,
   Platform,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import Contacts, {Contact} from 'react-native-contacts';
 import {
+  getFriendList,
+  getFriendRequest,
   getSuggestFriend,
   rejectFriend,
   requestAddFriend,
@@ -27,6 +28,10 @@ import Typography from '../theme/Typography';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import IconButton from '../components/control/IconButton';
+import {responsiveWidth} from 'react-native-responsive-dimensions';
+import {FlatGrid} from 'react-native-super-grid';
+import Header from '../components/header/Header';
+import IFriendResponse from 'models/response/IFriendResponse';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -37,25 +42,22 @@ const Friend = ({navigation}: props) => {
   const [listfriendSuggest, setListFriendSuggest] = useState<IFriendResponse[]>(
     [],
   );
+  const [listRequestFriend, setListRequestFriend] = useState<IFriendResponse[]>(
+    [],
+  );
+  const [listFriend, setListFriend] = useState<IFriendResponse[]>([]);
   const [contacts, setContacts] = useState<any>(null);
   const [search, setSearch] = useState<any>(null);
 
   useEffect(() => {
     getContacts();
-    fetchListSuggestFriend(contacts, search, pageNumber).then(
-      (friendList: IFriendResponse[]) => {
-        setListFriendSuggest(friendList);
-      },
-    );
   }, []);
 
   useEffect(() => {
-    // fetchListSuggestFriend(contacts, search, pageNumber).then(
-    //   (friendList: IFriendResponse[]) => {
-    //     setListFriendSuggest([...listfriendSuggest, ...friendList]);
-    //   },
-    // );
-  }, [pageNumber, search, contacts]);
+    fetchListRequestFriend(pageNumber);
+    fetchListFriend(pageNumber);
+    fetchListSuggestFriend(contacts, search, pageNumber);
+  }, [pageNumber]);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -100,19 +102,44 @@ const Friend = ({navigation}: props) => {
 
   const fetchListSuggestFriend = async (
     listContact: string[],
-    searchFriend: string,
+    searchFriend: any,
     page: number,
-  ): Promise<IFriendResponse[]> => {
+  ) => {
     try {
-      return await getSuggestFriend({
+      const friendList = await getSuggestFriend({
         phone: listContact,
         search: searchFriend,
         pageNumber: page,
         pageSize: Pagination.PAGE_SIZE,
       });
+      setListFriendSuggest([...listfriendSuggest, ...friendList]);
     } catch (err: any) {
       showError(err.message);
       return [];
+    }
+  };
+
+  const fetchListRequestFriend = async (page: number) => {
+    try {
+      const response = await getFriendRequest({
+        pageNumber: page,
+        pageSize: Pagination.PAGE_SIZE,
+      });
+      setListRequestFriend(response);
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const fetchListFriend = async (page: number) => {
+    try {
+      const response = await getFriendList({
+        pageNumber: page,
+        pageSize: Pagination.PAGE_SIZE,
+      });
+      setListFriend(response);
+    } catch (err: any) {
+      showError(err.message);
     }
   };
 
@@ -126,176 +153,255 @@ const Friend = ({navigation}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <View style={{height: 24}}>
-        <HeaderBar
-          firstChilden={
-            <TouchableOpacity
-              onPress={() => {
-                navigation.goBack();
-              }}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Ionicons
-                name="chevron-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
-              />
-            </TouchableOpacity>
-          }
-        />
-      </View>
-      <View style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <AnimatedSearchBar
-          value={search}
-          placeholder="Search"
-          onBlur={() => {}}
-          onFocus={() => {}}
-          onChangeText={handleOnChangeText}
-        />
-        <FlatList
-          scrollEnabled={false}
-          ListHeaderComponent={() => (
-            <View style={[styles(theme).row, space(IconSizes.x5).mt]}>
-              <Ionicons
-                name="checkmark-circle"
-                size={IconSizes.x6}
-                color={theme.text01}
-              />
-              <Text
-                style={[
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Label,
-                  },
-                  space(IconSizes.x1).ml,
-                ]}>
-                Send Request
-              </Text>
-            </View>
-          )}
-          ListHeaderComponentStyle={space(IconSizes.x5).mb}
-          showsVerticalScrollIndicator={false}
-          data={listfriendSuggest}
-          contentContainerStyle={styles(theme).listContentContainer}
-          renderItem={({item}) => (
-            <UserCard
-              userId={item.id}
-              avatar={item.avatar}
-              name={item.name}
-              childen={
-                <IconButton
-                  Icon={() => (
-                    <Ionicons
-                      name="close"
-                      size={IconSizes.x6}
-                      color={theme.accent}
-                      style={{
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: theme.placeholder,
-                        padding: IconSizes.x1,
-                        borderRadius: 50,
-                      }}
-                    />
-                  )}
-                  onPress={() => rejectFriend(item.id)}
-                />
-              }
+      <HeaderBar
+        firstChilden={
+          <TouchableOpacity
+            onPress={() => {
+              navigation.goBack();
+            }}
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Ionicons
+              name="chevron-back-outline"
+              size={IconSizes.x8}
+              color={theme.text01}
             />
-          )}
-          ItemSeparatorComponent={() => <View style={space(IconSizes.x2).mb} />}
-        />
-        <FlatList
-          scrollEnabled={false}
-          ListHeaderComponent={() => (
-            <View style={[styles(theme).row, space(IconSizes.x5).mt]}>
-              <Ionicons
-                name="person-add"
-                size={IconSizes.x6}
-                color={theme.text01}
-              />
-              <Text
-                style={[
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Label,
-                  },
-                  space(IconSizes.x1).ml,
-                ]}>
-                Suggestions
-              </Text>
-            </View>
-          )}
-          ListHeaderComponentStyle={space(IconSizes.x5).mb}
-          showsVerticalScrollIndicator={false}
-          data={listfriendSuggest}
-          contentContainerStyle={styles(theme).listContentContainer}
-          renderItem={({item}) => (
-            <UserCard
-              userId={item.id}
-              avatar={item.avatar}
-              name={item.name}
-              childen={
-                <AppButton
-                  label="Add"
-                  onPress={() => requestAddFriend(item.id)}
-                  containerStyle={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.accent,
-                    paddingHorizontal: IconSizes.x4,
-                    borderRadius: 50,
-                  }}
-                  Icon={() => (
-                    <Ionicons
-                      name="add"
-                      size={IconSizes.x6}
-                      color={theme.text01}
-                    />
-                  )}
-                />
-              }
-            />
-          )}
-          ItemSeparatorComponent={() => <View style={space(IconSizes.x2).mb} />}
-          ListFooterComponentStyle={space(IconSizes.x5).mt}
-          ListFooterComponent={() => (
-            <AppButton
-              label="Load More"
-              onPress={() => setPageNumber(pageNumber + 1)}
-              containerStyle={{
-                borderRadius: 50,
-              }}
-              Icon={() => (
-                <Ionicons
-                  name="add-circle-outline"
-                  size={IconSizes.x6}
-                  color={theme.accent}
-                />
-              )}
-            />
-          )}
-        />
-        <View style={[styles(theme).row]}>
-          <Ionicons
-            name="share-social-outline"
-            size={IconSizes.x6}
-            color={theme.text01}
+          </TouchableOpacity>
+        }
+      />
+      <ScrollView
+        stickyHeaderIndices={[0]}
+        showsVerticalScrollIndicator={false}>
+        <View style={[styles(theme).defaultBackground, space(IconSizes.x5).pv]}>
+          <Header title="Your friend" />
+          <AnimatedSearchBar
+            value={search}
+            placeholder="Search"
+            onBlur={() => {}}
+            onFocus={() => {}}
+            onChangeText={handleOnChangeText}
           />
-          <Text
-            style={[
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Label,
-              },
-              space(IconSizes.x1).ml,
-            ]}>
-            Invite from other apps
-          </Text>
+          <View style={[styles(theme).row]}>
+            <Ionicons
+              name="share-social-outline"
+              size={IconSizes.x6}
+              color={theme.text01}
+            />
+            <Text
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Label,
+                  color: theme.text01,
+                },
+                space(IconSizes.x1).ml,
+              ]}>
+              Invite from other apps
+            </Text>
+          </View>
         </View>
-      </View>
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+          {listRequestFriend.length > 0 && (
+            <>
+              <View style={[styles(theme).row]}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Label,
+                      color: theme.text01,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}>
+                  Send Request
+                </Text>
+              </View>
+              <FlatGrid
+                nestedScrollEnabled={true}
+                itemDimension={responsiveWidth(85)}
+                showsVerticalScrollIndicator={false}
+                data={listRequestFriend}
+                itemContainerStyle={styles().listItemContainer}
+                contentContainerStyle={styles().listContentContainer}
+                style={styles().listContainer}
+                spacing={20}
+                renderItem={({item}) => (
+                  <UserCard
+                    userId={item.id}
+                    avatar={item.avatar}
+                    name={item.name}
+                    childen={
+                      <IconButton
+                        Icon={() => (
+                          <Ionicons
+                            name="close"
+                            size={IconSizes.x6}
+                            color={theme.accent}
+                            style={{
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: theme.placeholder,
+                              padding: IconSizes.x1,
+                              borderRadius: 50,
+                            }}
+                          />
+                        )}
+                        onPress={() => rejectFriend(item.friendId)}
+                      />
+                    }
+                  />
+                )}
+              />
+            </>
+          )}
+          {listFriend.length > 0 && (
+            <>
+              <View style={[styles(theme).row]}>
+                <Ionicons
+                  name="people"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Label,
+                      color: theme.text01,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}>
+                  Your Friends
+                </Text>
+              </View>
+              <FlatGrid
+                nestedScrollEnabled={true}
+                itemDimension={responsiveWidth(85)}
+                showsVerticalScrollIndicator={false}
+                data={listFriend}
+                itemContainerStyle={styles().listItemContainer}
+                contentContainerStyle={styles().listContentContainer}
+                style={styles().listContainer}
+                spacing={20}
+                renderItem={({item}) => (
+                  <UserCard
+                    userId={item.id}
+                    avatar={item.avatar}
+                    name={item.name}
+                    childen={
+                      <IconButton
+                        Icon={() => (
+                          <Ionicons
+                            name="close"
+                            size={IconSizes.x6}
+                            color={theme.accent}
+                            style={{
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: theme.placeholder,
+                              padding: IconSizes.x1,
+                              borderRadius: 50,
+                            }}
+                          />
+                        )}
+                        onPress={() => rejectFriend(item.friendId)}
+                      />
+                    }
+                  />
+                )}
+              />
+            </>
+          )}
+          {listfriendSuggest.length > 0 && (
+            <>
+              <View style={[styles(theme).row]}>
+                <Ionicons
+                  name="bulb"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Label,
+                      color: theme.text01,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}>
+                  Suggestions
+                </Text>
+              </View>
+              <FlatGrid
+                nestedScrollEnabled={true}
+                itemDimension={responsiveWidth(85)}
+                showsVerticalScrollIndicator={false}
+                data={listfriendSuggest}
+                itemContainerStyle={styles().listItemContainer}
+                contentContainerStyle={styles().listContentContainer}
+                style={styles().listContainer}
+                spacing={20}
+                renderItem={({item}) => (
+                  <UserCard
+                    userId={item.id}
+                    avatar={item.avatar}
+                    name={item.name}
+                    childen={
+                      <AppButton
+                        label="Add"
+                        onPress={() => requestAddFriend(item.id)}
+                        containerStyle={{
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: theme.accent,
+                          paddingHorizontal: IconSizes.x5,
+                          borderRadius: 50,
+                        }}
+                        Icon={() => (
+                          <Ionicons
+                            name="add"
+                            size={IconSizes.x6}
+                            color={theme.text01}
+                          />
+                        )}
+                      />
+                    }
+                  />
+                )}
+                ListFooterComponent={() => (
+                  <AppButton
+                    label="Load More"
+                    onPress={() => setPageNumber(pageNumber + 1)}
+                    containerStyle={{
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      alignSelf: 'center',
+                      borderRadius: 50,
+                      backgroundColor: theme.placeholder,
+                      paddingHorizontal: IconSizes.x5,
+                      paddingVertical: IconSizes.x1,
+                    }}
+                    Icon={() => (
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={IconSizes.x6}
+                        color={theme.text01}
+                      />
+                    )}
+                  />
+                )}
+              />
+            </>
+          )}
+        </View>
+      </ScrollView>
     </View>
   );
 };

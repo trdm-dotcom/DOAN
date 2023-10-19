@@ -15,47 +15,24 @@ import {
   useCameraDevices,
 } from 'react-native-vision-camera';
 import {AppContext} from '../context';
-import {Linking, TouchableOpacity, View, StyleSheet, Text} from 'react-native';
+import {Linking, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {space, styles} from '../components/style';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import {useIsFocused} from '@react-navigation/core';
 import {useIsForeground} from '../hook/useIsForeground';
-import SettingsBottomSheet from '../components/bottomsheet/SettingsBottomSheet';
-import {Modalize} from 'react-native-modalize';
 import {showError} from '../utils/Toast';
 import IconButton from '../components/control/IconButton';
-import Typography from '../theme/Typography';
 import {NativeImage} from '../components/shared/NativeImage';
-
-const {FontWeights, FontSizes} = Typography;
+import {NativeVideo} from '../components/shared/NativeVideo';
+import Header from '../components/header/Header';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 
 const Camera = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
-
   const devices: CameraDevices = useCameraDevices();
-
   const cameraRef = useRef<CameraVision>(null);
-  const settingsBottomSheetRef = useRef<Modalize>(null);
-  const blockListBottomSheetRef = useRef<Modalize>(null);
-
-  // @ts-ignore
-  const onSettingsOpen = () => settingsBottomSheetRef.current?.open();
-  // @ts-ignore
-  const onSettingsClose = () => settingsBottomSheetRef.current?.close();
-  // @ts-ignore
-  const onBlockListOpen = () => blockListBottomSheetRef.current?.open();
-
-  const onBlockListPress = () => {
-    onSettingsClose();
-    onBlockListOpen();
-  };
-
-  const onAboutPress = () => {
-    onSettingsClose();
-  };
 
   const [cameraView, setCameraView] = useState('back');
   const [torch, setTorch] = useState<'on' | 'off' | 'auto'>('off');
@@ -85,7 +62,7 @@ const Camera = ({navigation}: props) => {
     if (permission === 'denied') {
       await Linking.openSettings();
     }
-  }, [devices]);
+  }, []);
 
   const takePhoto = async () => {
     try {
@@ -169,7 +146,7 @@ const Camera = ({navigation}: props) => {
               Icon={() => (
                 <Ionicons
                   name="people"
-                  size={IconSizes.x6}
+                  size={IconSizes.x7}
                   color={theme.text01}
                 />
               )}
@@ -184,12 +161,12 @@ const Camera = ({navigation}: props) => {
 
             <IconButton
               onPress={() => {
-                onSettingsOpen();
+                navigation.navigate('Setting');
               }}
               Icon={() => (
                 <Ionicons
-                  name="person-circle"
-                  size={IconSizes.x6}
+                  name="person-circle-outline"
+                  size={IconSizes.x7}
                   color={theme.text01}
                 />
               )}
@@ -203,19 +180,10 @@ const Camera = ({navigation}: props) => {
             />
           </>
         ) : (
-          <Text
-            style={[
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.SubHeading,
-                color: theme.text01,
-              },
-            ]}>
-            Send to...
-          </Text>
+          <Header title="Send to..." />
         )}
       </View>
-      <View style={[styles(theme).cameraContainer, space(IconSizes.x8).mt]}>
+      <View style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
         {device && showCamera && (
           <>
             <CameraVision
@@ -273,8 +241,14 @@ const Camera = ({navigation}: props) => {
             </View>
           </>
         )}
-        {!showCamera && imageSource && (
+        {!showCamera && imageSource && mode === 'photo' && (
           <NativeImage
+            uri={`file://${imageSource}`}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        {!showCamera && imageSource && mode === 'video' && (
+          <NativeVideo
             uri={`file://${imageSource}`}
             style={StyleSheet.absoluteFill}
           />
@@ -376,11 +350,6 @@ const Camera = ({navigation}: props) => {
           </>
         )}
       </View>
-      <SettingsBottomSheet
-        ref={settingsBottomSheetRef}
-        onBlockListPress={onBlockListPress}
-        onAboutPress={onAboutPress}
-      />
     </View>
   );
 };

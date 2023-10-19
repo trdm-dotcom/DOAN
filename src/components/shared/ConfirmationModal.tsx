@@ -5,12 +5,13 @@ import Modal from 'react-native-modal';
 import AppButton from '../control/AppButton';
 import {ThemeColors} from '../../constants/Types';
 import Typography from '../../theme/Typography';
+import {IconSizes} from '../../constants/Constants';
+import {space} from '../../components/style';
 
 const {FontWeights, FontSizes} = Typography;
 
 type ConfirmationModalProps = {
   title: string;
-  description: string;
   isVisible: boolean;
   toggle: () => void;
   label: string;
@@ -20,7 +21,6 @@ type ConfirmationModalProps = {
 
 const ConfirmationModal = ({
   title,
-  description,
   isVisible,
   toggle,
   label,
@@ -41,22 +41,29 @@ const ConfirmationModal = ({
       onBackdropPress={toggle}>
       <View style={styles(theme).container}>
         <Text style={styles(theme).heading}>{title}</Text>
-        <Text style={styles(theme).subHeading}>{description}</Text>
         <AppButton
           label={label}
           onPress={onConfirm}
           loading={false}
           containerStyle={[
-            styles().confirm,
-            {backgroundColor: color || theme.accent},
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: IconSizes.x5,
+            },
+            space(IconSizes.x5).mt,
           ]}
+          labelStyle={{color: color || theme.accent}}
         />
         <AppButton
           label="Cancel"
           onPress={toggle}
           loading={false}
           labelStyle={{color: theme.text02}}
-          containerStyle={[styles().cancel, {backgroundColor: theme.base}]}
+          containerStyle={[
+            space(IconSizes.x5).mt,
+            {backgroundColor: theme.base},
+          ]}
         />
       </View>
     </Modal>
@@ -71,18 +78,10 @@ const styles = (theme = {} as ThemeColors) =>
       backgroundColor: theme.base,
     },
     heading: {
-      ...FontWeights.Regular,
+      ...FontWeights.Bold,
       ...FontSizes.Label,
       color: theme.text01,
     },
-    subHeading: {
-      ...FontWeights.Light,
-      ...FontSizes.Body,
-      marginTop: 10,
-      color: theme.text02,
-    },
-    confirm: {marginTop: 40},
-    cancel: {marginTop: 10},
   });
 
 export default ConfirmationModal;

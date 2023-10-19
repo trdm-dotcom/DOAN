@@ -232,4 +232,21 @@ export const styles = (theme = {} as ThemeColors) =>
       flex: 1,
       paddingHorizontal: 4,
     },
+
+    //group options settings
+    groupOptionContainer: {
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    appOptions: {
+      backgroundColor: theme.placeholder,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    labelOption: {
+      ...FontWeights.Bold,
+      ...FontSizes.Body,
+      marginLeft: 10,
+      color: theme.text01,
+    },
   });

@@ -1,4 +1,6 @@
-import React, {useContext, useEffect, useState} from 'react';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../navigators/RootStack';
+import React, {useContext, useState} from 'react';
 import {
   KeyboardAvoidingView,
   Text,
@@ -7,45 +9,44 @@ import {
   View,
 } from 'react-native';
 import {space, styles} from '../components/style';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigators/RootStack';
+import {AppContext} from '../context';
+import HeaderBar from '../components/header/HeaderBar';
+import IconButton from '../components/control/IconButton';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {IconSizes} from '../constants/Constants';
+import Header from '../components/header/Header';
+import Typography from '../theme/Typography';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import HeaderBar from '../components/header/HeaderBar';
-import {AppContext} from '../context';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {ICheckExistRequest} from '../models/request/ICheckExistRequest';
 import {ICheckExistResponse} from '../models/response/ICheckExistResponse';
-import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {IconSizes} from '../constants/Constants';
-import Typography from '../theme/Typography';
 import {checkExist} from '../reducers/action/authentications';
-import IOtpResponse from '../models/response/IOtpResponse';
-import {apiPost} from '../utils/Api';
 import {OtpIdType} from '../models/enum/OtpIdType';
 import {OtpTxtType} from '../models/enum/OtpTxtType';
-import Header from '../components/header/Header';
-import IconButton from '../components/control/IconButton';
-import DeviceNumber from 'react-native-device-number';
+import IOtpResponse from '../models/response/IOtpResponse';
+import {apiPost} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
 
-type props = NativeStackScreenProps<RootStackParamList, 'PhoneNumber'>;
+type props = NativeStackScreenProps<RootStackParamList, 'Reset'>;
 
-const PhoneNumber = ({navigation}: props) => {
+const Reset = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [isContinue, setIsContinue] = useState<boolean>(false);
+  const [id, setId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [isContinue, setIsContinue] = useState<boolean>(false);
 
-  useEffect(() => {
-    DeviceNumber.get().then(({mobileNumber}) => {
-      setPhoneNumber(mobileNumber.replace('+84', '0'));
-    });
-  }, []);
+  const handleOnChangeText = (text: string) => {
+    const verify: boolean = text.trim().length > 0;
+    setIsContinue(verify);
+    if (verify) {
+      setId(text.trim());
+    }
+  };
 
   const isValidData = () => {
-    const error = checkEmpty(phoneNumber, 'Please enter your phome number');
+    const error = checkEmpty(id, 'Please enter your phone number');
     if (error) {
       showError(error);
       return false;
@@ -53,25 +54,18 @@ const PhoneNumber = ({navigation}: props) => {
     return true;
   };
 
-  const handleOnChangePhoneNumber = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    setIsContinue(verify);
-    if (verify) {
-      setPhoneNumber(text.trim());
-    }
-  };
-
   const handleContinue = async () => {
     if (isValidData()) {
       try {
         setLoading(true);
+        setLoading(true);
         const body: ICheckExistRequest = {
-          value: phoneNumber,
+          value: id,
         };
         const responseCheckExist: ICheckExistResponse = await checkExist(body);
-        if (!responseCheckExist.isExist) {
+        if (responseCheckExist.isExist) {
           const bodyGetOtp = {
-            id: phoneNumber,
+            id: id,
             idType: OtpIdType.SMS,
             txtType: OtpTxtType.VERIFY,
           };
@@ -83,12 +77,12 @@ const PhoneNumber = ({navigation}: props) => {
             },
           );
           navigation.navigate('Otp', {
-            phoneNumber: phoneNumber,
+            phoneNumber: id,
             otpId: responseGetOtp.otpId,
-            nextStep: 'Mail',
+            nextStep: 'NewPassword',
           });
         } else {
-          showError('This phone number is already in use');
+          showError('Your account is not exist');
         }
       } catch (error: any) {
         showError(error.message);
@@ -117,7 +111,7 @@ const PhoneNumber = ({navigation}: props) => {
         }
       />
       <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <Header title="Phone Number" />
+        <Header title="Forgot Password" />
         <Text
           style={[
             {
@@ -126,12 +120,12 @@ const PhoneNumber = ({navigation}: props) => {
               color: theme.text02,
             },
           ]}>
-          Enter your phone number
+          Let's help recover your account
         </Text>
-        <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
+        <View style={[styles(theme).inputContainer]}>
           <TextInput
-            value={phoneNumber}
-            onChangeText={handleOnChangePhoneNumber}
+            value={id}
+            onChangeText={handleOnChangeText}
             style={[
               styles(theme).inputField,
               {
@@ -142,40 +136,34 @@ const PhoneNumber = ({navigation}: props) => {
             ]}
             keyboardType="numeric"
             autoFocus
+            placeholder="Phone Number"
             placeholderTextColor={theme.text02}
           />
         </View>
-        <View
-          style={[
-            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
-            space(IconSizes.x5).mt,
-          ]}>
+        <View style={[styles(theme).row, styles(theme).displayBottom]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
-            style={[styles(theme).button, styles(theme).buttonPrimary]}
+            style={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+              {flex: 1},
+            ]}
             disabled={!isContinue || loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
             ) : (
-              <>
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                    styles(theme).centerText,
-                  ]}>
-                  Next
-                </Text>
-                <Ionicons
-                  name="arrow-forward"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
-              </>
+              <Text
+                style={[
+                  styles(theme).centerText,
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: theme.text01,
+                  },
+                ]}>
+                Done
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -184,4 +172,4 @@ const PhoneNumber = ({navigation}: props) => {
   );
 };
 
-export default PhoneNumber;
+export default Reset;

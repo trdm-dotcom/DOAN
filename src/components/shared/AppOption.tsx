@@ -1,71 +1,46 @@
 import React, {useContext} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import Typography from '../../theme/Typography';
+import {Text, View} from 'react-native';
 import {AppContext} from '../../context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../../constants/Constants';
-
-const {FontWeights, FontSizes} = Typography;
+import {space, styles} from '../../components/style';
 
 type OptionProps = {
-  label?: string;
+  label: string;
   iconName: string;
-  onPress?: () => void;
-  children?: any;
   color?: string;
+  children?: React.ReactNode;
 };
 
-const AppOption = ({
-  label,
-  iconName,
-  onPress,
-  children,
-  color,
-}: OptionProps) => {
+const AppOption = ({label, iconName, color, children}: OptionProps) => {
   const {theme} = useContext(AppContext);
 
-  if (children) {
-    return (
-      <View style={styles().container}>
+  return (
+    <View
+      style={[
+        styles(theme).row,
+        styles(theme).appOptions,
+        space(IconSizes.x5).ph,
+        space(IconSizes.x5).pv,
+      ]}>
+      <View style={[styles(theme).row]}>
         <Ionicons
           name={iconName}
-          size={IconSizes.x5}
+          size={IconSizes.x6}
           color={color || theme.text01}
         />
-        {children}
+        <Text
+          style={[
+            styles(theme).labelOption,
+            {color: color || theme.text01},
+            space(IconSizes.x1).ml,
+          ]}>
+          {label}
+        </Text>
       </View>
-    );
-  }
-
-  return (
-    <TouchableOpacity
-      style={styles().container}
-      activeOpacity={0.9}
-      onPress={onPress}>
-      <Ionicons
-        name={iconName}
-        size={IconSizes.x6}
-        color={color || theme.text01}
-      />
-      <Text style={[styles().label, {color: color || theme.text01}]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+      {children}
+    </View>
   );
 };
-
-const styles = () =>
-  StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginVertical: 8,
-    },
-    label: {
-      ...FontWeights.Regular,
-      ...FontSizes.Body,
-      marginLeft: 10,
-    },
-  });
 
 export default AppOption;

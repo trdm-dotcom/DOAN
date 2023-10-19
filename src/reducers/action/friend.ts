@@ -16,8 +16,10 @@ export const requestAddFriend = async (id: number) =>
     },
   );
 
-export const getFriendRequest = async () =>
-  await apiGet<IFriendResponse[]>('/user/friend/request');
+export const getFriendRequest = async (queryParams: IParam) =>
+  await apiGet<IFriendResponse[]>('/user/friend/request', {
+    params: queryParams,
+  });
 
 export const acceptFriendRequest = async (id: number) =>
   await apiPut<any>(
@@ -33,8 +35,10 @@ export const acceptFriendRequest = async (id: number) =>
 export const rejectFriend = async (id: number) =>
   await apiDelete<any>('user/friend', {params: {friend: id}});
 
-export const getFriendList = async () =>
-  await apiGet<IFriendResponse[]>('/user/friend');
+export const getFriendList = async (queryParams: IParam) =>
+  await apiGet<IFriendResponse[]>('/user/friend', {
+    params: queryParams,
+  });
 
 export const blockUser = async (id: number) =>
   await apiPost<any>(
@@ -48,4 +52,5 @@ export const blockUser = async (id: number) =>
 export const unblockUser = async (id: number) =>
   await apiDelete<any>('/user/friend/block', {params: {block: id}});
 
-export const getBlockList = async () => await apiGet<any[]>('/user/friend/block');
+export const getBlockList = async () =>
+  await apiGet<any[]>('/user/friend/block');

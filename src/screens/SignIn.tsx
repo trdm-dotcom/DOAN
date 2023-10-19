@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   KeyboardAvoidingView,
   Text,
@@ -23,6 +23,8 @@ import {getHash} from '../utils/Crypto';
 import {useAppDispatch} from '../reducers/redux/store';
 import IconButton from '../components/control/IconButton';
 import {authenticated} from '../reducers/redux/authentication.reducer';
+import Header from '../components/header/Header';
+import DeviceNumber from 'react-native-device-number';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -35,6 +37,12 @@ const SignIn = ({navigation}: props) => {
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    DeviceNumber.get().then(({mobileNumber}) => {
+      setUsername(mobileNumber.replace('+84', '0'));
+    });
+  }, []);
 
   const isValidData = () => {
     const error = checkEmpty(
@@ -85,37 +93,24 @@ const SignIn = ({navigation}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <View style={{height: 24}}>
-        <HeaderBar
-          firstChilden={
-            <TouchableOpacity
-              onPress={() => {
-                navigation.goBack();
-              }}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+      <HeaderBar
+        firstChilden={
+          <IconButton
+            Icon={() => (
               <Ionicons
                 name="chevron-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
-            </TouchableOpacity>
-          }
-        />
-      </View>
+            )}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+        }
+      />
       <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <Text
-          style={[
-            {
-              ...FontWeights.Bold,
-              ...FontSizes.SubHeading,
-              color: theme.text01,
-            },
-          ]}>
-          Sign In
-        </Text>
+        <Header title="Sign In" />
         <Text
           style={[
             {
@@ -128,12 +123,14 @@ const SignIn = ({navigation}: props) => {
         </Text>
         <View style={[styles(theme).inputContainer]}>
           <TextInput
+            value={username}
             onChangeText={handleOnUsernameChangeText}
             style={[
               styles(theme).inputField,
               {
                 ...FontWeights.Bold,
                 ...FontSizes.Body,
+                color: theme.text01,
               },
             ]}
             autoFocus
@@ -149,6 +146,7 @@ const SignIn = ({navigation}: props) => {
               {
                 ...FontWeights.Bold,
                 ...FontSizes.Body,
+                color: theme.text01,
               },
               {flex: 1},
             ]}
@@ -170,6 +168,25 @@ const SignIn = ({navigation}: props) => {
             )}
           />
         </View>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'flex-end',
+          }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Reset')}>
+            <Text
+              style={[
+                styles(theme).centerText,
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  color: theme.accent,
+                },
+              ]}>
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
+        </View>
         <View style={[styles(theme).row, styles(theme).displayBottom]}>
           <TouchableOpacity
             activeOpacity={0.9}
@@ -189,6 +206,7 @@ const SignIn = ({navigation}: props) => {
                   {
                     ...FontWeights.Bold,
                     ...FontSizes.Body,
+                    color: theme.text01,
                   },
                 ]}>
                 Done

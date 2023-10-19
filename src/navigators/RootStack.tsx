@@ -14,6 +14,11 @@ export type RootStackParamList = {
   SignIn: undefined;
   Notification: undefined;
   Friend: undefined;
+  Reset: undefined;
+  NewPassword: {
+    username: string;
+    otpKey: string;
+  };
   Profile: {userId: number};
   Mail: {
     phoneNumber: string;
@@ -28,6 +33,7 @@ export type RootStackParamList = {
   Otp: {
     phoneNumber: string;
     otpId: string;
+    nextStep: keyof RootStackParamList;
   };
 };
 

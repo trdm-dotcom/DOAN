@@ -1,41 +1,36 @@
-import React, {useContext, useState} from 'react';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../navigators/RootStack';
+import Typography from '../theme/Typography';
+import {AppContext} from 'context';
+import {useContext, useState} from 'react';
+import React from 'react';
 import {
   KeyboardAvoidingView,
   Text,
-  View,
   TextInput,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import {space, styles} from '../components/style';
-import {getHash} from '../utils/Crypto';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigators/RootStack';
+import HeaderBar from '../components/header/HeaderBar';
+import IconButton from '../components/control/IconButton';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {IconSizes} from '../constants/Constants';
+import Header from '../components/header/Header';
+import CheckBox from 'react-native-check-box';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
-import {IconSizes} from '../constants/Constants';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
-  register,
-  password as loginPassword,
-} from '../reducers/action/authentications';
-import {useAppDispatch} from '../reducers/redux/store';
-import HeaderBar from '../components/header/HeaderBar';
-import {AppContext} from '../context';
-import LoadingIndicator from '../components/shared/LoadingIndicator';
-import Typography from '../theme/Typography';
-import CheckBox from 'react-native-check-box';
-import {authenticated} from '../reducers/redux/authentication.reducer';
-import Header from '../components/header/Header';
-import IconButton from '../components/control/IconButton';
+import IChangePasswordRequest from '../models/request/IResetPasswordRequest';
+import {getHash} from '../utils/Crypto';
+import {apiPost} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
 
-type props = NativeStackScreenProps<RootStackParamList, 'Password'>;
-
-const Password = ({navigation, route}: props) => {
+type props = NativeStackScreenProps<RootStackParamList, 'NewPassword'>;
+const NewPassword = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
-  const dispatch = useAppDispatch();
-  const {name, phoneNumber, mail, otpKey} = route.params;
+  const {username, otpKey} = route.params;
   const [password, setPassword] = useState<string>('');
   const [isContinue, setIsContinue] = useState<boolean>(false);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
@@ -62,22 +57,13 @@ const Password = ({navigation, route}: props) => {
     if (isValidData()) {
       try {
         setLoading(true);
-        await register({
-          username: phoneNumber,
-          password: password,
-          name: name,
+        const body: IChangePasswordRequest = {
+          username: username,
           otpKey: otpKey,
-          mail: mail,
-          hash: getHash('REGISTER'),
-        });
-        await loginPassword({
-          username: phoneNumber,
-          password: password,
-          grant_type: 'password',
-          client_secret: 'iW4rurIrZJ',
+          newPassword: password,
           hash: getHash('LOGIN'),
-        });
-        dispatch(authenticated());
+        };
+        await apiPost<any>('/user/resetPassword', body);
       } catch (error: any) {
         showError(error.message);
       } finally {
@@ -105,7 +91,7 @@ const Password = ({navigation, route}: props) => {
         }
       />
       <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <Header title="Password" />
+        <Header title="Pick a new Password" />
         <Text
           style={[
             {
@@ -179,15 +165,15 @@ const Password = ({navigation, route}: props) => {
           ]}>
           Your password must be at least 8 characters
         </Text>
-        <View
-          style={[
-            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
-            space(IconSizes.x5).mt,
-          ]}>
+        <View style={[styles(theme).row, styles(theme).displayBottom]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
-            style={[styles(theme).button, styles(theme).buttonPrimary]}
+            style={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+              {flex: 1},
+            ]}
             disabled={!isContinue || loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
@@ -201,7 +187,7 @@ const Password = ({navigation, route}: props) => {
                     color: theme.text01,
                   },
                 ]}>
-                Create my account
+                Done
               </Text>
             )}
           </TouchableOpacity>
@@ -211,4 +197,4 @@ const Password = ({navigation, route}: props) => {
   );
 };
 
-export default Password;
+export default NewPassword;

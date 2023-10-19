@@ -23,6 +23,8 @@ import {AppContext} from '../context';
 import {IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
+import Header from '../components/header/Header';
+import IconButton from '../components/control/IconButton';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -30,7 +32,7 @@ type props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
 
 const Otp = ({navigation, route}: props) => {
   const {theme, fcmToken} = useContext(AppContext);
-  const {phoneNumber, otpId} = route.params;
+  const {phoneNumber, otpId, nextStep} = route.params;
   const [otpValue, setOtpValue] = useState<string>('');
   const [otp, setOtp] = useState<string>(otpId);
   const [minutes, setMinutes] = useState<number>(1);
@@ -119,7 +121,7 @@ const Otp = ({navigation, route}: props) => {
             'Content-Type': 'application/json',
           },
         );
-        navigation.replace('Mail', {
+        navigation.replace(nextStep, {
           phoneNumber: phoneNumber,
           otpKey: response.otpKey,
         });
@@ -131,37 +133,24 @@ const Otp = ({navigation, route}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <View style={{height: 24}}>
-        <HeaderBar
-          firstChilden={
-            <TouchableOpacity
-              onPress={() => {
-                navigation.goBack();
-              }}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+      <HeaderBar
+        firstChilden={
+          <IconButton
+            Icon={() => (
               <Ionicons
                 name="chevron-back-outline"
-                size={IconSizes.x6}
+                size={IconSizes.x8}
                 color={theme.text01}
               />
-            </TouchableOpacity>
-          }
-        />
-      </View>
+            )}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+        }
+      />
       <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <Text
-          style={[
-            {
-              ...FontWeights.Bold,
-              ...FontSizes.SubHeading,
-              color: theme.text01,
-            },
-          ]}>
-          OTP sent
-        </Text>
+        <Header title="OTP sent" />
         <Text
           style={[
             {

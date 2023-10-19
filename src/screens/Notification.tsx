@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
-import {TouchableOpacity, View} from 'react-native';
+import {View} from 'react-native';
 import {styles} from '../components/style';
 import HeaderBar from '../components/header/HeaderBar';
 import {AppContext} from '../context';
@@ -19,6 +19,7 @@ import {
   getNotifications,
   remarkNotification,
 } from '../reducers/action/notification';
+import IconButton from '../components/control/IconButton';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
 
@@ -97,28 +98,24 @@ const Notification = ({navigation}: props) => {
   }
 
   <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-    <View style={{height: 24}}>
-      <HeaderBar
-        firstChilden={
-          <TouchableOpacity
-            onPress={() => {
-              navigation.goBack();
-            }}
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+    <HeaderBar
+      firstChilden={
+        <IconButton
+          Icon={() => (
             <Ionicons
               name="chevron-back-outline"
-              size={IconSizes.x6}
+              size={IconSizes.x8}
               color={theme.text01}
             />
-          </TouchableOpacity>
-        }
-      />
-      <Header title="Notifications" />
-      {content}
-    </View>
+          )}
+          onPress={() => {
+            navigation.goBack();
+          }}
+        />
+      }
+    />
+    <Header title="Notifications" />
+    {content}
   </View>;
 };
 

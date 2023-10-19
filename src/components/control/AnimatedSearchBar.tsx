@@ -27,8 +27,8 @@ type AnimatedSearchBarProps = {
 };
 
 const TransitionInput = posed(TextInput)({
-  focused: {width: '75%'},
-  notFocused: {width: '90%'},
+  focused: {width: '80%'},
+  notFocused: {width: '100%'},
 });
 
 const TransitionTouchableOpacity = posed(TouchableOpacity)({
@@ -88,18 +88,16 @@ const styles = (theme = {} as ThemeColors) =>
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingBottom: 5,
     },
     animatedSearchBar: {
       ...FontWeights.Light,
       ...FontSizes.Body,
-      marginLeft: 20,
-      paddingVertical: Platform.select({ios: 10, android: 5}),
+      paddingVertical: Platform.select({ios: 10, android: 10}),
       paddingHorizontal: 20,
       backgroundColor: theme.placeholder,
       color: theme.text01,
       borderRadius: 10,
-      marginVertical: 5,
+      marginVertical: 10,
     },
     cancel: {
       height: 20,
@@ -108,7 +106,7 @@ const styles = (theme = {} as ThemeColors) =>
     },
     cancelText: {
       height: 20,
-      ...FontWeights.Light,
+      ...FontWeights.Regular,
       ...FontSizes.Body,
       color: theme.text01,
     },

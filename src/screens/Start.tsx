@@ -32,6 +32,7 @@ const Start = ({navigation}: props) => {
             labelStyle={{
               ...FontWeights.Bold,
               ...FontSizes.Body,
+              color: theme.text01,
             }}
           />
           <AppButton
@@ -46,6 +47,7 @@ const Start = ({navigation}: props) => {
             labelStyle={{
               ...FontWeights.Bold,
               ...FontSizes.Body,
+              color: theme.text01,
             }}
           />
         </View>

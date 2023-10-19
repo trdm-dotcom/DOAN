@@ -20,6 +20,8 @@ import {ICheckExistRequest} from '../models/request/ICheckExistRequest';
 import {IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
 import {checkExist} from '../reducers/action/authentications';
+import Header from '../components/header/Header';
+import IconButton from '../components/control/IconButton';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -85,37 +87,24 @@ const Mail = ({navigation, route}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <View style={{height: 24}}>
-        <HeaderBar
-          firstChilden={
-            <TouchableOpacity
-              onPress={() => {
-                navigation.goBack();
-              }}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+      <HeaderBar
+        firstChilden={
+          <IconButton
+            Icon={() => (
               <Ionicons
                 name="chevron-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
-            </TouchableOpacity>
-          }
-        />
-      </View>
+            )}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+        }
+      />
       <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <Text
-          style={[
-            {
-              ...FontWeights.Bold,
-              ...FontSizes.SubHeading,
-              color: theme.text01,
-            },
-          ]}>
-          Personal Infomation
-        </Text>
+        <Header title="Personal Infomation" />
         <Text
           style={[
             {
@@ -134,6 +123,7 @@ const Mail = ({navigation, route}: props) => {
               {
                 ...FontWeights.Bold,
                 ...FontSizes.Body,
+                color: theme.text01,
               },
             ]}
             autoFocus
@@ -149,8 +139,10 @@ const Mail = ({navigation, route}: props) => {
               {
                 ...FontWeights.Bold,
                 ...FontSizes.Body,
+                color: theme.text01,
               },
             ]}
+            keyboardType="email-address"
             placeholder="Email Address"
             placeholderTextColor={theme.text02}
           />
@@ -175,6 +167,7 @@ const Mail = ({navigation, route}: props) => {
                     {
                       ...FontWeights.Bold,
                       ...FontSizes.Body,
+                      color: theme.text01,
                     },
                   ]}>
                   Next
