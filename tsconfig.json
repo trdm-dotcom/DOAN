@@ -13,18 +13,7 @@
     "strict": true,
     "target": "esnext",
     "baseUrl": ".",
-    "noImplicitAny": false,
-    "paths": {
-      "*": [
-        "./src/*",
-      ],
-      "@app/*": [
-        "./src/*"
-      ],
-      "@app/assets/*": [
-        "./assets/*"
-      ],
-    },                        /* Skip type checking all .d.ts files. */
+    "noImplicitAny": false,                     /* Skip type checking all .d.ts files. */
   },
   "exclude": [
     "node_modules",

@@ -37,25 +37,23 @@ const Password = ({navigation, route}: props) => {
   const dispatch = useAppDispatch();
   const {name, phoneNumber, mail, otpKey} = route.params;
   const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isContinue, setIsContinue] = useState<boolean>(false);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const isValidData = () => {
-    const error = checkEmpty(password, 'Please enter your password');
+    const error =
+      checkEmpty(password, 'Please enter your password') ||
+      checkEmpty(confirmPassword, 'Please enter your confirm password') ||
+      (password !== confirmPassword
+        ? 'Password and confirm password do not match'
+        : null);
     if (error) {
       showError(error);
       return false;
     }
     return true;
-  };
-
-  const handleOnChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    setIsContinue(verify);
-    if (verify) {
-      setPassword(text.trim());
-    }
   };
 
   const handleContinue = async () => {
@@ -118,7 +116,13 @@ const Password = ({navigation, route}: props) => {
         </Text>
         <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
-            onChangeText={handleOnChangeText}
+            onChangeText={(text: string) => {
+              const verify: boolean = text.trim().length > 0;
+              setIsContinue(verify);
+              if (verify) {
+                setPassword(text.trim());
+              }
+            }}
             style={[
               styles(theme).inputField,
               {
@@ -136,7 +140,13 @@ const Password = ({navigation, route}: props) => {
         </View>
         <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
-            onChangeText={handleOnChangeText}
+            onChangeText={(text: string) => {
+              const verify: boolean = text.trim().length > 0;
+              setIsContinue(verify);
+              if (verify) {
+                setConfirmPassword(text.trim());
+              }
+            }}
             style={[
               styles(theme).inputField,
               {
@@ -151,7 +161,7 @@ const Password = ({navigation, route}: props) => {
             placeholderTextColor={theme.text02}
           />
         </View>
-        <View style={{alignItems: 'flex-end'}}>
+        <View style={{flex: 1, alignItems: 'flex-end'}}>
           <CheckBox
             style={{flex: 1, padding: 10}}
             onClick={() => {
@@ -181,7 +191,7 @@ const Password = ({navigation, route}: props) => {
         </Text>
         <View
           style={[
-            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
+            {flex: 1, justifyContent: 'flex-end'},
             space(IconSizes.x5).mt,
           ]}>
           <TouchableOpacity

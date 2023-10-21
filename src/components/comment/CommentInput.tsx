@@ -91,8 +91,8 @@ const styles = (theme = {} as ThemeColors) =>
       backgroundColor: theme.base,
     },
     commentAvatarImage: {
-      height: 36,
-      width: 36,
+      height: 30,
+      width: 30,
       backgroundColor: theme.placeholder,
       marginRight: 10,
       borderRadius: 50,

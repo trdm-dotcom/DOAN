@@ -249,11 +249,9 @@ export const styles = (theme = {} as ThemeColors) =>
       marginLeft: 10,
       color: theme.text01,
     },
-    avatar: {
+    avatarImage: {
       height: 110,
       width: 110,
-    },
-    avatarImage: {
       backgroundColor: theme.placeholder,
       borderRadius: 110,
     },

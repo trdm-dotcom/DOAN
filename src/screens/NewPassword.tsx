@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
 import Typography from '../theme/Typography';
-import {AppContext} from 'context';
+import {AppContext} from '../context';
 import {useContext, useState} from 'react';
 import React from 'react';
 import {
@@ -21,7 +21,7 @@ import CheckBox from 'react-native-check-box';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {checkEmpty} from '../utils/Validate';
 import {showError} from '../utils/Toast';
-import IChangePasswordRequest from '../models/request/IResetPasswordRequest';
+import IChangePasswordRequest from '../models/request/IChangePasswordRequest';
 import {getHash} from '../utils/Crypto';
 import {apiPost} from '../utils/Api';
 
@@ -32,25 +32,23 @@ const NewPassword = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
   const {username, otpKey} = route.params;
   const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isContinue, setIsContinue] = useState<boolean>(false);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const isValidData = () => {
-    const error = checkEmpty(password, 'Please enter your password');
+    const error =
+      checkEmpty(password, 'Please enter your password') ||
+      checkEmpty(confirmPassword, 'Please enter your confirm password') ||
+      (password !== confirmPassword
+        ? 'Password and confirm password do not match'
+        : null);
     if (error) {
       showError(error);
       return false;
     }
     return true;
-  };
-
-  const handleOnChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    setIsContinue(verify);
-    if (verify) {
-      setPassword(text.trim());
-    }
   };
 
   const handleContinue = async () => {
@@ -61,7 +59,7 @@ const NewPassword = ({navigation, route}: props) => {
           username: username,
           otpKey: otpKey,
           newPassword: password,
-          hash: getHash('LOGIN'),
+          hash: getHash('PASSWORD'),
         };
         await apiPost<any>('/user/resetPassword', body);
       } catch (error: any) {
@@ -104,7 +102,13 @@ const NewPassword = ({navigation, route}: props) => {
         </Text>
         <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
-            onChangeText={handleOnChangeText}
+            onChangeText={(text: string) => {
+              const verify: boolean = text.trim().length > 0;
+              setIsContinue(verify);
+              if (verify) {
+                setPassword(text.trim());
+              }
+            }}
             style={[
               styles(theme).inputField,
               {
@@ -122,7 +126,13 @@ const NewPassword = ({navigation, route}: props) => {
         </View>
         <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
-            onChangeText={handleOnChangeText}
+            onChangeText={(text: string) => {
+              const verify: boolean = text.trim().length > 0;
+              setIsContinue(verify);
+              if (verify) {
+                setConfirmPassword(text.trim());
+              }
+            }}
             style={[
               styles(theme).inputField,
               {
@@ -165,15 +175,15 @@ const NewPassword = ({navigation, route}: props) => {
           ]}>
           Your password must be at least 8 characters
         </Text>
-        <View style={[styles(theme).row, styles(theme).displayBottom]}>
+        <View
+          style={[
+            {flex: 1, justifyContent: 'flex-end'},
+            space(IconSizes.x5).mt,
+          ]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
-            style={[
-              styles(theme).button,
-              styles(theme).buttonPrimary,
-              {flex: 1},
-            ]}
+            style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />

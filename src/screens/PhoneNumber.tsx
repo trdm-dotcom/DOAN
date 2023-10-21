@@ -147,7 +147,7 @@ const PhoneNumber = ({navigation}: props) => {
         </View>
         <View
           style={[
-            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
+            {flex: 1, justifyContent: 'flex-end'},
             space(IconSizes.x5).mt,
           ]}>
           <TouchableOpacity

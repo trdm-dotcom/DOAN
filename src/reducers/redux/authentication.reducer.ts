@@ -24,11 +24,11 @@ export const AuthenticationSlice = createSlice({
     logout: () => ({
       ...initialState,
     }),
-    getAccountInfo: (state, action) => {
+    userInfo: (state, action) => {
       state.userInfo = action.payload;
     },
   },
 });
 
-export const {authenticated, logout, getAccountInfo} =
+export const {authenticated, logout, userInfo} =
   AuthenticationSlice.actions;

@@ -1,6 +1,7 @@
 export default interface IChangePasswordRequest {
-  username: string;
+  username?: string;
   newPassword: string;
+  oldPassword?: string;
   otpKey: string;
   hash: string;
 }

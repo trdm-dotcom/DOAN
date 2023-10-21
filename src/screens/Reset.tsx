@@ -122,7 +122,7 @@ const Reset = ({navigation}: props) => {
           ]}>
           Let's help recover your account
         </Text>
-        <View style={[styles(theme).inputContainer]}>
+        <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
           <TextInput
             value={id}
             onChangeText={handleOnChangeText}
@@ -140,15 +140,15 @@ const Reset = ({navigation}: props) => {
             placeholderTextColor={theme.text02}
           />
         </View>
-        <View style={[styles(theme).row, styles(theme).displayBottom]}>
+        <View
+          style={[
+            {flex: 1, justifyContent: 'flex-end'},
+            space(IconSizes.x5).mt,
+          ]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
-            style={[
-              styles(theme).button,
-              styles(theme).buttonPrimary,
-              {flex: 1},
-            ]}
+            style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={theme.text01} />

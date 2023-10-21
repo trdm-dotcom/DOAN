@@ -101,13 +101,12 @@ const Otp = ({navigation, route}: props) => {
     }
   };
 
-  const resendOtp = () => {
+  const resendOtp = async () => {
     setOtpValue('');
     setOtp('');
     setMinutes(1);
     setSeconds(30);
-    setLoading(true);
-    getOtp();
+    await getOtp();
   };
 
   const handleContinue = async () => {
@@ -173,20 +172,23 @@ const Otp = ({navigation, route}: props) => {
               },
             ]}
             autoFocus
-            textAlign="center"
+            keyboardType="numeric"
             placeholder="Code"
             placeholderTextColor={theme.text02}
           />
         </View>
-        <Text
-          style={[
-            {
-              ...FontWeights.Regular,
-              ...FontSizes.Caption,
-              color: theme.text01,
-            },
-          ]}>
-          Didn't receive the code?{' '}
+        <View style={styles(theme).row}>
+          <Text
+            style={[
+              {
+                ...FontWeights.Regular,
+                ...FontSizes.Caption,
+                color: theme.text01,
+              },
+              space(IconSizes.x00).mr,
+            ]}>
+            Didn't receive the code?{' '}
+          </Text>
           {seconds > 0 || minutes > 0 ? (
             <Text
               style={[
@@ -200,7 +202,7 @@ const Otp = ({navigation, route}: props) => {
               {seconds < 10 ? `0${seconds}` : seconds}
             </Text>
           ) : (
-            <TouchableOpacity onPress={resendOtp}>
+            <TouchableOpacity onPress={resendOtp} style={styles(theme).button}>
               <Text
                 style={[
                   {
@@ -213,10 +215,10 @@ const Otp = ({navigation, route}: props) => {
               </Text>
             </TouchableOpacity>
           )}
-        </Text>
+        </View>
         <View
           style={[
-            {flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'},
+            {flex: 1, justifyContent: 'flex-end'},
             space(IconSizes.x5).mt,
           ]}>
           <TouchableOpacity
@@ -234,6 +236,7 @@ const Otp = ({navigation, route}: props) => {
                     {
                       ...FontWeights.Bold,
                       ...FontSizes.Body,
+                      color: theme.text01,
                     },
                   ]}>
                   Next step

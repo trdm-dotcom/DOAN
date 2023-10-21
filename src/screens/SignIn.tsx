@@ -17,17 +17,19 @@ import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {CONTENT_SPACING, IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
-import {
-  getSession,
-  password as loginPassword,
-} from '../reducers/action/authentications';
+import {password as loginPassword} from '../reducers/action/authentications';
 import {ILoginRequest} from '../models/request/ILoginRequest.model';
 import {getHash} from '../utils/Crypto';
 import {useAppDispatch} from '../reducers/redux/store';
 import IconButton from '../components/control/IconButton';
-import {authenticated} from '../reducers/redux/authentication.reducer';
+import {
+  authenticated,
+  userInfo,
+} from '../reducers/redux/authentication.reducer';
 import Header from '../components/header/Header';
 import DeviceNumber from 'react-native-device-number';
+import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
+import {getUserInfo} from '../reducers/action/user';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -85,9 +87,10 @@ const SignIn = ({navigation}: props) => {
           hash: getHash('LOGIN'),
         };
         await loginPassword(body);
-        dispatch(getSession());
+        const userInfoRes: IUserInfoResponse = await getUserInfo();
+        dispatch(userInfo(userInfoRes));
         dispatch(authenticated());
-      }  catch (err: any) {
+      } catch (err: any) {
         showError(err.message);
       } finally {
         setLoading(false);
@@ -173,10 +176,13 @@ const SignIn = ({navigation}: props) => {
           />
         </View>
         <View
-          style={{
-            flex: 1,
-            alignItems: 'flex-end',
-          }}>
+          style={[
+            {
+              flex: 1,
+              alignItems: 'flex-end',
+            },
+            space(IconSizes.x5).mt,
+          ]}>
           <TouchableOpacity onPress={() => navigation.navigate('Reset')}>
             <Text
               style={[

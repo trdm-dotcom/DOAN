@@ -12,12 +12,17 @@ import {AppContext, AppContextProvider} from './src/context';
 import {SafeAreaView} from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import {CredentialType, loadThemeType, loadToken} from './src/utils/Storage';
-import {getSession} from './src/reducers/action/authentications';
 import Loading from './src/screens/Loading';
 import {styles} from './src/components/style';
 import {bindActionCreators} from '@reduxjs/toolkit';
-import {clearAuthentication} from './src/reducers/redux/authentication.reducer';
+import {
+  authenticated,
+  clearAuthentication,
+  userInfo,
+} from './src/reducers/redux/authentication.reducer';
 import {useNavigation} from '@react-navigation/native';
+import {getUserInfo} from './src/reducers/action/user';
+import {IUserInfoResponse} from './src/models/response/IUserInfoResponse';
 
 const SafeAreaApp = () => {
   const dispatch = useAppDispatch();
@@ -36,7 +41,9 @@ const SafeAreaApp = () => {
     if (credentials) {
       const token = credentials.token;
       if (token.refExpiredTime > Date.now()) {
-        dispatch(getSession());
+        const userInfoRes: IUserInfoResponse = await getUserInfo();
+        dispatch(userInfo(userInfoRes));
+        dispatch(authenticated());
       }
     }
   };
@@ -64,8 +71,7 @@ const SafeAreaApp = () => {
   }, []);
 
   return (
-    <SafeAreaView
-      style={[styles(theme).safeArea]}>
+    <SafeAreaView style={[styles(theme).safeArea]}>
       {loading ? <Loading /> : <RootStack />}
       <FlashMessage
         titleStyle={styles(theme).flashMessageTitle}

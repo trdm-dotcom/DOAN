@@ -3,12 +3,8 @@ import {ILoginResponse} from '../../models/response/ILoginResponse';
 import {IRegisterRequest} from '../../models/request/IRegisterRequest';
 import {ICheckExistRequest} from '../../models/request/ICheckExistRequest';
 import {ICheckExistResponse} from '../../models/response/ICheckExistResponse';
-import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {apiPost, apiPut, getToken} from '../../utils/Api';
 import {IBiometricLoginRequest} from '../../models/request/IBiometricLoginRequest';
-import {AppThunk} from '../redux/store';
-import {authenticated, getAccountInfo} from '../redux/authentication.reducer';
-import {getUserInfo} from './user';
 import {removeToken, saveToken} from '../../utils/Storage';
 import {IUpdateUserInfoRequest} from '../../models/request/IUpdateUserInfoRequest';
 
@@ -63,16 +59,6 @@ export const updateUserInfo = async (
       'Content-Type': 'application/json',
     },
   );
-};
-
-export const getAccount = (): AppThunk => dispatch =>
-  getUserInfo().then((response: IUserInfoResponse) =>
-    dispatch(getAccountInfo(response)),
-  );
-
-export const getSession = (): AppThunk => async dispatch => {
-  dispatch(getAccount());
-  dispatch(authenticated());
 };
 
 export const checkExist = async (
