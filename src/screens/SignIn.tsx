@@ -17,7 +17,10 @@ import {AppContext} from '../context';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {CONTENT_SPACING, IconSizes} from '../constants/Constants';
 import Typography from '../theme/Typography';
-import {password as loginPassword} from '../reducers/action/authentications';
+import {
+  getSession,
+  password as loginPassword,
+} from '../reducers/action/authentications';
 import {ILoginRequest} from '../models/request/ILoginRequest.model';
 import {getHash} from '../utils/Crypto';
 import {useAppDispatch} from '../reducers/redux/store';
@@ -82,9 +85,10 @@ const SignIn = ({navigation}: props) => {
           hash: getHash('LOGIN'),
         };
         await loginPassword(body);
+        dispatch(getSession());
         dispatch(authenticated());
-      } catch (error: any) {
-        showError(error.message);
+      }  catch (err: any) {
+        showError(err.message);
       } finally {
         setLoading(false);
       }

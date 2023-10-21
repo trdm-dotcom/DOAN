@@ -357,6 +357,11 @@ const Friend = ({navigation}: props) => {
                       <AppButton
                         label="Add"
                         onPress={() => requestAddFriend(item.id)}
+                        labelStyle={{
+                          ...FontWeights.Bold,
+                          ...FontSizes.Body,
+                          color: theme.text01,
+                        }}
                         containerStyle={{
                           alignItems: 'center',
                           justifyContent: 'center',

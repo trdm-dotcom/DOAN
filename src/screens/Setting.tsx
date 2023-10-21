@@ -15,6 +15,12 @@ import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../theme/Typography';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
+import {NativeImage} from '../components/shared/NativeImage';
+import AppButton from '../components/control/AppButton';
+import {Modalize} from 'react-native-modalize';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import {showError} from '../utils/Toast';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -27,6 +33,11 @@ const Setting = ({navigation}: props) => {
   const [isDarkMode, setIsDarkMode] = useState(themeType === ThemeVariant.dark);
   const [signoutConfirmationModal, setSignoutConfirmationModal] =
     useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const modalizeRef = React.useRef<Modalize>(null);
+
+  const modalizeOpen = () => modalizeRef.current?.open();
 
   const handleSwitch = () => {
     if (isDarkMode) {
@@ -49,8 +60,20 @@ const Setting = ({navigation}: props) => {
     setSignoutConfirmationModal(previousState => !previousState);
   };
 
+  const handleOnPress = () => {
+    try {
+      setLoading(true);
+      modalizeRef.current?.close();
+    } catch (err: any) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+    <GestureHandlerRootView
+      style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
         firstChilden={
           <IconButton
@@ -67,6 +90,37 @@ const Setting = ({navigation}: props) => {
           />
         }
       />
+      <View
+        style={[
+          {alignItems: 'center'},
+          space(IconSizes.x10).mt,
+          space(IconSizes.x5).mb,
+        ]}>
+        <NativeImage uri={userInfo.avatar} style={styles(theme).avatar} />
+        <View
+          style={[styles(theme).profileNameContainer, space(IconSizes.x1).mv]}>
+          <Text style={styles(theme).profileUsernameText}>{userInfo.name}</Text>
+        </View>
+        <AppButton
+          label="Edit Info"
+          onPress={() => modalizeOpen()}
+          labelStyle={{
+            ...FontWeights.Bold,
+            ...FontSizes.Body,
+            color: theme.text01,
+          }}
+          containerStyle={[
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              paddingHorizontal: IconSizes.x5,
+              height: IconSizes.x9,
+              borderRadius: 50,
+            },
+          ]}
+        />
+      </View>
       <View style={[styles(theme).row]}>
         <Ionicons
           name="settings-outline"
@@ -101,6 +155,7 @@ const Setting = ({navigation}: props) => {
               }}
             />
           }
+          style={space(IconSizes.x00).mb}
         />
         <TouchableOpacity>
           <AppOption
@@ -147,6 +202,7 @@ const Setting = ({navigation}: props) => {
                 size={IconSizes.x6}
               />
             }
+            style={space(IconSizes.x00).mb}
           />
         </TouchableOpacity>
         <TouchableOpacity>
@@ -172,7 +228,40 @@ const Setting = ({navigation}: props) => {
         toggle={signoutConfirmationToggle}
         onConfirm={logOut}
       />
-    </View>
+      <Modalize
+        ref={modalizeRef}
+        scrollViewProps={{showsVerticalScrollIndicator: false}}
+        modalStyle={styles(theme).container}
+        adjustToContentHeight>
+        <View style={[{flex: 1, justifyContent: 'center'}]}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={handleOnPress}
+            style={[
+              styles(theme).button,
+              styles(theme).buttonPrimary,
+              {flex: 1},
+            ]}
+            disabled={loading}>
+            {loading ? (
+              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+            ) : (
+              <Text
+                style={[
+                  styles(theme).centerText,
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: theme.text01,
+                  },
+                ]}>
+                Done
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </Modalize>
+    </GestureHandlerRootView>
   );
 };
 

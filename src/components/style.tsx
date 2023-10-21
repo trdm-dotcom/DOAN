@@ -235,7 +235,7 @@ export const styles = (theme = {} as ThemeColors) =>
 
     //group options settings
     groupOptionContainer: {
-      borderRadius: 10,
+      borderRadius: 20,
       overflow: 'hidden',
     },
     appOptions: {
@@ -247,6 +247,23 @@ export const styles = (theme = {} as ThemeColors) =>
       ...FontWeights.Bold,
       ...FontSizes.Body,
       marginLeft: 10,
+      color: theme.text01,
+    },
+    avatar: {
+      height: 110,
+      width: 110,
+    },
+    avatarImage: {
+      backgroundColor: theme.placeholder,
+      borderRadius: 110,
+    },
+    profileNameContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    profileUsernameText: {
+      ...FontWeights.Bold,
+      ...FontSizes.SubHeading,
       color: theme.text01,
     },
   });

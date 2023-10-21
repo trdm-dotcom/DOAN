@@ -111,9 +111,8 @@ const Camera = ({navigation}: props) => {
     }
   };
 
-  const upPost = () => {
+  const upPost = async () => {
     try {
-      setLoading(true);
     } catch (err: any) {
       showError(err.message);
     } finally {
@@ -193,7 +192,6 @@ const Camera = ({navigation}: props) => {
               isActive={isActive}
               photo={true}
               video={true}
-              focusable={true}
               enableZoomGesture={true}
               orientation="portrait"
               lowLightBoost={true}

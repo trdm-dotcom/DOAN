@@ -1,5 +1,5 @@
 import React, {useContext} from 'react';
-import {Text, View} from 'react-native';
+import {StyleProp, Text, View, ViewStyle} from 'react-native';
 import {AppContext} from '../../context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../../constants/Constants';
@@ -10,9 +10,10 @@ type OptionProps = {
   iconName: string;
   color?: string;
   children?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 };
 
-const AppOption = ({label, iconName, color, children}: OptionProps) => {
+const AppOption = ({label, iconName, color, children, style}: OptionProps) => {
   const {theme} = useContext(AppContext);
 
   return (
@@ -21,7 +22,8 @@ const AppOption = ({label, iconName, color, children}: OptionProps) => {
         styles(theme).row,
         styles(theme).appOptions,
         space(IconSizes.x5).ph,
-        space(IconSizes.x5).pv,
+        space(IconSizes.x3).pv,
+        style,
       ]}>
       <View style={[styles(theme).row]}>
         <Ionicons
