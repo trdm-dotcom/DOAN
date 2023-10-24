@@ -8,17 +8,14 @@ import {
   Switch,
   TextInput,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import {ThemeVariant} from '../theme/Colors';
 import {signOut} from '../reducers/action/authentications';
 import {logout} from '../reducers/redux/authentication.reducer';
 import {useAppDispatch, useAppSelector} from '../reducers/redux/store';
 import {IconSizes} from '../constants/Constants';
-import {RootStackParamList} from '../navigators/RootStack';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import AppOption from '../components/shared/AppOption';
-import HeaderBar from '../components/header/HeaderBar';
-import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../theme/Typography';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
@@ -43,9 +40,7 @@ import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
 
 const {FontWeights, FontSizes} = Typography;
 
-type props = NativeStackScreenProps<RootStackParamList, 'Setting'>;
-
-const Setting = ({navigation}: props) => {
+const Setting = () => {
   const dispatch = useAppDispatch();
   const userInfo: IUserInfoResponse = useAppSelector(
     state => state.auth.userInfo,
@@ -199,302 +194,283 @@ const Setting = ({navigation}: props) => {
   };
 
   return (
-    <GestureHandlerRootView
-      style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        firstChilden={
-          <IconButton
-            Icon={() => (
-              <Ionicons
-                name="chevron-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
+    <>
+      <GestureHandlerRootView
+        style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View
+            style={[
+              {alignItems: 'center'},
+              space(IconSizes.x10).mt,
+              space(IconSizes.x5).mb,
+            ]}>
+            <View
+              style={{
+                padding: IconSizes.x00,
+                borderColor: theme.placeholder,
+                borderWidth: IconSizes.x00,
+                borderRadius: 110,
+              }}>
+              <NativeImage
+                uri={userInfo.avatar}
+                style={styles(theme).avatarImage}
               />
-            )}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-        }
-      />
-      <View
-        style={[
-          {alignItems: 'center'},
-          space(IconSizes.x10).mt,
-          space(IconSizes.x5).mb,
-        ]}>
-        <View
-          style={{
-            padding: IconSizes.x00,
-            borderColor: theme.placeholder,
-            borderWidth: IconSizes.x00,
-            borderRadius: 110,
-          }}>
-          <NativeImage
-            uri={userInfo.avatar}
-            style={styles(theme).avatarImage}
-          />
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => {}}
-            style={{
-              position: 'absolute',
-              borderRadius: 100,
-              right: 0,
-              bottom: 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-              alignSelf: 'center',
-              backgroundColor: theme.accent,
-            }}>
-            <Ionicons name="add" size={IconSizes.x8} />
-          </TouchableOpacity>
-        </View>
-        <View
-          style={[styles(theme).profileNameContainer, space(IconSizes.x1).mv]}>
-          <Text style={styles(theme).profileUsernameText}>{name}</Text>
-        </View>
-        <AppButton
-          label="Edit Info"
-          onPress={() => {
-            setProgess('editInfo');
-            modalizeOpen();
-          }}
-          labelStyle={{
-            ...FontWeights.Bold,
-            ...FontSizes.Body,
-            color: theme.text01,
-          }}
-          containerStyle={[
-            {
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: theme.placeholder,
-              paddingHorizontal: IconSizes.x5,
-              height: IconSizes.x9,
-              borderRadius: 50,
-            },
-          ]}
-        />
-      </View>
-      <View style={[styles(theme).row]}>
-        <Ionicons
-          name="settings-outline"
-          size={IconSizes.x6}
-          color={theme.text01}
-        />
-        <Text
-          style={[
-            {
-              ...FontWeights.Bold,
-              ...FontSizes.Label,
-              color: theme.text01,
-            },
-            space(IconSizes.x1).ml,
-          ]}>
-          Setting
-        </Text>
-      </View>
-      <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
-        <AppOption
-          label="Dark Mode"
-          iconName="moon-outline"
-          children={
-            <Switch
-              value={isDarkMode}
-              onValueChange={handleSwitch}
-              thumbColor={isDarkMode ? theme.accent : theme.base}
-              ios_backgroundColor={theme.base}
-              trackColor={{
-                false: theme.base,
-                true: theme.accent,
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => {}}
+                style={{
+                  position: 'absolute',
+                  borderRadius: 100,
+                  right: 0,
+                  bottom: 0,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  alignSelf: 'center',
+                  backgroundColor: theme.accent,
+                }}>
+                <Ionicons name="add" size={IconSizes.x8} />
+              </TouchableOpacity>
+            </View>
+            <View
+              style={[
+                styles(theme).profileNameContainer,
+                space(IconSizes.x1).mv,
+              ]}>
+              <Text style={styles(theme).profileUsernameText}>{name}</Text>
+            </View>
+            <AppButton
+              label="Edit Info"
+              onPress={() => {
+                setProgess('editInfo');
+                modalizeOpen();
               }}
+              labelStyle={{
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              }}
+              containerStyle={[
+                {
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: theme.placeholder,
+                  paddingHorizontal: IconSizes.x5,
+                  height: IconSizes.x9,
+                  borderRadius: 50,
+                },
+              ]}
             />
-          }
-          style={space(IconSizes.x00).mb}
-        />
-        <TouchableOpacity>
-          <AppOption
-            label="Notification"
-            iconName="notifications-outline"
-            children={
-              <Ionicons
-                name="chevron-forward"
-                color={theme.base}
-                size={IconSizes.x6}
-              />
-            }
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={[styles(theme).row]}>
-        <Ionicons
-          name="person-outline"
-          size={IconSizes.x6}
-          color={theme.text01}
-        />
-        <Text
-          style={[
-            {
-              ...FontWeights.Bold,
-              ...FontSizes.Label,
-              color: theme.text01,
-            },
-            space(IconSizes.x1).ml,
-          ]}>
-          General
-        </Text>
-      </View>
-      <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
-        <TouchableOpacity
-          onPress={() => {
-            setProgess('changePass');
-            modalizeOpen();
-          }}>
-          <AppOption
-            label="Change Password"
-            iconName="lock-closed-outline"
-            children={
-              <Ionicons
-                name="chevron-forward"
-                color={theme.base}
-                size={IconSizes.x6}
-              />
-            }
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={[styles(theme).row]}>
-        <Ionicons
-          name="hand-left-outline"
-          size={IconSizes.x6}
-          color={theme.text01}
-        />
-        <Text
-          style={[
-            {
-              ...FontWeights.Bold,
-              ...FontSizes.Label,
-              color: theme.text01,
-            },
-            space(IconSizes.x1).ml,
-          ]}>
-          Danger Zone
-        </Text>
-      </View>
-      <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
-        <TouchableOpacity onPress={() => signoutConfirmationToggle()}>
-          <AppOption
-            label="Sign out"
-            iconName="log-out-outline"
-            color="red"
-            children={
-              <Ionicons
-                name="chevron-forward"
-                color={theme.base}
-                size={IconSizes.x6}
-              />
-            }
-            style={space(IconSizes.x00).mb}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <AppOption
-            label="Delete Account"
-            iconName="sad-outline"
-            color="red"
-            children={
-              <Ionicons
-                name="chevron-forward"
-                color={theme.base}
-                size={IconSizes.x6}
-              />
-            }
-          />
-        </TouchableOpacity>
-      </View>
-      <ConfirmationModal
-        label="Sign Out"
-        title="Are you sure you want to sign out?"
-        color="red"
-        isVisible={signoutConfirmationModal}
-        toggle={signoutConfirmationToggle}
-        onConfirm={logOut}
-      />
-      <Modalize
-        ref={modalizeRef}
-        scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={[styles(theme).container, styles(theme).defaultBackground]}>
-        <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
-          {progess === 'editInfo' && (
-            <>
-              <Header title="Edit your name" />
-              <View style={[styles(theme).inputContainer]}>
-                <TextInput
-                  value={name}
-                  onChangeText={(text: string) => {
-                    const verify: boolean = text.trim().length > 0;
-                    setIsContinue(verify);
-                    if (verify) {
-                      setName(text.trim());
-                    }
+          </View>
+          <View style={[styles(theme).row]}>
+            <Ionicons
+              name="settings-outline"
+              size={IconSizes.x6}
+              color={theme.text01}
+            />
+            <Text
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Label,
+                  color: theme.text01,
+                },
+                space(IconSizes.x1).ml,
+              ]}>
+              Setting
+            </Text>
+          </View>
+          <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
+            <AppOption
+              label="Dark Mode"
+              iconName="moon-outline"
+              children={
+                <Switch
+                  value={isDarkMode}
+                  onValueChange={handleSwitch}
+                  thumbColor={isDarkMode ? theme.accent : theme.base}
+                  ios_backgroundColor={theme.base}
+                  trackColor={{
+                    false: theme.base,
+                    true: theme.accent,
                   }}
-                  style={[
-                    styles(theme).inputField,
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                  ]}
-                  placeholder="Your name"
-                  placeholderTextColor={theme.text02}
                 />
-              </View>
-            </>
-          )}
-          {progess === 'verifyOtp' && (
-            <>
-              <Header title="OTP sent" />
-              <Text
-                style={[
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Caption,
-                    color: theme.text02,
-                  },
-                ]}>
-                Enter the code sent to your phone
-              </Text>
-              <View style={[styles(theme).inputContainer]}>
-                <TextInput
-                  style={[
-                    styles(theme).inputField,
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                  ]}
-                  autoFocus
-                  keyboardType="numeric"
-                  placeholder="OTP"
-                  placeholderTextColor={theme.text02}
-                />
-              </View>
-              <View style={styles(theme).row}>
+              }
+              style={space(IconSizes.x00).mb}
+            />
+            <TouchableOpacity>
+              <AppOption
+                label="Notification"
+                iconName="notifications-outline"
+                children={
+                  <Ionicons
+                    name="chevron-forward"
+                    color={theme.base}
+                    size={IconSizes.x6}
+                  />
+                }
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={[styles(theme).row]}>
+            <Ionicons
+              name="person-outline"
+              size={IconSizes.x6}
+              color={theme.text01}
+            />
+            <Text
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Label,
+                  color: theme.text01,
+                },
+                space(IconSizes.x1).ml,
+              ]}>
+              General
+            </Text>
+          </View>
+          <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
+            <TouchableOpacity
+              onPress={() => {
+                setProgess('changePass');
+                modalizeOpen();
+              }}>
+              <AppOption
+                label="Change Password"
+                iconName="lock-closed-outline"
+                children={
+                  <Ionicons
+                    name="chevron-forward"
+                    color={theme.base}
+                    size={IconSizes.x6}
+                  />
+                }
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={[styles(theme).row]}>
+            <Ionicons
+              name="hand-left-outline"
+              size={IconSizes.x6}
+              color={theme.text01}
+            />
+            <Text
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Label,
+                  color: theme.text01,
+                },
+                space(IconSizes.x1).ml,
+              ]}>
+              Danger Zone
+            </Text>
+          </View>
+          <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
+            <TouchableOpacity onPress={() => signoutConfirmationToggle()}>
+              <AppOption
+                label="Sign out"
+                iconName="log-out-outline"
+                color="red"
+                children={
+                  <Ionicons
+                    name="chevron-forward"
+                    color={theme.base}
+                    size={IconSizes.x6}
+                  />
+                }
+                style={space(IconSizes.x00).mb}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <AppOption
+                label="Delete Account"
+                iconName="sad-outline"
+                color="red"
+                children={
+                  <Ionicons
+                    name="chevron-forward"
+                    color={theme.base}
+                    size={IconSizes.x6}
+                  />
+                }
+              />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+        <ConfirmationModal
+          label="Sign Out"
+          title="Are you sure you want to sign out?"
+          color="red"
+          isVisible={signoutConfirmationModal}
+          toggle={signoutConfirmationToggle}
+          onConfirm={logOut}
+        />
+        <Modalize
+          ref={modalizeRef}
+          scrollViewProps={{showsVerticalScrollIndicator: false}}
+          modalStyle={[
+            styles(theme).container,
+            styles(theme).defaultBackground,
+          ]}>
+          <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
+            {progess === 'editInfo' && (
+              <>
+                <Header title="Edit your name" />
+                <View style={[styles(theme).inputContainer]}>
+                  <TextInput
+                    value={name}
+                    onChangeText={(text: string) => {
+                      const verify: boolean = text.trim().length > 0;
+                      setIsContinue(verify);
+                      if (verify) {
+                        setName(text.trim());
+                      }
+                    }}
+                    style={[
+                      styles(theme).inputField,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: theme.text01,
+                      },
+                    ]}
+                    placeholder="Your name"
+                    placeholderTextColor={theme.text02}
+                  />
+                </View>
+              </>
+            )}
+            {progess === 'verifyOtp' && (
+              <>
+                <Header title="OTP sent" />
                 <Text
                   style={[
                     {
-                      ...FontWeights.Regular,
+                      ...FontWeights.Bold,
                       ...FontSizes.Caption,
-                      color: theme.text01,
+                      color: theme.text02,
                     },
-                    space(IconSizes.x00).mr,
                   ]}>
-                  Didn't receive the code?{' '}
+                  Enter the code sent to your phone
                 </Text>
-                {seconds > 0 || minutes > 0 ? (
+                <View style={[styles(theme).inputContainer]}>
+                  <TextInput
+                    style={[
+                      styles(theme).inputField,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: theme.text01,
+                      },
+                    ]}
+                    autoFocus
+                    keyboardType="numeric"
+                    placeholder="OTP"
+                    placeholderTextColor={theme.text02}
+                  />
+                </View>
+                <View style={styles(theme).row}>
                   <Text
                     style={[
                       {
@@ -502,123 +478,153 @@ const Setting = ({navigation}: props) => {
                         ...FontSizes.Caption,
                         color: theme.text01,
                       },
+                      space(IconSizes.x00).mr,
                     ]}>
-                    Resend in: {minutes < 10 ? `0${minutes}` : minutes}:
-                    {seconds < 10 ? `0${seconds}` : seconds}
+                    Didn't receive the code?{' '}
                   </Text>
-                ) : (
-                  <TouchableOpacity
-                    onPress={resendOtp}
-                    style={styles(theme).button}>
+                  {seconds > 0 || minutes > 0 ? (
                     <Text
                       style={[
                         {
-                          ...FontWeights.Bold,
+                          ...FontWeights.Regular,
                           ...FontSizes.Caption,
                           color: theme.text01,
                         },
                       ]}>
-                      Resend OTP
+                      Resend in: {minutes < 10 ? `0${minutes}` : minutes}:
+                      {seconds < 10 ? `0${seconds}` : seconds}
                     </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </>
-          )}
-          {progess === 'changePass' && (
-            <>
-              <Header title="Change password" />
-              <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <TextInput
-                  onChangeText={(text: string) => {
-                    const verify: boolean =
-                      text.trim().length > 0 && newPassword.length > 0;
-                    setIsContinue(verify);
-                    setOldPassword(text.trim());
-                  }}
+                  ) : (
+                    <TouchableOpacity
+                      onPress={resendOtp}
+                      style={styles(theme).button}>
+                      <Text
+                        style={[
+                          {
+                            ...FontWeights.Bold,
+                            ...FontSizes.Caption,
+                            color: theme.text01,
+                          },
+                        ]}>
+                        Resend OTP
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
+            {progess === 'changePass' && (
+              <>
+                <Header title="Change password" />
+                <View style={[styles(theme).inputContainer, styles(theme).row]}>
+                  <TextInput
+                    onChangeText={(text: string) => {
+                      const verify: boolean =
+                        text.trim().length > 0 && newPassword.length > 0;
+                      setIsContinue(verify);
+                      setOldPassword(text.trim());
+                    }}
+                    style={[
+                      styles(theme).inputField,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: theme.text01,
+                      },
+                    ]}
+                    autoFocus
+                    secureTextEntry={!isPasswordVisible}
+                    placeholder="Old Password"
+                    placeholderTextColor={theme.text02}
+                  />
+                </View>
+                <View style={[styles(theme).inputContainer, styles(theme).row]}>
+                  <TextInput
+                    onChangeText={(text: string) => {
+                      const verify: boolean =
+                        text.trim().length > 0 && oldPassword.length > 0;
+                      setIsContinue(verify);
+                      setNewPassword(text.trim());
+                    }}
+                    style={[
+                      styles(theme).inputField,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: theme.text01,
+                      },
+                    ]}
+                    secureTextEntry={!isPasswordVisible}
+                    placeholder="New Password"
+                    placeholderTextColor={theme.text02}
+                  />
+                </View>
+                <View style={{alignItems: 'flex-end'}}>
+                  <CheckBox
+                    style={{flex: 1, padding: 10}}
+                    onClick={() => {
+                      setPasswordVisible(!isPasswordVisible);
+                    }}
+                    isChecked={isPasswordVisible}
+                    leftText="Show"
+                    leftTextStyle={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).mr,
+                    ]}
+                  />
+                </View>
+                <Text
                   style={[
-                    styles(theme).inputField,
                     {
                       ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
+                      ...FontSizes.Caption,
+                      color: theme.text02,
                     },
-                  ]}
-                  autoFocus
-                  secureTextEntry={!isPasswordVisible}
-                  placeholder="Old Password"
-                  placeholderTextColor={theme.text02}
-                />
-              </View>
-              <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <TextInput
-                  onChangeText={(text: string) => {
-                    const verify: boolean =
-                      text.trim().length > 0 && oldPassword.length > 0;
-                    setIsContinue(verify);
-                    setNewPassword(text.trim());
-                  }}
-                  style={[
-                    styles(theme).inputField,
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                  ]}
-                  secureTextEntry={!isPasswordVisible}
-                  placeholder="New Password"
-                  placeholderTextColor={theme.text02}
-                />
-              </View>
-              <View style={{alignItems: 'flex-end'}}>
-                <CheckBox
-                  style={{flex: 1, padding: 10}}
-                  onClick={() => {
-                    setPasswordVisible(!isPasswordVisible);
-                  }}
-                  isChecked={isPasswordVisible}
-                  leftText="Show"
-                  leftTextStyle={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).mr,
-                  ]}
-                />
-              </View>
-              <Text
-                style={[
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Caption,
-                    color: theme.text02,
-                  },
-                ]}>
-                Your password must be at least 8 characters
-              </Text>
-            </>
-          )}
-          <View
-            style={[
-              {flex: 1, justifyContent: 'flex-end'},
-              space(IconSizes.x5).mt,
-            ]}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={handleOnPress}
-              disabled={!isContinue || loading}
+                  ]}>
+                  Your password must be at least 8 characters
+                </Text>
+              </>
+            )}
+            <View
               style={[
-                styles(theme).button,
-                styles(theme).buttonPrimary,
-                {flex: 1},
+                {flex: 1, justifyContent: 'flex-end'},
+                space(IconSizes.x5).mt,
               ]}>
-              {loading ? (
-                <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
-              ) : progess === 'changePass' ? (
-                <>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={handleOnPress}
+                disabled={!isContinue || loading}
+                style={[
+                  styles(theme).button,
+                  styles(theme).buttonPrimary,
+                  {flex: 1},
+                ]}>
+                {loading ? (
+                  <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+                ) : progess === 'changePass' ? (
+                  <>
+                    <Text
+                      style={[
+                        styles(theme).centerText,
+                        {
+                          ...FontWeights.Bold,
+                          ...FontSizes.Body,
+                          color: theme.text01,
+                        },
+                      ]}>
+                      Next step
+                    </Text>
+                    <Ionicons
+                      name="arrow-forward"
+                      size={IconSizes.x6}
+                      color={theme.text01}
+                    />
+                  </>
+                ) : (
                   <Text
                     style={[
                       styles(theme).centerText,
@@ -628,32 +634,15 @@ const Setting = ({navigation}: props) => {
                         color: theme.text01,
                       },
                     ]}>
-                    Next step
+                    Done
                   </Text>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={IconSizes.x6}
-                    color={theme.text01}
-                  />
-                </>
-              ) : (
-                <Text
-                  style={[
-                    styles(theme).centerText,
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                  ]}>
-                  Done
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modalize>
-    </GestureHandlerRootView>
+                )}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </Modalize>
+      </GestureHandlerRootView>
+    </>
   );
 };
 

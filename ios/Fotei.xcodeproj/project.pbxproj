@@ -26,6 +26,8 @@
 		BB94F886BE5241C1B38EFBF4 /* Roboto-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 291D032391E34B39818A9245 /* Roboto-Regular.ttf */; };
 		31DE82C144CF430CA1362FC1 /* Roboto-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D000BE2E08F04318AD73BA21 /* Roboto-Thin.ttf */; };
 		03F6A80D0132475596CDC1B8 /* Roboto-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D3C199F0A60406EA296B8C8 /* Roboto-ThinItalic.ttf */; };
+		D7E4911DD9D54145BC7598B8 /* Sniglet-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 575C6E44137443FA8E414B16 /* Sniglet-ExtraBold.ttf */; };
+		7BA9580E63744FBC98719CA9 /* Sniglet-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D1CB2F1E0CF74198BAE2AAE6 /* Sniglet-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +70,8 @@
 		291D032391E34B39818A9245 /* Roboto-Regular.ttf */ = {isa = PBXFileReference; name = "Roboto-Regular.ttf"; path = "../assets/fonts/Roboto-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		D000BE2E08F04318AD73BA21 /* Roboto-Thin.ttf */ = {isa = PBXFileReference; name = "Roboto-Thin.ttf"; path = "../assets/fonts/Roboto-Thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		6D3C199F0A60406EA296B8C8 /* Roboto-ThinItalic.ttf */ = {isa = PBXFileReference; name = "Roboto-ThinItalic.ttf"; path = "../assets/fonts/Roboto-ThinItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		575C6E44137443FA8E414B16 /* Sniglet-ExtraBold.ttf */ = {isa = PBXFileReference; name = "Sniglet-ExtraBold.ttf"; path = "../assets/fonts/Sniglet-ExtraBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D1CB2F1E0CF74198BAE2AAE6 /* Sniglet-Regular.ttf */ = {isa = PBXFileReference; name = "Sniglet-Regular.ttf"; path = "../assets/fonts/Sniglet-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -188,6 +192,8 @@
 				291D032391E34B39818A9245 /* Roboto-Regular.ttf */,
 				D000BE2E08F04318AD73BA21 /* Roboto-Thin.ttf */,
 				6D3C199F0A60406EA296B8C8 /* Roboto-ThinItalic.ttf */,
+				575C6E44137443FA8E414B16 /* Sniglet-ExtraBold.ttf */,
+				D1CB2F1E0CF74198BAE2AAE6 /* Sniglet-Regular.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -301,6 +307,8 @@
 				BB94F886BE5241C1B38EFBF4 /* Roboto-Regular.ttf in Resources */,
 				31DE82C144CF430CA1362FC1 /* Roboto-Thin.ttf in Resources */,
 				03F6A80D0132475596CDC1B8 /* Roboto-ThinItalic.ttf in Resources */,
+				D7E4911DD9D54145BC7598B8 /* Sniglet-ExtraBold.ttf in Resources */,
+				7BA9580E63744FBC98719CA9 /* Sniglet-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -545,7 +553,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Fotei/Info.plist";
-             INFOPLIST_KEY_CFBundleDisplayName = "Fotei";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fotei";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -571,7 +579,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = "Fotei/Info.plist";
-             INFOPLIST_KEY_CFBundleDisplayName = "Fotei";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fotei";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

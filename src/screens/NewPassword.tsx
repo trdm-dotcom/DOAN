@@ -6,6 +6,7 @@ import {useContext, useState} from 'react';
 import React from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -70,6 +71,8 @@ const NewPassword = ({navigation, route}: props) => {
     }
   };
 
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
+
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
@@ -88,7 +91,10 @@ const NewPassword = ({navigation, route}: props) => {
           />
         }
       />
-      <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
+      <KeyboardAvoidingView
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={20}
+        style={[{flex: 1}, space(IconSizes.x10).mt]}>
         <Header title="Pick a new Password" />
         <Text
           style={[
@@ -115,8 +121,8 @@ const NewPassword = ({navigation, route}: props) => {
                 ...FontWeights.Bold,
                 ...FontSizes.Body,
                 color: theme.text01,
+                flex: 1,
               },
-              {flex: 1},
             ]}
             autoFocus
             secureTextEntry={!isPasswordVisible}
@@ -139,8 +145,8 @@ const NewPassword = ({navigation, route}: props) => {
                 ...FontWeights.Bold,
                 ...FontSizes.Body,
                 color: theme.text01,
+                flex: 1,
               },
-              {flex: 1},
             ]}
             secureTextEntry={!isPasswordVisible}
             placeholder="Confirm Password"

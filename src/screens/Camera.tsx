@@ -5,64 +5,74 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigators/RootStack';
 import {
   CameraDevices,
   Camera as CameraVision,
   PhotoFile,
-  VideoFile,
+  // VideoFile,
   useCameraDevices,
 } from 'react-native-vision-camera';
 import {AppContext} from '../context';
-import {Linking, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {
+  Linking,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import {space, styles} from '../components/style';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import {useIsFocused} from '@react-navigation/core';
 import {useIsForeground} from '../hook/useIsForeground';
-import {showError} from '../utils/Toast';
 import IconButton from '../components/control/IconButton';
 import {NativeImage} from '../components/shared/NativeImage';
 import {NativeVideo} from '../components/shared/NativeVideo';
 import Header from '../components/header/Header';
+import {RootStackParamList} from '../navigators/RootStack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import HeaderBar from '../components/header/HeaderBar';
+import Typography from '../theme/Typography';
+import {launchImageLibrary} from 'react-native-image-picker';
+import storage from '@react-native-firebase/storage';
+import {getHash} from '../utils/Crypto';
+import {upPost} from '../reducers/action/post';
+import {IParam} from 'src/models/IParam';
+
+const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
-
 const Camera = ({navigation}: props) => {
-  const {theme} = useContext(AppContext);
+  const {theme, cameraView, toggleCameraView} = useContext(AppContext);
   const devices: CameraDevices = useCameraDevices();
   const cameraRef = useRef<CameraVision>(null);
-
-  const [cameraView, setCameraView] = useState('back');
   const [torch, setTorch] = useState<'on' | 'off' | 'auto'>('off');
-  const [isCameraInitialized, setIsCameraInitialized] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [imageSource, setImageSource] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [device, setDevice] = useState(devices[cameraView]);
   const [mode, setMode] = useState<'photo' | 'video'>('photo');
-  const [isRecording, setIsRecording] = useState(false);
+  // const [isRecording, setIsRecording] = useState(false);
+  const [caption, setCaption] = useState<any>(null);
+  const device = cameraView === 'back' ? devices.back : devices.front;
 
   // check if camera page is active
   const isFocussed = useIsFocused();
   const isForeground = useIsForeground();
   const isActive = isFocussed && isForeground;
+  const inputCaptionRef = useRef<TextInput>(null);
 
   useEffect(() => {
     cameraPermission();
-  }, []);
-
-  useEffect(() => {
-    setDevice(devices[cameraView]);
-  }, [cameraView]);
+  }, [devices]);
 
   const cameraPermission = useCallback(async () => {
     const permission = await CameraVision.requestCameraPermission();
     if (permission === 'denied') {
       await Linking.openSettings();
     }
-  }, []);
+  }, [devices]);
 
   const takePhoto = async () => {
     try {
@@ -83,38 +93,46 @@ const Camera = ({navigation}: props) => {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      if (cameraRef.current != null) {
-        await cameraRef.current.startRecording({
-          flash: `${torch}`,
-          onRecordingFinished: (file: VideoFile) => {
-            setImageSource(file.path);
-          },
-          onRecordingError: (error: any) => {
-            console.warn(error);
-          },
-        });
-      }
-    } finally {
-      setIsRecording(true);
-    }
-  };
+  // const startRecording = async () => {
+  //   try {
+  //     if (cameraRef.current != null) {
+  //       await cameraRef.current.startRecording({
+  //         flash: `${torch}`,
+  //         onRecordingFinished: (file: VideoFile) => {
+  //           setImageSource(file.path);
+  //         },
+  //         onRecordingError: (error: any) => {
+  //           console.warn(error);
+  //         },
+  //       });
+  //     }
+  //   } finally {
+  //     setIsRecording(true);
+  //   }
+  // };
 
-  const stopRecording = async () => {
-    try {
-      if (cameraRef.current != null) {
-        await cameraRef.current.stopRecording();
-      }
-    } finally {
-      setIsRecording(false);
-    }
-  };
+  // const stopRecording = async () => {
+  //   try {
+  //     if (cameraRef.current != null) {
+  //       await cameraRef.current.stopRecording();
+  //     }
+  //   } finally {
+  //     setIsRecording(false);
+  //   }
+  // };
 
-  const upPost = async () => {
+  const doUpPost = async () => {
     try {
-    } catch (err: any) {
-      showError(err.message);
+      const source = await uploadImage(imageSource);
+      const body: IParam = {
+        source: source,
+        caption: caption,
+        hash: getHash('UP_POST'),
+      };
+      await upPost(body);
+      setShowCamera(true);
+      setCaption(null);
+      setImageSource(null);
     } finally {
       setLoading(false);
     }
@@ -122,13 +140,53 @@ const Camera = ({navigation}: props) => {
 
   const download = () => {};
 
-  const onInitialized = useCallback(() => {
-    console.log('Camera initialized!');
-    setIsCameraInitialized(true);
-  }, []);
+  const openGallery = () => {
+    launchImageLibrary({
+      selectionLimit: 1,
+      mediaType: 'photo',
+      quality: 1,
+    }).then(result => {
+      if (result && result.assets) {
+        setMode('photo');
+        setImageSource(result.assets[0].uri);
+        setShowCamera(false);
+      }
+    });
+  };
+
+  const uploadImage = async (uri: string) => {
+    const filename = uri.substring(uri.lastIndexOf('/') + 1);
+    const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+    const imageRef = storage().ref(filename);
+    await imageRef.putFile(uploadUri);
+    return imageRef.getDownloadURL();
+  };
+
+  const onCameraInitialized = useCallback(
+    () => console.log('camera initialized'),
+    [],
+  );
+
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <HeaderBar
+        firstChilden={
+          <IconButton
+            Icon={() => (
+              <Ionicons
+                name="chevron-back-outline"
+                size={IconSizes.x8}
+                color={theme.text01}
+              />
+            )}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+        }
+      />
       <View
         style={[
           styles(theme).row,
@@ -136,122 +194,109 @@ const Camera = ({navigation}: props) => {
             justifyContent: 'space-between',
           },
         ]}>
-        {showCamera ? (
+        {!showCamera && (
           <>
-            <IconButton
-              onPress={() => {
-                navigation.navigate('Friend');
-              }}
+            <Header title="Send to..." />
+          </>
+        )}
+      </View>
+      {device && showCamera && (
+        <View style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
+          <CameraVision
+            ref={cameraRef}
+            style={StyleSheet.absoluteFill}
+            device={device}
+            isActive={showCamera}
+            photo
+            enableZoomGesture
+            orientation="portrait"
+            onInitialized={onCameraInitialized}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              padding: IconSizes.x4,
+            }}>
+            {/* <IconButton
               Icon={() => (
                 <Ionicons
-                  name="people"
-                  size={IconSizes.x7}
-                  color={theme.text01}
+                  name={mode === 'video' ? 'videocam' : 'videocam-outline'}
+                  size={IconSizes.x6}
+                  color={mode === 'video' ? theme.accent : theme.text01}
                 />
               )}
+              onPress={() => {
+                mode === 'photo' ? setMode('video') : setMode('photo');
+              }}
               style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
+                padding: IconSizes.x1,
+                borderRadius: 50,
+              }}
+            /> */}
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name={torch === 'on' ? 'flash' : 'flash-outline'}
+                  size={IconSizes.x6}
+                  color={torch === 'on' ? theme.accent : theme.text01}
+                />
+              )}
+              onPress={() => {
+                torch === 'off' ? setTorch('on') : setTorch('off');
+              }}
+              style={{
                 padding: IconSizes.x1,
                 borderRadius: 50,
               }}
             />
-
-            <IconButton
-              onPress={() => {
-                navigation.navigate('Setting');
-              }}
-              Icon={() => (
-                <Ionicons
-                  name="person-circle-outline"
-                  size={IconSizes.x7}
-                  color={theme.text01}
-                />
-              )}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
-                padding: IconSizes.x1,
-                borderRadius: 50,
-              }}
-            />
-          </>
-        ) : (
-          <Header title="Send to..." />
-        )}
-      </View>
-      <View style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
-        {device && showCamera && (
-          <>
-            <CameraVision
-              ref={cameraRef}
-              style={StyleSheet.absoluteFill}
-              device={device}
-              isActive={isActive}
-              photo={true}
-              video={true}
-              enableZoomGesture={true}
-              orientation="portrait"
-              lowLightBoost={true}
-              onInitialized={onInitialized}
-            />
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                padding: IconSizes.x4,
-              }}>
-              <IconButton
-                Icon={() => (
-                  <Ionicons
-                    name={mode === 'video' ? 'videocam' : 'videocam-outline'}
-                    size={IconSizes.x6}
-                    color={mode === 'video' ? theme.accent : theme.text01}
-                  />
-                )}
-                onPress={() => {
-                  mode === 'photo' ? setMode('video') : setMode('photo');
-                }}
-                style={{
-                  padding: IconSizes.x1,
-                  borderRadius: 50,
-                }}
+          </View>
+        </View>
+      )}
+      {!showCamera && (
+        <KeyboardAvoidingView
+          behavior={keyboardBehavior}
+          keyboardVerticalOffset={20}
+          style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
+          {mode === 'photo' && (
+            <>
+              <NativeImage
+                uri={`file://${imageSource}`}
+                style={StyleSheet.absoluteFill}
               />
-              <IconButton
-                Icon={() => (
-                  <Ionicons
-                    name={torch === 'on' ? 'flash' : 'flash-outline'}
-                    size={IconSizes.x6}
-                    color={torch === 'on' ? theme.accent : theme.text01}
-                  />
-                )}
-                onPress={() => {
-                  torch === 'off' ? setTorch('on') : setTorch('off');
-                }}
-                style={{
-                  padding: IconSizes.x1,
-                  borderRadius: 50,
-                }}
+            </>
+          )}
+          {mode === 'video' && (
+            <>
+              <NativeVideo
+                uri={`file://${imageSource}`}
+                style={StyleSheet.absoluteFill}
               />
-            </View>
-          </>
-        )}
-        {!showCamera && imageSource && mode === 'photo' && (
-          <NativeImage
-            uri={`file://${imageSource}`}
-            style={StyleSheet.absoluteFill}
+            </>
+          )}
+          <TextInput
+            onChangeText={(text: string) => {
+              if (text && text.trim().length > 0) {
+                setCaption(text.trim());
+              }
+            }}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+                flex: 1,
+              },
+            ]}
+            ref={inputCaptionRef}
+            autoFocus
+            placeholder="Add a caption..."
+            placeholderTextColor={theme.text02}
           />
-        )}
-        {!showCamera && imageSource && mode === 'video' && (
-          <NativeVideo
-            uri={`file://${imageSource}`}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-      </View>
+        </KeyboardAvoidingView>
+      )}
       <View
         style={[
           styles(theme).row,
@@ -271,22 +316,23 @@ const Camera = ({navigation}: props) => {
                   color={theme.text01}
                 />
               )}
-              onPress={() => {}}
+              onPress={() => openGallery()}
             />
             <TouchableOpacity
               style={[styles(theme).captureButton]}
               onPress={() => {
                 if (mode === 'photo') {
                   takePhoto();
-                } else {
-                  if (isRecording) {
-                    stopRecording();
-                  } else {
-                    startRecording();
-                  }
                 }
+                // else {
+                //   if (isRecording) {
+                //     stopRecording();
+                //   } else {
+                //     startRecording();
+                //   }
+                // }
               }}
-              disabled={!isCameraInitialized || !isActive || loading}
+              disabled={!isActive || loading}
             />
             <IconButton
               Icon={() => (
@@ -298,8 +344,8 @@ const Camera = ({navigation}: props) => {
               )}
               onPress={() => {
                 cameraView === 'back'
-                  ? setCameraView('front')
-                  : setCameraView('back');
+                  ? toggleCameraView('front')
+                  : toggleCameraView('back');
               }}
             />
           </>
@@ -333,7 +379,7 @@ const Camera = ({navigation}: props) => {
                 padding: IconSizes.x7,
                 borderRadius: 50,
               }}
-              onPress={upPost}
+              onPress={doUpPost}
             />
             <IconButton
               Icon={() => (

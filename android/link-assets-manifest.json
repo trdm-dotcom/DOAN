@@ -48,6 +48,14 @@
     {
       "path": "assets/fonts/Roboto-ThinItalic.ttf",
       "sha1": "cc79d5a23bd0ec08b1d99f5390bf33cacc3082f4"
+    },
+    {
+      "path": "assets/fonts/Sniglet-ExtraBold.ttf",
+      "sha1": "8f67b4843b1418dd5c047cbbef4ec866d1032901"
+    },
+    {
+      "path": "assets/fonts/Sniglet-Regular.ttf",
+      "sha1": "e3d60e22ffdb5c1f5c571fcf4723ef3c2c314a57"
     }
   ]
 }

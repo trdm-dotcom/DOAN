@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -98,6 +99,8 @@ const PhoneNumber = ({navigation}: props) => {
     }
   };
 
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
+
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
@@ -116,7 +119,10 @@ const PhoneNumber = ({navigation}: props) => {
           />
         }
       />
-      <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
+      <KeyboardAvoidingView
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={20}
+        style={[{flex: 1}, space(IconSizes.x10).mt]}>
         <Header title="Phone Number" />
         <Text
           style={[

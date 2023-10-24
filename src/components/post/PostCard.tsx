@@ -1,20 +1,26 @@
-import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import React, {createRef, useRef, useState} from 'react';
+import {View, Text, StyleSheet} from 'react-native';
 import {useAppSelector} from '../../reducers/redux/store';
-import {parseLikes, parseTimeElapsed} from '../../utils/shared';
+import {parseComments, parseLikes, parseTimeElapsed} from '../../utils/shared';
 import {NativeImage} from '../shared/NativeImage';
 import {IconSizes, PostDimensions} from '../../constants/Constants';
 import {ThemeStatic} from '../../theme/Colors';
 import Typography from '../../theme/Typography';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {
+  GestureHandlerRootView,
+  TapGestureHandler,
+} from 'react-native-gesture-handler';
+import {postLike} from '../../reducers/action/post';
+import LikeBounceAnimation from './LikeBounceAnimation';
 
 const {FontWeights, FontSizes} = Typography;
 
 type Author = {
-  id: string;
+  userId: string;
   avatar: string;
-  handle: string;
+  name: string;
 };
 
 type PostCardProps = {
@@ -22,52 +28,117 @@ type PostCardProps = {
   author: Author;
   time: string;
   uri: string;
-  likes: string[];
+  likes: any[];
+  comments: any[];
   caption: string;
 };
 
-const PostCard = ({id, author, time, uri, likes, caption}: PostCardProps) => {
+const PostCard = ({
+  id,
+  author,
+  time,
+  uri,
+  likes,
+  comments,
+  caption,
+}: PostCardProps) => {
   const navigation = useNavigation();
 
   const user = useAppSelector(state => state.auth.userInfo);
 
-  const navigateToPost = () =>
-    navigation.navigate('Routes.PostView', {postId: id});
-
   const {readableTime} = parseTimeElapsed(time);
-  const readableLikes = parseLikes(likes.length);
-  const isLiked = likes.includes(user.id);
+  const readableComments = parseComments(comments.length);
+  const [isLiked, setIsLiked] = useState(likes.includes(user.id));
+  const [sLikes, setSLikes] = useState(likes);
+
+  const likeBounceAnimationRef = createRef();
+  const doubleTapRef = useRef();
+
+  const navigateToPost = () =>
+    navigation.navigate('PostView', {
+      post: {
+        id,
+        author,
+        time,
+        uri,
+        likes: sLikes,
+        comments,
+        caption,
+      },
+    });
+
+  const likeInteractionHandler = (liked: boolean) => {
+    if (!liked) {
+      const body = {
+        postId: id,
+        reaction: 'like',
+      };
+      postLike(body);
+      setIsLiked(!liked);
+      setSLikes([...sLikes, user.id]);
+    }
+    // @ts-ignore
+    likeBounceAnimationRef.current.animate();
+  };
 
   return (
-    <TouchableOpacity
-      onPress={navigateToPost}
-      activeOpacity={0.9}
-      style={styles.container}>
-      <NativeImage uri={uri} style={styles.postImage} />
+    <GestureHandlerRootView>
+      <TapGestureHandler
+        onActivated={navigateToPost}
+        numberOfTaps={1}
+        waitFor={doubleTapRef}>
+        <TapGestureHandler
+          maxDelayMs={300}
+          ref={doubleTapRef}
+          onActivated={() => likeInteractionHandler(isLiked)}
+          numberOfTaps={2}>
+          <View style={styles.container}>
+            <NativeImage uri={uri} style={styles.postImage} />
+            <LikeBounceAnimation ref={likeBounceAnimationRef} />
+            <View style={styles.upperContent}>
+              <NativeImage uri={author.avatar} style={styles.avatarImage} />
+              <View>
+                <Text style={styles.handleText}>{author.name}</Text>
+                <Text style={styles.timeText}>{readableTime}</Text>
+              </View>
+            </View>
 
-      <View style={styles.upperContent}>
-        <NativeImage uri={author.avatar} style={styles.avatarImage} />
-        <View>
-          <Text style={styles.handleText}>{author.handle}</Text>
-          <Text style={styles.timeText}>{readableTime}</Text>
-        </View>
-      </View>
+            <View style={styles.lowerContent}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}>
+                <View style={{flexDirection: 'row'}}>
+                  <Ionicons
+                    name={isLiked ? 'heart' : 'heart-outline'}
+                    color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
+                    size={IconSizes.x6}
+                  />
+                  <Text style={styles.likesText}>{parseLikes(sLikes.length)}</Text>
+                </View>
+                <View style={{flexDirection: 'row', marginLeft: IconSizes.x1}}>
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    color={ThemeStatic.unlike}
+                    size={IconSizes.x6}
+                  />
+                  <Text style={styles.likesText}>{readableComments}</Text>
+                </View>
+              </View>
 
-      <View style={styles.lowerContent}>
-        <View style={styles.likeContent}>
-          <AntDesign
-            name="heart"
-            color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
-            size={IconSizes.x5}
-          />
-          <Text style={styles.likesText}>{readableLikes}</Text>
-        </View>
-
-        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.captionText}>
-          {caption}
-        </Text>
-      </View>
-    </TouchableOpacity>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.captionText}>
+                {caption}
+              </Text>
+            </View>
+          </View>
+        </TapGestureHandler>
+      </TapGestureHandler>
+    </GestureHandlerRootView>
   );
 };
 
@@ -78,7 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: ThemeStatic.black,
     overflow: 'hidden',
-    borderRadius: 10,
+    borderRadius: 40,
   },
   postImage: {
     position: 'absolute',
@@ -102,16 +173,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: ThemeStatic.translucent,
   },
-  likeContent: {
-    flexDirection: 'row',
-  },
   handleText: {
-    ...FontWeights.Regular,
+    ...FontWeights.Bold,
     ...FontSizes.Body,
     color: ThemeStatic.white,
   },
   timeText: {
-    ...FontWeights.Light,
+    ...FontWeights.Regular,
     ...FontSizes.Caption,
     color: ThemeStatic.white,
     marginTop: 2,
@@ -123,7 +191,7 @@ const styles = StyleSheet.create({
     color: ThemeStatic.white,
   },
   captionText: {
-    ...FontWeights.Light,
+    ...FontWeights.Bold,
     ...FontSizes.Body,
     color: ThemeStatic.white,
     marginTop: 5,

@@ -1,59 +1,68 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigators/RootStack';
-import {View} from 'react-native';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
+import {RefreshControl, View} from 'react-native';
 import {styles} from '../components/style';
-import HeaderBar from '../components/header/HeaderBar';
 import {AppContext} from '../context';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes, Pagination} from '../constants/Constants';
-import {Header} from 'react-native/Libraries/NewAppScreen';
+import {Pagination} from '../constants/Constants';
 import NotificationScreenPlaceholder from '../components/placeholder/NotificationScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import SvgBanner from '../components/SvgBanner';
 import NotificationCard from '../components/notification/NotificationCard';
 import EmptyNotifications from '../../assets/svg/empty-notifications.svg';
-import {showError} from '../utils/Toast';
 import {
   getNotifications,
   remarkNotification,
 } from '../reducers/action/notification';
-import IconButton from '../components/control/IconButton';
+import {useFocusEffect} from '@react-navigation/native';
+import Header from '../components/header/Header';
 
-type props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
-
-const Notification = ({navigation}: props) => {
+const Notifi = () => {
   const {theme} = useContext(AppContext);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [pageNumber, setPageNumber] = useState(0);
   const [notifications, setNotifications] = useState<any>([]);
 
-  useEffect(() => {
-    fetchNotifications(pageNumber);
-  }, [pageNumber]);
+  useFocusEffect(
+    useCallback(() => {
+      setPageNumber(0);
+      remarkAllNotification();
+    }, []),
+  );
 
   useEffect(() => {
-    remarkAllNotification();
-  });
+    fetchNotifications(pageNumber);
+  }, []);
 
   const remarkAllNotification = async () => await remarkNotification();
 
-  const fetchNotifications = async (page: number) => {
-    try {
-      setLoading(true);
-      const response = await getNotifications({
-        pageNumber: page,
-        pageSize: Pagination.PAGE_SIZE,
+  const fetchNotifications = (page: number) => {
+    getNotifications({
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    })
+      .then(res => {
+        setNotifications(res);
+      })
+      .catch(err => {
+        console.log(err);
+        setError(true);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-      setNotifications(response);
-    } catch (err: any) {
-      setError(true);
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  };
+
+  const refreshControl = () => {
+    const onRefresh = () => fetchNotifications(1);
+
+    return (
+      <RefreshControl
+        tintColor={theme.text02}
+        refreshing={loading}
+        onRefresh={onRefresh}
+      />
+    );
   };
 
   let content = <NotificationScreenPlaceholder />;
@@ -74,6 +83,7 @@ const Notification = ({navigation}: props) => {
   if (!loading && !error) {
     content = (
       <FlatGrid
+        refreshControl={refreshControl()}
         itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
         data={notifications}
@@ -92,31 +102,22 @@ const Notification = ({navigation}: props) => {
         ]}
         spacing={20}
         renderItem={renderItem}
-        onEndReached={() => setPageNumber(pageNumber + 1)}
+        onEndReached={() => {
+          setPageNumber(pageNumber + 1);
+          fetchNotifications(pageNumber);
+        }}
       />
     );
   }
 
-  <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-    <HeaderBar
-      firstChilden={
-        <IconButton
-          Icon={() => (
-            <Ionicons
-              name="chevron-back-outline"
-              size={IconSizes.x8}
-              color={theme.text01}
-            />
-          )}
-          onPress={() => {
-            navigation.goBack();
-          }}
-        />
-      }
-    />
-    <Header title="Notifications" />
-    {content}
-  </View>;
+  return (
+    <>
+      <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <Header title="Notifications" />
+        {content}
+      </View>
+    </>
+  );
 };
 
-export default Notification;
+export default Notifi;

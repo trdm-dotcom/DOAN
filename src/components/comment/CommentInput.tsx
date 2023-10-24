@@ -16,7 +16,7 @@ import {useAppSelector} from '../../reducers/redux/store';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentInputProps = {
-  postId: number;
+  postId: string;
   scrollViewRef: React.MutableRefObject<any>;
 };
 

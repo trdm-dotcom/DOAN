@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {Animated, StyleSheet} from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import {ThemeStatic} from '../../theme/Colors';
 import {IconSizes, PostDimensions} from '../../constants/Constants';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AnimationValues = {
   opacity: {initial: 0, final: 1},
@@ -76,11 +76,7 @@ const LikeBounceAnimation: React.FC<LikeBounceAnimationProps> =
             transform: [{scale: likeBounce}],
           },
         ]}>
-        <AntDesign
-          name="heart"
-          color={ThemeStatic.white}
-          size={IconSizes.x12}
-        />
+        <Ionicons name="heart" color={ThemeStatic.like} size={IconSizes.x12} />
       </Animated.View>
     );
   });

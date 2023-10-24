@@ -28,7 +28,8 @@ const Comments = ({postId}: CommentsProps) => {
   }, [postId, pageNumber]);
 
   const fetchComments = async (post: string, page: number) => {
-    const response = await getCommentsOfPost(post, {
+    const response = await getCommentsOfPost({
+      postId: post,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
@@ -48,6 +49,10 @@ const Comments = ({postId}: CommentsProps) => {
     );
   };
 
+  const modelToggle = () => {
+    setShowModal(previousState => !previousState);
+  };
+
   const toggleModal = (comment: any) => {
     setCommentPressOption(comment);
     setShowModal(previousState => !previousState);
@@ -61,15 +66,6 @@ const Comments = ({postId}: CommentsProps) => {
   const deleteComment = async (comment: any) => {
     const newComments = comments.filter(it => it.commentId !== comment.id);
     setComments(newComments);
-  };
-
-  const onReport = async () => {
-    await reportComment(commentPressOption);
-    setShowModal(false);
-  };
-
-  const reportComment = (comment: any) => {
-    
   };
 
   const ListHeaderComponent = () => (
@@ -105,7 +101,7 @@ const Comments = ({postId}: CommentsProps) => {
         isVisible={showModal}
         animationIn="fadeIn"
         animationOut="fadeOut"
-        onBackdropPress={toggle}>
+        onBackdropPress={modelToggle}>
         <View
           style={[
             {
@@ -124,17 +120,8 @@ const Comments = ({postId}: CommentsProps) => {
             ]}
           />
           <AppButton
-            label={'Report'}
-            onPress={onReport}
-            loading={false}
-            containerStyle={[
-              {marginTop: 10},
-              {backgroundColor: theme.placeholder},
-            ]}
-          />
-          <AppButton
             label="Cancel"
-            onPress={toggle}
+            onPress={modelToggle}
             loading={false}
             labelStyle={{color: theme.text02}}
             containerStyle={[

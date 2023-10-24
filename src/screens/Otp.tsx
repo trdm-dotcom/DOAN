@@ -6,6 +6,7 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import {space, styles} from '../components/style';
 import {OtpIdType} from '../models/enum/OtpIdType';
@@ -130,6 +131,8 @@ const Otp = ({navigation, route}: props) => {
     }
   };
 
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
+
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
@@ -148,7 +151,10 @@ const Otp = ({navigation, route}: props) => {
           />
         }
       />
-      <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
+      <KeyboardAvoidingView
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={20}
+        style={[{flex: 1}, space(IconSizes.x10).mt]}>
         <Header title="OTP sent" />
         <Text
           style={[

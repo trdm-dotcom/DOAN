@@ -1,6 +1,7 @@
 import {Platform, StyleSheet} from 'react-native';
 import {
   CONTENT_SPACING,
+  PostDimensions,
   SAFE_AREA_PADDING,
   SCREEN_WIDTH,
 } from '../constants/Constants';
@@ -138,7 +139,7 @@ export const styles = (theme = {} as ThemeColors) =>
 
     // camera screen
     cameraContainer: {
-      height: SCREEN_WIDTH - CONTENT_SPACING,
+      height: SCREEN_WIDTH,
       borderRadius: 40,
       backgroundColor: theme.placeholder,
       overflow: 'hidden',
@@ -263,5 +264,42 @@ export const styles = (theme = {} as ThemeColors) =>
       ...FontWeights.Bold,
       ...FontSizes.SubHeading,
       color: theme.text01,
+    },
+
+    // post view
+    postViewHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    postViewAvatarImage: {
+      height: 50,
+      width: 50,
+      backgroundColor: theme.placeholder,
+      borderRadius: 50,
+      marginRight: 12,
+    },
+    postViewImage: {
+      ...PostDimensions.Large,
+      alignSelf: 'center',
+      marginTop: 25,
+      borderRadius: 40,
+      backgroundColor: theme.placeholder,
+    },
+    postViewLikes: {
+      flexDirection: 'row',
+      marginTop: 20,
+    },
+    postViewLikesText: {
+      ...FontWeights.Regular,
+      ...FontSizes.Body,
+      marginLeft: 10,
+      color: theme.text01,
+    },
+    postViewCaptionText: {
+      ...FontWeights.Light,
+      ...FontSizes.Body,
+      color: theme.text01,
+      marginTop: 10,
+      marginBottom: 20,
     },
   });

@@ -7,7 +7,7 @@ export const deleteComment = async (params: IParam) =>
 export const addComment = async (data: IParam) =>
   await apiPost<any>(
     '/social/comment',
-    {params: data},
+    {data: data},
     {
       'Content-Type': 'application/json',
     },
@@ -15,8 +15,8 @@ export const addComment = async (data: IParam) =>
 
 export const postLike = async (data: IParam) =>
   await apiPost<any>(
-    '/social/like',
-    {params: data},
+    '/social/reaction',
+    {data: data},
     {
       'Content-Type': 'application/json',
     },
@@ -25,7 +25,7 @@ export const postLike = async (data: IParam) =>
 export const upPost = async (data: IParam) =>
   await apiPost<any>(
     '/social/post',
-    {params: data},
+    {data: data},
     {
       'Content-Type': 'application/json',
     },
@@ -37,7 +37,7 @@ export const deletePost = async (params: IParam) =>
 export const updatePost = async (data: IParam) =>
   await apiPut<any>(
     '/social/post',
-    {params: data},
+    {data: data},
     {
       'Content-Type': 'application/json',
     },
@@ -46,14 +46,17 @@ export const updatePost = async (data: IParam) =>
 export const disablePost = async (params: IParam) =>
   await apiPut<any>(
     '/social/post/disable',
-    {params: params},
+    {data: params},
     {
       'Content-Type': 'application/json',
     },
   );
 
-export const getCommentsOfPost = async (postId: string, params: IParam) =>
-  await apiGet<any>(`/social/post/${postId}/comments`, {params: params});
+export const getCommentsOfPost = async (params: IParam) =>
+  await apiGet<any>('/social/post/comments', {params: params});
 
-export const getReactionsOfPost = async (postId: string, params: IParam) =>
-  await apiGet<any>(`/social/post/${postId}/reactions`, {params: params});
+export const getReactionsOfPost = async (params: IParam) =>
+  await apiGet<any>('/social/post/reactions', {params: params});
+
+export const getPosts = async (params: IParam) =>
+  await apiGet<any>('/social/post', {params: params});

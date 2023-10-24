@@ -72,6 +72,12 @@ export const parseLikes = (likeCount: number) => {
   return likeCount === 1 ? `${likeCount} like` : `${likeCount} likes`;
 };
 
+export const parseComments = (commentCount: number) => {
+  return commentCount === 1
+    ? `${commentCount} comment`
+    : `${commentCount} comments`;
+};
+
 export const createAsyncDelay = (duration: number) => {
   return new Promise<void>((resolve, _) =>
     setTimeout(() => {

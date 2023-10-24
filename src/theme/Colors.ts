@@ -14,7 +14,7 @@ export const ThemeStatic: ThemeStaticType = {
   placeholder: '#F4F4F4',
   like: '#E24359',
   unlike: '#DDD',
-  translucent: 'rgba(0, 0, 0, 0.1)',
+  translucent: 'rgba(0, 0, 0, 0.3)',
   delete: '#F44336',
   badge: '#F24',
 };

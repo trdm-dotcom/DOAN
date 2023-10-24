@@ -65,10 +65,12 @@
 		<string>Roboto-Regular.ttf</string>
 		<string>Roboto-Thin.ttf</string>
 		<string>Roboto-ThinItalic.ttf</string>
+		<string>Sniglet-ExtraBold.ttf</string>
+		<string>Sniglet-Regular.ttf</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
 	<key>NSMicrophoneUsageDescription</key>
-<string>$(PRODUCT_NAME) needs access to your Microphone.</string>
+	<string>$(PRODUCT_NAME) needs access to your Microphone.</string>
 </dict>
 </plist>

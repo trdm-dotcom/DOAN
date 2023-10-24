@@ -5,7 +5,6 @@ import {
   Platform,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Contacts, {Contact} from 'react-native-contacts';
@@ -17,26 +16,21 @@ import {
   requestAddFriend,
 } from '../reducers/action/friend';
 import {IconSizes, Pagination} from '../constants/Constants';
-import {showError} from '../utils/Toast';
 import UserCard from '../components/user/UserCard';
 import AppButton from '../components/control/AppButton';
 import {space, styles} from '../components/style';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AnimatedSearchBar from '../components/control/AnimatedSearchBar';
-import HeaderBar from '../components/header/HeaderBar';
 import Typography from '../theme/Typography';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigators/RootStack';
 import IconButton from '../components/control/IconButton';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {FlatGrid} from 'react-native-super-grid';
 import Header from '../components/header/Header';
-import IFriendResponse from 'models/response/IFriendResponse';
+import IFriendResponse from '../models/response/IFriendResponse';
+import ConfirmationModal from '../components/shared/ConfirmationModal';
+import {useFocusEffect} from '@react-navigation/native';
 
 const {FontWeights, FontSizes} = Typography;
 
-type props = NativeStackScreenProps<RootStackParamList, 'Friend'>;
-const Friend = ({navigation}: props) => {
+const Friend = () => {
   const {theme} = useContext(AppContext);
   const [pageNumber, setPageNumber] = useState(0);
   const [listfriendSuggest, setListFriendSuggest] = useState<IFriendResponse[]>(
@@ -48,16 +42,21 @@ const Friend = ({navigation}: props) => {
   const [listFriend, setListFriend] = useState<IFriendResponse[]>([]);
   const [contacts, setContacts] = useState<any>(null);
   const [search, setSearch] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [friendRejected, setFriendRejected] = useState<any>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchListRequestFriend();
+      fetchListFriend();
+      setPageNumber(0);
+      fetchListSuggestFriend(contacts, search, pageNumber);
+    }, []),
+  );
 
   useEffect(() => {
     getContacts();
   }, []);
-
-  useEffect(() => {
-    fetchListRequestFriend(pageNumber);
-    fetchListFriend(pageNumber);
-    fetchListSuggestFriend(contacts, search, pageNumber);
-  }, [pageNumber]);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -100,47 +99,37 @@ const Friend = ({navigation}: props) => {
     }
   }, []);
 
-  const fetchListSuggestFriend = async (
+  const fetchListSuggestFriend = (
     listContact: string[],
     searchFriend: any,
     page: number,
   ) => {
-    try {
-      const friendList = await getSuggestFriend({
-        phone: listContact,
-        search: searchFriend,
-        pageNumber: page,
-        pageSize: Pagination.PAGE_SIZE,
-      });
-      setListFriendSuggest([...listfriendSuggest, ...friendList]);
-    } catch (err: any) {
-      showError(err.message);
-      return [];
-    }
+    getSuggestFriend({
+      phone: listContact,
+      search: searchFriend,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    }).then(response =>
+      setListFriendSuggest(
+        page === 0 ? response : [...listfriendSuggest, ...response],
+      ),
+    );
   };
 
-  const fetchListRequestFriend = async (page: number) => {
-    try {
-      const response = await getFriendRequest({
-        pageNumber: page,
-        pageSize: Pagination.PAGE_SIZE,
-      });
-      setListRequestFriend(response);
-    } catch (err: any) {
-      showError(err.message);
-    }
+  const fetchListRequestFriend = () => {
+    console.log('fetchListRequestFriend');
+    getFriendRequest({
+      pageNumber: 0,
+      pageSize: Pagination.PAGE_SIZE,
+    }).then(response => setListRequestFriend(response));
   };
 
-  const fetchListFriend = async (page: number) => {
-    try {
-      const response = await getFriendList({
-        pageNumber: page,
-        pageSize: Pagination.PAGE_SIZE,
-      });
-      setListFriend(response);
-    } catch (err: any) {
-      showError(err.message);
-    }
+  const fetchListFriend = () => {
+    console.log('fetchListFriend');
+    getFriendList({
+      pageNumber: 0,
+      pageSize: Pagination.PAGE_SIZE,
+    }).then(response => setListFriend(response));
   };
 
   const handleOnChangeText = async (event: any) => {
@@ -151,92 +140,98 @@ const Friend = ({navigation}: props) => {
     setSearch(text);
   };
 
+  const deleteConfirmationToggle = () => {
+    setShowModal(previousState => !previousState);
+  };
+
+  const deleteFriend = () => {
+    rejectFriend(friendRejected)
+      .then(() => {
+        setListFriend(
+          listFriend.filter(item => item.friendId !== friendRejected),
+        );
+        setListRequestFriend(
+          listRequestFriend.filter(item => item.friendId !== friendRejected),
+        );
+      })
+      .finally(() => {
+        setFriendRejected(null);
+        setShowModal(false);
+      });
+  };
+
+  const addFriend = (friend: IFriendResponse) => {
+    requestAddFriend(friend.id).then(response => {
+      setListFriendSuggest(
+        listfriendSuggest.filter(item => item.id !== friend.id),
+      );
+      friend.friendId = response.id;
+      setListRequestFriend([...listRequestFriend, friend]);
+    });
+  };
+
   return (
-    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        firstChilden={
-          <TouchableOpacity
-            onPress={() => {
-              navigation.goBack();
-            }}
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <Ionicons
-              name="chevron-back-outline"
-              size={IconSizes.x8}
-              color={theme.text01}
+    <>
+      <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <ScrollView
+          stickyHeaderIndices={[0]}
+          showsVerticalScrollIndicator={false}>
+          <View
+            style={[styles(theme).defaultBackground, space(IconSizes.x5).pv]}>
+            <Header title="Your friend" />
+            <AnimatedSearchBar
+              value={search}
+              placeholder="Search"
+              onBlur={() => {}}
+              onFocus={() => {}}
+              onChangeText={handleOnChangeText}
             />
-          </TouchableOpacity>
-        }
-      />
-      <ScrollView
-        stickyHeaderIndices={[0]}
-        showsVerticalScrollIndicator={false}>
-        <View style={[styles(theme).defaultBackground, space(IconSizes.x5).pv]}>
-          <Header title="Your friend" />
-          <AnimatedSearchBar
-            value={search}
-            placeholder="Search"
-            onBlur={() => {}}
-            onFocus={() => {}}
-            onChangeText={handleOnChangeText}
-          />
-          <View style={[styles(theme).row]}>
-            <Ionicons
-              name="share-social-outline"
-              size={IconSizes.x6}
-              color={theme.text01}
-            />
-            <Text
-              style={[
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Label,
-                  color: theme.text01,
-                },
-                space(IconSizes.x1).ml,
-              ]}>
-              Invite from other apps
-            </Text>
+            <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+              <Ionicons
+                name="share-social-outline"
+                size={IconSizes.x6}
+                color={theme.text01}
+              />
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Label,
+                    color: theme.text01,
+                  },
+                  space(IconSizes.x1).ml,
+                ]}>
+                Invite from other apps
+              </Text>
+            </View>
           </View>
-        </View>
-        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
-          {listRequestFriend.length > 0 && (
-            <>
-              <View style={[styles(theme).row]}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Label,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).ml,
-                  ]}>
-                  Send Request
-                </Text>
-              </View>
-              <FlatGrid
-                nestedScrollEnabled={true}
-                itemDimension={responsiveWidth(85)}
-                showsVerticalScrollIndicator={false}
-                data={listRequestFriend}
-                itemContainerStyle={styles().listItemContainer}
-                contentContainerStyle={styles().listContentContainer}
-                style={styles().listContainer}
-                spacing={20}
-                renderItem={({item}) => (
+          <View style={[{flex: 1}]}>
+            {listRequestFriend.length > 0 && (
+              <>
+                <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Label,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).ml,
+                    ]}>
+                    Request friend
+                  </Text>
+                </View>
+                {listRequestFriend.map(item => (
                   <UserCard
                     userId={item.id}
                     avatar={item.avatar}
                     name={item.name}
+                    style={[space(IconSizes.x1).mt]}
                     childen={
                       <IconButton
                         Icon={() => (
@@ -253,48 +248,42 @@ const Friend = ({navigation}: props) => {
                             }}
                           />
                         )}
-                        onPress={() => rejectFriend(item.friendId)}
+                        onPress={() => {
+                          setFriendRejected(item.friendId);
+                          deleteConfirmationToggle();
+                        }}
                       />
                     }
                   />
-                )}
-              />
-            </>
-          )}
-          {listFriend.length > 0 && (
-            <>
-              <View style={[styles(theme).row]}>
-                <Ionicons
-                  name="people"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Label,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).ml,
-                  ]}>
-                  Your Friends
-                </Text>
-              </View>
-              <FlatGrid
-                nestedScrollEnabled={true}
-                itemDimension={responsiveWidth(85)}
-                showsVerticalScrollIndicator={false}
-                data={listFriend}
-                itemContainerStyle={styles().listItemContainer}
-                contentContainerStyle={styles().listContentContainer}
-                style={styles().listContainer}
-                spacing={20}
-                renderItem={({item}) => (
+                ))}
+              </>
+            )}
+            {listFriend.length > 0 && (
+              <>
+                <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+                  <Ionicons
+                    name="people"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Label,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).ml,
+                    ]}>
+                    Your Friends
+                  </Text>
+                </View>
+                {listFriend.map(item => (
                   <UserCard
                     userId={item.id}
                     avatar={item.avatar}
                     name={item.name}
+                    style={[space(IconSizes.x1).mt]}
                     childen={
                       <IconButton
                         Icon={() => (
@@ -311,52 +300,46 @@ const Friend = ({navigation}: props) => {
                             }}
                           />
                         )}
-                        onPress={() => rejectFriend(item.friendId)}
+                        onPress={() => {
+                          setFriendRejected(item.friendId);
+                          deleteConfirmationToggle();
+                        }}
                       />
                     }
                   />
-                )}
-              />
-            </>
-          )}
-          {listfriendSuggest.length > 0 && (
-            <>
-              <View style={[styles(theme).row]}>
-                <Ionicons
-                  name="bulb"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Label,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).ml,
-                  ]}>
-                  Suggestions
-                </Text>
-              </View>
-              <FlatGrid
-                nestedScrollEnabled={true}
-                itemDimension={responsiveWidth(85)}
-                showsVerticalScrollIndicator={false}
-                data={listfriendSuggest}
-                itemContainerStyle={styles().listItemContainer}
-                contentContainerStyle={styles().listContentContainer}
-                style={styles().listContainer}
-                spacing={20}
-                renderItem={({item}) => (
+                ))}
+              </>
+            )}
+            {listfriendSuggest.length > 0 && (
+              <>
+                <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+                  <Ionicons
+                    name="bulb"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Label,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).ml,
+                    ]}>
+                    Suggestions
+                  </Text>
+                </View>
+                {listfriendSuggest.map(item => (
                   <UserCard
                     userId={item.id}
                     avatar={item.avatar}
                     name={item.name}
+                    style={[space(IconSizes.x1).mt]}
                     childen={
                       <AppButton
                         label="Add"
-                        onPress={() => requestAddFriend(item.id)}
+                        onPress={() => addFriend(item)}
                         labelStyle={{
                           ...FontWeights.Bold,
                           ...FontSizes.Body,
@@ -379,35 +362,44 @@ const Friend = ({navigation}: props) => {
                       />
                     }
                   />
-                )}
-                ListFooterComponent={() => (
-                  <AppButton
-                    label="Load More"
-                    onPress={() => setPageNumber(pageNumber + 1)}
-                    containerStyle={{
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      alignSelf: 'center',
-                      borderRadius: 50,
-                      backgroundColor: theme.placeholder,
-                      paddingHorizontal: IconSizes.x5,
-                      paddingVertical: IconSizes.x1,
-                    }}
-                    Icon={() => (
-                      <Ionicons
-                        name="add-circle-outline"
-                        size={IconSizes.x6}
-                        color={theme.text01}
-                      />
-                    )}
-                  />
-                )}
-              />
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+                ))}
+                <AppButton
+                  label="Load More"
+                  onPress={() => {
+                    setPageNumber(pageNumber + 1);
+                    fetchListSuggestFriend(contacts, search, pageNumber);
+                  }}
+                  containerStyle={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    alignSelf: 'center',
+                    borderRadius: 50,
+                    backgroundColor: theme.placeholder,
+                    paddingHorizontal: IconSizes.x5,
+                    paddingVertical: IconSizes.x1,
+                  }}
+                  Icon={() => (
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={IconSizes.x6}
+                      color={theme.text01}
+                    />
+                  )}
+                />
+              </>
+            )}
+          </View>
+        </ScrollView>
+        <ConfirmationModal
+          label="Delete"
+          title="Are you sure you want to delete?"
+          color="red"
+          isVisible={showModal}
+          toggle={deleteConfirmationToggle}
+          onConfirm={deleteFriend}
+        />
+      </View>
+    </>
   );
 };
 
