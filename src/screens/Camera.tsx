@@ -61,7 +61,6 @@ const Camera = ({navigation}: props) => {
   const isFocussed = useIsFocused();
   const isForeground = useIsForeground();
   const isActive = isFocussed && isForeground;
-  const inputCaptionRef = useRef<TextInput>(null);
 
   useEffect(() => {
     cameraPermission();
@@ -158,7 +157,9 @@ const Camera = ({navigation}: props) => {
     const filename = uri.substring(uri.lastIndexOf('/') + 1);
     const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
     const imageRef = storage().ref(filename);
-    await imageRef.putFile(uploadUri);
+    await imageRef.putFile(uploadUri, {
+      cacheControl: 'no-store', // disable caching
+    });
     return imageRef.getDownloadURL();
   };
 
@@ -290,7 +291,6 @@ const Camera = ({navigation}: props) => {
                 flex: 1,
               },
             ]}
-            ref={inputCaptionRef}
             autoFocus
             placeholder="Add a caption..."
             placeholderTextColor={theme.text02}
@@ -364,14 +364,9 @@ const Camera = ({navigation}: props) => {
                 setImageSource(null);
               }}
             />
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="paper-plane"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
+            <TouchableOpacity
+              onPress={doUpPost}
+              activeOpacity={0.9}
               style={{
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -379,8 +374,13 @@ const Camera = ({navigation}: props) => {
                 padding: IconSizes.x7,
                 borderRadius: 50,
               }}
-              onPress={doUpPost}
-            />
+              disabled={!isActive || loading}>
+              <Ionicons
+                name="paper-plane"
+                size={IconSizes.x9}
+                color={theme.text01}
+              />
+            </TouchableOpacity>
             <IconButton
               Icon={() => (
                 <Ionicons

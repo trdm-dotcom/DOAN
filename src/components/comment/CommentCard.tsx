@@ -6,7 +6,6 @@ import {NativeImage} from '../shared/NativeImage';
 import {space, styles} from '../style';
 import {parseTimeElapsed} from '../../utils/shared';
 import {IconSizes} from '../../constants/Constants';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import {AppContext} from '../../context';
 import Typography from '../../theme/Typography';
 import {useNavigation} from '@react-navigation/native';
@@ -67,6 +66,7 @@ const CommentCard = ({
             {
               ...FontWeights.Light,
               ...FontSizes.Body,
+              color: theme.text01,
             },
           ]}>
           <TouchableOpacity activeOpacity={0.9} onPress={navigateToProfile}>
@@ -83,13 +83,6 @@ const CommentCard = ({
             space(IconSizes.x5).mt,
           ]}>
           <Text style={[styles(theme).timeText]}>{parsedTime}</Text>
-          <TouchableOpacity onPress={onPressOption}>
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={IconSizes.x2}
-              color={theme.text01}
-            />
-          </TouchableOpacity>
         </View>
       </View>
     </View>

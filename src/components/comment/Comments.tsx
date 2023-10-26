@@ -27,16 +27,19 @@ const Comments = ({postId}: CommentsProps) => {
     fetchComments(postId, pageNumber);
   }, [postId, pageNumber]);
 
-  const fetchComments = async (post: string, page: number) => {
-    const response = await getCommentsOfPost({
+  const fetchComments = (post: string, page: number) => {
+    getCommentsOfPost({
       postId: post,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
+    }).then(response => {
+      if (response) {
+        setComments([...comments, ...response]);
+      }
     });
-    setComments(response);
   };
 
-  const renderItem = (item: any) => {
+  const renderItem = ({item}) => {
     return (
       <CommentCard
         userId={item.userId}
@@ -77,14 +80,12 @@ const Comments = ({postId}: CommentsProps) => {
   return (
     <>
       <FlatGrid
-        bounces={false}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={ListHeaderComponent}
         data={comments}
         renderItem={renderItem}
         style={styles().listStyle}
         onEndReached={() => setPageNumber(pageNumber + 1)}
-        keyExtractor={item => item.id.toString()}
         ListEmptyComponent={() => (
           <ListEmptyComponent
             placeholder="Be the first one to comment"

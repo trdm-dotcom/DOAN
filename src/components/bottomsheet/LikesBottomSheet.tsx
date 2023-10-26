@@ -1,26 +1,27 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {Ref, forwardRef, useContext, useEffect, useState} from 'react';
 import {View} from 'react-native';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {AppContext} from '../../context';
 import {Modalize} from 'react-native-modalize';
 import UserCard from '../user/UserCard';
 import SvgBanner from '../SvgBanner';
-import BottomSheetHeader from '../header/BottomSheetHeader';
 import EmptyLikesBanner from '../../../assets/svg/empty-likes.svg';
 import {FlatGrid} from 'react-native-super-grid';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {getUserInfos} from '../../reducers/action/user';
 import {showError} from '../../utils/Toast';
 import {styles} from '../style';
+import {getReactionsOfPost} from '../../reducers/action/post';
+import BottomSheetHeader from '../header/BottomSheetHeader';
 
-type LikesBottomSheetProps = {
-  userIds: number[];
+interface LikesBottomSheetProps {
+  ref: Ref<any>;
+  postId: string;
   onUserPress: (userId: number) => void;
-};
+}
 
-const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
-  ({userIds, onUserPress}, ref) => {
+const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
+  ({postId, onUserPress}, ref) => {
     const {theme} = useContext(AppContext);
     const [users, setUsers] = useState<IUserInfoResponse[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -30,14 +31,14 @@ const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
 
     useEffect(() => {
       setLoading(true);
-      getUserInfos({userIds: userIds})
+      getReactionsOfPost({postId: postId})
         .then(res => setUsers(res))
         .catch((err: any) => {
           setError(true);
           showError(err.message);
         })
         .finally(() => setLoading(false));
-    }, [userIds]);
+    }, [postId]);
 
     const ListEmptyComponent = () => (
       <SvgBanner
@@ -47,10 +48,10 @@ const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
       />
     );
 
-    const renderItem = (item: any) => {
+    const renderItem = ({item}) => {
       return (
         <UserCard
-          userId={item.id}
+          userId={item.userId}
           avatar={item.avatar}
           name={item.name}
           onPress={() => onUserPress(item.id)}
@@ -79,7 +80,8 @@ const LikesBottomSheet = React.forwardRef<Modalize, LikesBottomSheetProps>(
       <Modalize
         ref={ref}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={[styles(theme).modalizeContainer]}>
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
         <BottomSheetHeader
           heading="Likes"
           subHeading="Users who liked this post"

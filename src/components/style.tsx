@@ -188,8 +188,10 @@ export const styles = (theme = {} as ThemeColors) =>
     // modalize
     modalizeContainer: {
       marginTop: 40,
-      padding: 20,
+      flex: 1,
       backgroundColor: theme.base,
+      paddingHorizontal: SAFE_AREA_PADDING.paddingHorizontal,
+      paddingVertical: SAFE_AREA_PADDING.paddingVertical,
     },
     modalizeContent: {
       flex: 1,

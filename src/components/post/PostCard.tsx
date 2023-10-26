@@ -54,19 +54,6 @@ const PostCard = ({
   const likeBounceAnimationRef = createRef();
   const doubleTapRef = useRef();
 
-  const navigateToPost = () =>
-    navigation.navigate('PostView', {
-      post: {
-        id,
-        author,
-        time,
-        uri,
-        likes: sLikes,
-        comments,
-        caption,
-      },
-    });
-
   const likeInteractionHandler = (liked: boolean) => {
     if (!liked) {
       const body = {
@@ -84,7 +71,20 @@ const PostCard = ({
   return (
     <GestureHandlerRootView>
       <TapGestureHandler
-        onActivated={navigateToPost}
+        onActivated={() =>
+          navigation.navigate('PostView', {
+            post: {
+              id,
+              author,
+              time,
+              uri,
+              likes: sLikes,
+              comments,
+              caption,
+              createdAt: time,
+            },
+          })
+        }
         numberOfTaps={1}
         waitFor={doubleTapRef}>
         <TapGestureHandler
@@ -116,7 +116,9 @@ const PostCard = ({
                     color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
                     size={IconSizes.x6}
                   />
-                  <Text style={styles.likesText}>{parseLikes(sLikes.length)}</Text>
+                  <Text style={styles.likesText}>
+                    {parseLikes(sLikes.length)}
+                  </Text>
                 </View>
                 <View style={{flexDirection: 'row', marginLeft: IconSizes.x1}}>
                   <Ionicons

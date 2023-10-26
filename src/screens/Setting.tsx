@@ -1,6 +1,6 @@
 import {AppContext} from '../context';
 import {space, styles} from '../components/style';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,7 @@ import {OtpIdType} from '../models/enum/OtpIdType';
 import IOtpResponse from '../models/response/IOtpResponse';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
+import BottomSheetHeader from '../components/header/BottomSheetHeader';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -63,9 +64,12 @@ const Setting = () => {
   const [minutes, setMinutes] = useState<number>(1);
   const [seconds, setSeconds] = useState<number>(30);
 
-  const modalizeRef = React.useRef<Modalize>(null);
+  const modalizeRef = useRef();
 
-  const modalizeOpen = () => modalizeRef.current?.open();
+  const modalizeOpen = () => {
+    // @ts-ignore
+    modalizeRef.current.open();
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -138,7 +142,8 @@ const Setting = () => {
     });
     userInfo.name = name;
     dispatch(updateUserInfo(userInfo));
-    modalizeRef.current?.close();
+    // @ts-ignore
+    modalizeRef.current.close();
   };
 
   const verifyOtp = async () => {
@@ -157,7 +162,8 @@ const Setting = () => {
       hash: getHash('PASSWORD'),
     };
     await apiPost<any>('/user/changePassword', body);
-    modalizeRef.current?.close();
+    // @ts-ignore
+    modalizeRef.current.close();
   };
 
   const changePass = async () => {
@@ -345,6 +351,24 @@ const Setting = () => {
                     size={IconSizes.x6}
                   />
                 }
+                style={space(IconSizes.x00).mb}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setProgess('changePass');
+                modalizeOpen();
+              }}>
+              <AppOption
+                label="Biometric"
+                iconName="finger-print-outline"
+                children={
+                  <Ionicons
+                    name="chevron-forward"
+                    color={theme.base}
+                    size={IconSizes.x6}
+                  />
+                }
               />
             </TouchableOpacity>
           </View>
@@ -409,23 +433,22 @@ const Setting = () => {
         <Modalize
           ref={modalizeRef}
           scrollViewProps={{showsVerticalScrollIndicator: false}}
-          modalStyle={[
-            styles(theme).container,
-            styles(theme).defaultBackground,
-          ]}>
+          modalStyle={[styles(theme).modalizeContainer]}
+          adjustToContentHeight>
           <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
             {progess === 'editInfo' && (
               <>
-                <Header title="Edit your name" />
+                <BottomSheetHeader
+                  heading="Edit profile"
+                  subHeading="Edit your personal information"
+                />
                 <View style={[styles(theme).inputContainer]}>
                   <TextInput
                     value={name}
                     onChangeText={(text: string) => {
                       const verify: boolean = text.trim().length > 0;
                       setIsContinue(verify);
-                      if (verify) {
-                        setName(text.trim());
-                      }
+                      setName(text);
                     }}
                     style={[
                       styles(theme).inputField,

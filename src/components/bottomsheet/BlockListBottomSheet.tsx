@@ -1,4 +1,4 @@
-import React, {forwardRef, useContext, useEffect} from 'react';
+import React, {Ref, forwardRef, useContext, useEffect} from 'react';
 import {View} from 'react-native';
 import {Modalize} from 'react-native-modalize';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
@@ -13,80 +13,87 @@ import {showError} from '../../utils/Toast';
 import {getBlockList} from '../../reducers/action/friend';
 import {styles} from '../style';
 
-const BlockListBottomSheet = forwardRef<Modalize>(ref => {
-  const {theme} = useContext(AppContext);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [error, setError] = React.useState<boolean>(false);
-  const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
+interface BlockListBottomSheetProps {
+  ref: Ref<any>;
+}
 
-  let content = <ConnectionsPlaceholder />;
+const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
+  ref => {
+    const {theme} = useContext(AppContext);
+    const [loading, setLoading] = React.useState<boolean>(true);
+    const [error, setError] = React.useState<boolean>(false);
+    const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
 
-  useEffect(() => {
-    fetchBlockedUsers();
-  }, []);
+    let content = <ConnectionsPlaceholder />;
 
-  const fetchBlockedUsers = async () => {
-    try {
-      setLoading(true);
-      const responsive = await getBlockList();
-      setBlockedUsers(responsive);
-    } catch (err: any) {
-      setError(true);
-      showError(err.message);
-    } finally {
-      setLoading(false);
+    useEffect(() => {
+      fetchBlockedUsers();
+    }, []);
+
+    const fetchBlockedUsers = async () => {
+      try {
+        setLoading(true);
+        const responsive = await getBlockList();
+        setBlockedUsers(responsive);
+      } catch (err: any) {
+        setError(true);
+        showError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const ListEmptyComponent = () => (
+      <SvgBanner
+        Svg={EmptyBlockListBanner}
+        placeholder="No users blocked"
+        spacing={16}
+      />
+    );
+
+    const renderItem = (item: any) => {
+      return (
+        <UserCard
+          userId={item.id}
+          avatar={item.avatar}
+          name={item.name}
+          onPress={() => null}
+        />
+      );
+    };
+
+    if (!loading && !error) {
+      content = (
+        <FlatGrid
+          bounces={false}
+          itemDimension={responsiveWidth(85)}
+          showsVerticalScrollIndicator={false}
+          data={blockedUsers}
+          itemContainerStyle={styles(theme).listItemContainer}
+          contentContainerStyle={styles(theme).listContentContainer}
+          ListEmptyComponent={ListEmptyComponent}
+          style={styles(theme).listContainer}
+          spacing={20}
+          renderItem={renderItem}
+        />
+      );
     }
-  };
 
-  const ListEmptyComponent = () => (
-    <SvgBanner
-      Svg={EmptyBlockListBanner}
-      placeholder="No users blocked"
-      spacing={16}
-    />
-  );
-
-  const renderItem = (item: any) => {
     return (
-      <UserCard
-        userId={item.id}
-        avatar={item.avatar}
-        name={item.name}
-        onPress={() => null}
-      />
+      <Modalize
+        //@ts-ignore
+        ref={ref}
+        scrollViewProps={{showsVerticalScrollIndicator: false}}
+        modalStyle={styles(theme).modalizeContainer}
+        adjustToContentHeight>
+        <BottomSheetHeader
+          heading="Blocked Users"
+          subHeading={"Below are the users you've blocked"}
+        />
+        <View style={styles(theme).modalizeContent}>{content}</View>
+      </Modalize>
     );
-  };
-
-  if (!loading && !error) {
-    content = (
-      <FlatGrid
-        bounces={false}
-        itemDimension={responsiveWidth(85)}
-        showsVerticalScrollIndicator={false}
-        data={blockedUsers}
-        itemContainerStyle={styles(theme).listItemContainer}
-        contentContainerStyle={styles(theme).listContentContainer}
-        ListEmptyComponent={ListEmptyComponent}
-        style={styles(theme).listContainer}
-        spacing={20}
-        renderItem={renderItem}
-      />
-    );
-  }
-
-  return (
-    <Modalize
-      //@ts-ignore
-      ref={ref}
-      scrollViewProps={{showsVerticalScrollIndicator: false}}
-      modalStyle={styles(theme).modalizeContainer}>
-      <BottomSheetHeader
-        heading="Blocked Users"
-        subHeading={"Below are the users you've blocked"}
-      />
-      <View style={styles(theme).modalizeContent}>{content}</View>
-    </Modalize>
-  );
-});
+  },
+);
 
 export default BlockListBottomSheet;
