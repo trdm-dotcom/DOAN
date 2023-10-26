@@ -39,7 +39,9 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import {getHash} from '../utils/Crypto';
 import {upPost} from '../reducers/action/post';
-import {IParam} from 'src/models/IParam';
+import {IParam} from '../models/IParam';
+import {BallIndicator} from 'react-native-indicators';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -332,8 +334,12 @@ const Camera = ({navigation}: props) => {
                 //   }
                 // }
               }}
-              disabled={!isActive || loading}
-            />
+              disabled={!isActive || loading}>
+              {loading && (
+                <BallIndicator size={IconSizes.x9} color={ThemeStatic.white} />
+              )}
+            </TouchableOpacity>
+
             <IconButton
               Icon={() => (
                 <Ionicons
@@ -375,16 +381,20 @@ const Camera = ({navigation}: props) => {
                 borderRadius: 50,
               }}
               disabled={!isActive || loading}>
-              <Ionicons
-                name="paper-plane"
-                size={IconSizes.x9}
-                color={theme.text01}
-              />
+              {loading ? (
+                <BallIndicator size={IconSizes.x9} color={ThemeStatic.white} />
+              ) : (
+                <Ionicons
+                  name="paper-plane"
+                  size={IconSizes.x9}
+                  color={theme.text01}
+                />
+              )}
             </TouchableOpacity>
             <IconButton
               Icon={() => (
                 <Ionicons
-                  name="download"
+                  name="download-outline"
                   size={IconSizes.x9}
                   color={theme.text01}
                 />

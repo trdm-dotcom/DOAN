@@ -27,7 +27,7 @@ import ConfirmationModal from '../components/shared/ConfirmationModal';
 import LikesBottomSheet from '../components/bottomsheet/LikesBottomSheet';
 import {getHash} from '../utils/Crypto';
 import {IParam} from '../models/IParam';
-import PostOptionsBottomSheet from '../components/bottomNavigation/PostOptionsBottomSheet';
+import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomSheet';
 import EditPostBottomSheet from '../components/bottomsheet/EditPostBottomSheet';
 
 const {FontWeights, FontSizes} = Typography;

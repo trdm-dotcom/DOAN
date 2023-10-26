@@ -17,6 +17,8 @@ import Typography from '../../theme/Typography';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {updatePost} from '../../reducers/action/post';
 import {getHash} from '../../utils/Crypto';
+import {BallIndicator} from 'react-native-indicators';
+import {ThemeStatic} from '../../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -101,11 +103,15 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
                 borderRadius: 50,
               }}
               disabled={loading}>
-              <Ionicons
-                name="paper-plane"
-                size={IconSizes.x9}
-                color={theme.text01}
-              />
+              {loading ? (
+                <BallIndicator size={IconSizes.x9} color={ThemeStatic.white} />
+              ) : (
+                <Ionicons
+                  name="paper-plane"
+                  size={IconSizes.x9}
+                  color={theme.text01}
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
