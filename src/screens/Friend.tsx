@@ -27,6 +27,7 @@ import Header from '../components/header/Header';
 import IFriendResponse from '../models/response/IFriendResponse';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
 import {useFocusEffect} from '@react-navigation/native';
+import ConnectionsPlaceholder from '../components/placeholder/Connections.Placeholder';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -44,13 +45,26 @@ const Friend = () => {
   const [search, setSearch] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [friendRejected, setFriendRejected] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
   useFocusEffect(
     useCallback(() => {
-      fetchListRequestFriend();
-      fetchListFriend();
+      const fetchInit = () => {
+        setLoading(true);
+        Promise.all([
+          fetchListRequestFriend(),
+          fetchListFriend(),
+          fetchListSuggestFriend(contacts, search, pageNumber),
+        ])
+          .catch(err => {
+            console.log(err);
+            setError(true);
+          })
+          .finally(() => setLoading(false));
+      };
       setPageNumber(0);
-      fetchListSuggestFriend(contacts, search, pageNumber);
+      fetchInit();
     }, []),
   );
 
@@ -170,6 +184,199 @@ const Friend = () => {
     });
   };
 
+  let content = <ConnectionsPlaceholder />;
+
+  if (!error && !loading) {
+    content = (
+      <>
+        <View style={[{flex: 1}]}>
+          {listRequestFriend.length > 0 && (
+            <>
+              <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Label,
+                      color: theme.text01,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}>
+                  Request friend
+                </Text>
+              </View>
+              {listRequestFriend.map(item => (
+                <UserCard
+                  userId={item.id}
+                  avatar={item.avatar}
+                  name={item.name}
+                  style={[space(IconSizes.x1).mt]}
+                  childen={
+                    <IconButton
+                      Icon={() => (
+                        <Ionicons
+                          name="close"
+                          size={IconSizes.x6}
+                          color={theme.accent}
+                          style={{
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: theme.placeholder,
+                            padding: IconSizes.x1,
+                            borderRadius: 50,
+                          }}
+                        />
+                      )}
+                      onPress={() => {
+                        setFriendRejected(item.friendId);
+                        deleteConfirmationToggle();
+                      }}
+                    />
+                  }
+                />
+              ))}
+            </>
+          )}
+          {listFriend.length > 0 && (
+            <>
+              <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+                <Ionicons
+                  name="people"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Label,
+                      color: theme.text01,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}>
+                  Your Friends
+                </Text>
+              </View>
+              {listFriend.map(item => (
+                <UserCard
+                  userId={item.id}
+                  avatar={item.avatar}
+                  name={item.name}
+                  style={[space(IconSizes.x1).mt]}
+                  childen={
+                    <IconButton
+                      Icon={() => (
+                        <Ionicons
+                          name="close"
+                          size={IconSizes.x6}
+                          color={theme.accent}
+                          style={{
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: theme.placeholder,
+                            padding: IconSizes.x1,
+                            borderRadius: 50,
+                          }}
+                        />
+                      )}
+                      onPress={() => {
+                        setFriendRejected(item.friendId);
+                        deleteConfirmationToggle();
+                      }}
+                    />
+                  }
+                />
+              ))}
+            </>
+          )}
+          {listfriendSuggest.length > 0 && (
+            <>
+              <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+                <Ionicons
+                  name="bulb"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Label,
+                      color: theme.text01,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}>
+                  Suggestions
+                </Text>
+              </View>
+              {listfriendSuggest.map(item => (
+                <UserCard
+                  userId={item.id}
+                  avatar={item.avatar}
+                  name={item.name}
+                  style={[space(IconSizes.x1).mt]}
+                  childen={
+                    <AppButton
+                      label="Add"
+                      onPress={() => addFriend(item)}
+                      labelStyle={{
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: theme.text01,
+                      }}
+                      containerStyle={{
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: theme.accent,
+                        paddingHorizontal: IconSizes.x5,
+                        borderRadius: 50,
+                      }}
+                      Icon={() => (
+                        <Ionicons
+                          name="add"
+                          size={IconSizes.x6}
+                          color={theme.text01}
+                        />
+                      )}
+                    />
+                  }
+                />
+              ))}
+              <AppButton
+                label="Load More"
+                onPress={() => {
+                  setPageNumber(pageNumber + 1);
+                  fetchListSuggestFriend(contacts, search, pageNumber);
+                }}
+                containerStyle={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  alignSelf: 'center',
+                  borderRadius: 50,
+                  backgroundColor: theme.placeholder,
+                  paddingHorizontal: IconSizes.x5,
+                  paddingVertical: IconSizes.x1,
+                }}
+                Icon={() => (
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                )}
+              />
+            </>
+          )}
+        </View>
+      </>
+    );
+  }
+
   return (
     <>
       <View style={[styles(theme).container, styles(theme).defaultBackground]}>
@@ -205,190 +412,7 @@ const Friend = () => {
               </Text>
             </View>
           </View>
-          <View style={[{flex: 1}]}>
-            {listRequestFriend.length > 0 && (
-              <>
-                <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={IconSizes.x6}
-                    color={theme.text01}
-                  />
-                  <Text
-                    style={[
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Label,
-                        color: theme.text01,
-                      },
-                      space(IconSizes.x1).ml,
-                    ]}>
-                    Request friend
-                  </Text>
-                </View>
-                {listRequestFriend.map(item => (
-                  <UserCard
-                    userId={item.id}
-                    avatar={item.avatar}
-                    name={item.name}
-                    style={[space(IconSizes.x1).mt]}
-                    childen={
-                      <IconButton
-                        Icon={() => (
-                          <Ionicons
-                            name="close"
-                            size={IconSizes.x6}
-                            color={theme.accent}
-                            style={{
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: theme.placeholder,
-                              padding: IconSizes.x1,
-                              borderRadius: 50,
-                            }}
-                          />
-                        )}
-                        onPress={() => {
-                          setFriendRejected(item.friendId);
-                          deleteConfirmationToggle();
-                        }}
-                      />
-                    }
-                  />
-                ))}
-              </>
-            )}
-            {listFriend.length > 0 && (
-              <>
-                <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-                  <Ionicons
-                    name="people"
-                    size={IconSizes.x6}
-                    color={theme.text01}
-                  />
-                  <Text
-                    style={[
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Label,
-                        color: theme.text01,
-                      },
-                      space(IconSizes.x1).ml,
-                    ]}>
-                    Your Friends
-                  </Text>
-                </View>
-                {listFriend.map(item => (
-                  <UserCard
-                    userId={item.id}
-                    avatar={item.avatar}
-                    name={item.name}
-                    style={[space(IconSizes.x1).mt]}
-                    childen={
-                      <IconButton
-                        Icon={() => (
-                          <Ionicons
-                            name="close"
-                            size={IconSizes.x6}
-                            color={theme.accent}
-                            style={{
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: theme.placeholder,
-                              padding: IconSizes.x1,
-                              borderRadius: 50,
-                            }}
-                          />
-                        )}
-                        onPress={() => {
-                          setFriendRejected(item.friendId);
-                          deleteConfirmationToggle();
-                        }}
-                      />
-                    }
-                  />
-                ))}
-              </>
-            )}
-            {listfriendSuggest.length > 0 && (
-              <>
-                <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-                  <Ionicons
-                    name="bulb"
-                    size={IconSizes.x6}
-                    color={theme.text01}
-                  />
-                  <Text
-                    style={[
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Label,
-                        color: theme.text01,
-                      },
-                      space(IconSizes.x1).ml,
-                    ]}>
-                    Suggestions
-                  </Text>
-                </View>
-                {listfriendSuggest.map(item => (
-                  <UserCard
-                    userId={item.id}
-                    avatar={item.avatar}
-                    name={item.name}
-                    style={[space(IconSizes.x1).mt]}
-                    childen={
-                      <AppButton
-                        label="Add"
-                        onPress={() => addFriend(item)}
-                        labelStyle={{
-                          ...FontWeights.Bold,
-                          ...FontSizes.Body,
-                          color: theme.text01,
-                        }}
-                        containerStyle={{
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: theme.accent,
-                          paddingHorizontal: IconSizes.x5,
-                          borderRadius: 50,
-                        }}
-                        Icon={() => (
-                          <Ionicons
-                            name="add"
-                            size={IconSizes.x6}
-                            color={theme.text01}
-                          />
-                        )}
-                      />
-                    }
-                  />
-                ))}
-                <AppButton
-                  label="Load More"
-                  onPress={() => {
-                    setPageNumber(pageNumber + 1);
-                    fetchListSuggestFriend(contacts, search, pageNumber);
-                  }}
-                  containerStyle={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    alignSelf: 'center',
-                    borderRadius: 50,
-                    backgroundColor: theme.placeholder,
-                    paddingHorizontal: IconSizes.x5,
-                    paddingVertical: IconSizes.x1,
-                  }}
-                  Icon={() => (
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={IconSizes.x6}
-                      color={theme.text01}
-                    />
-                  )}
-                />
-              </>
-            )}
-          </View>
+          {content}
         </ScrollView>
         <ConfirmationModal
           label="Delete"

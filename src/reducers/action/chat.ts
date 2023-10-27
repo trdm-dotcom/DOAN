@@ -1,14 +1,14 @@
 import {IParam} from '../../models/IParam';
-import {apiDelete, apiGet, apiPost} from '../../utils/Api';
+import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 
 export const getConversations = async (params: IParam) =>
   await apiGet<any[]>('/chat/conversation', {params: params});
 
 export const getMessagesByRoomId = async (roomId: string) =>
-  await apiGet<any[]>(`/chat/conversation/${roomId}/messages`);
+  await apiGet<any[]>('/chat/conversation/messages', {params: {roomId}});
 
 export const deleteChat = async (roomId: string) =>
-  await apiDelete<any>(`/chat/conversation/${roomId}`);
+  await apiDelete<any>('/chat/conversation', {params: {roomId}});
 
 export const sendMessage = async (recipientId: number, message: string) =>
   await apiPost<any>('/chat/message', {
@@ -17,3 +17,6 @@ export const sendMessage = async (recipientId: number, message: string) =>
       recipientId: recipientId,
     },
   });
+
+export const messageSeen = async (roomId: string) =>
+  await apiPut<any>('/chat/conversation', {params: roomId});

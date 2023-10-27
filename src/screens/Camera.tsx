@@ -55,7 +55,6 @@ const Camera = ({navigation}: props) => {
   const [imageSource, setImageSource] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'photo' | 'video'>('photo');
-  // const [isRecording, setIsRecording] = useState(false);
   const [caption, setCaption] = useState<any>(null);
   const device = cameraView === 'back' ? devices.back : devices.front;
 
@@ -93,34 +92,6 @@ const Camera = ({navigation}: props) => {
       setLoading(false);
     }
   };
-
-  // const startRecording = async () => {
-  //   try {
-  //     if (cameraRef.current != null) {
-  //       await cameraRef.current.startRecording({
-  //         flash: `${torch}`,
-  //         onRecordingFinished: (file: VideoFile) => {
-  //           setImageSource(file.path);
-  //         },
-  //         onRecordingError: (error: any) => {
-  //           console.warn(error);
-  //         },
-  //       });
-  //     }
-  //   } finally {
-  //     setIsRecording(true);
-  //   }
-  // };
-
-  // const stopRecording = async () => {
-  //   try {
-  //     if (cameraRef.current != null) {
-  //       await cameraRef.current.stopRecording();
-  //     }
-  //   } finally {
-  //     setIsRecording(false);
-  //   }
-  // };
 
   const doUpPost = async () => {
     try {
@@ -216,28 +187,14 @@ const Camera = ({navigation}: props) => {
             onInitialized={onCameraInitialized}
           />
           <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              padding: IconSizes.x4,
-            }}>
-            {/* <IconButton
-              Icon={() => (
-                <Ionicons
-                  name={mode === 'video' ? 'videocam' : 'videocam-outline'}
-                  size={IconSizes.x6}
-                  color={mode === 'video' ? theme.accent : theme.text01}
-                />
-              )}
-              onPress={() => {
-                mode === 'photo' ? setMode('video') : setMode('photo');
-              }}
-              style={{
-                padding: IconSizes.x1,
-                borderRadius: 50,
-              }}
-            /> */}
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                padding: IconSizes.x4,
+              },
+            ]}>
             <IconButton
               Icon={() => (
                 <Ionicons
@@ -326,13 +283,6 @@ const Camera = ({navigation}: props) => {
                 if (mode === 'photo') {
                   takePhoto();
                 }
-                // else {
-                //   if (isRecording) {
-                //     stopRecording();
-                //   } else {
-                //     startRecording();
-                //   }
-                // }
               }}
               disabled={!isActive || loading}>
               {loading && (

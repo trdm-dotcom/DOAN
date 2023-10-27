@@ -15,11 +15,12 @@ import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Feather from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
+import Header from '../components/header/Header';
 
 const Feed = () => {
   const {theme} = useContext(AppContext);
   const [loading, setLoading] = useState<boolean>(false);
-  const [userFeedQueryError, setUserFeedQueryError] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
   const [userFeed, setUserFeed] = useState<any[]>([]);
   const [pageNumber, setPageNumber] = useState(0);
   const navigation = useNavigation();
@@ -37,9 +38,9 @@ const Feed = () => {
       .then(response => {
         setUserFeed(response);
       })
-      .catch(error => {
-        console.log(error);
-        setUserFeedQueryError(true);
+      .catch(err => {
+        console.log(err);
+        setError(true);
       })
       .finally(() => setLoading(false));
   };
@@ -72,7 +73,7 @@ const Feed = () => {
 
   let content = <PostCardPlaceholder />;
 
-  if (!loading && !userFeedQueryError) {
+  if (!loading && !error) {
     content = (
       <FlatGrid
         refreshControl={refreshControl()}
@@ -138,7 +139,7 @@ const Feed = () => {
         secondChilden={
           <IconButton
             onPress={() => {
-              // navigation.navigate('Setting');
+              navigation.navigate('Chat');
             }}
             Icon={() => (
               <Feather
@@ -157,6 +158,7 @@ const Feed = () => {
           />
         }
       />
+      <Header title="Feed" />
       {content}
     </View>
   );

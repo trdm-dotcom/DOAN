@@ -18,6 +18,8 @@ import PostView from '../screens/PostView';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {AppContext} from '../context';
 import Feather from 'react-native-vector-icons/Feather';
+import Chat from '../screens/Chat';
+import Conversation from '../screens/Conversation';
 
 export type RootStackParamList = {
   Start: undefined;
@@ -26,6 +28,8 @@ export type RootStackParamList = {
   SignIn: undefined;
   Reset: undefined;
   Main: undefined;
+  Chat: undefined;
+  Conversation: undefined;
   PostView: {
     post: any;
   };
@@ -103,6 +107,8 @@ const RootStack = () => {
             </Stack.Screen>
             <Stack.Screen name="Camera" component={Camera} />
             <Stack.Screen name="PostView" component={PostView} />
+            <Stack.Screen name="Chat" component={Chat} />
+            <Stack.Screen name="Conversation" component={Conversation} />
           </>
         ) : (
           <>

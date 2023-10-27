@@ -124,9 +124,7 @@ const PostView = ({navigation, route}: props) => {
     <>
       <View style={styles(theme).postViewHeader}>
         <NativeImage
-          uri={
-            'https://s3-ap-southeast-1.amazonaws.com/tradex-vn/avatar/default.png'
-          }
+          uri={post.author.avatar}
           style={styles(theme).postViewAvatarImage}
         />
         <View style={{flex: 1}}>
@@ -214,8 +212,7 @@ const PostView = ({navigation, route}: props) => {
     <>
       <PostOptionsBottomSheet
         ref={postOptionsBottomSheetRef}
-        authorId={post.author.userId}
-        postId={post.id}
+        post={post}
         onPostEdit={onPostEdit}
         onPostDelete={onPostDelete}
         onPostDiable={doDisablePost}

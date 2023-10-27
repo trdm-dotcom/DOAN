@@ -88,3 +88,41 @@ export const createAsyncDelay = (duration: number) => {
 
 export const filterChatParticipants = (userId: string, participants: any[]) =>
   participants.filter(participant => userId !== participant.id);
+
+export const sortMessageAscendingTime = array =>
+  [...array].sort((a, b) => {
+    const [lastMessageA] = a.messages;
+    const [lastMessageB] = b.messages;
+
+    // @ts-ignore
+    return new Date(lastMessageB.createdAt) - new Date(lastMessageA.createdAt);
+  });
+
+export const computeUnreadMessages = (chats, userId: string) =>
+  chats.filter(({messages}) => {
+    const [lastMessage] = messages;
+    const {author, seen} = lastMessage;
+
+    return !seen && author.id !== userId;
+  }).length;
+
+export const transformMessages = messages =>
+  messages.map(message => {
+    const {
+      id,
+      body,
+      createdAt,
+      author: {id: authorId, name, avatar},
+    } = message;
+
+    return {
+      _id: id,
+      text: body,
+      createdAt: new Date(createdAt),
+      user: {
+        _id: authorId,
+        name,
+        avatar,
+      },
+    };
+  });

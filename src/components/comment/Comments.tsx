@@ -33,9 +33,7 @@ const Comments = ({postId}: CommentsProps) => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     }).then(response => {
-      if (response) {
-        setComments([...comments, ...response]);
-      }
+      setComments([...comments, ...response]);
     });
   };
 
