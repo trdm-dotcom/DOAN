@@ -27,16 +27,18 @@ const Notifi = () => {
     useCallback(() => {
       setPageNumber(0);
       remarkAllNotification();
+      fetchNotifications(pageNumber);
     }, []),
   );
 
   useEffect(() => {
     fetchNotifications(pageNumber);
-  }, []);
+  }, [pageNumber]);
 
   const remarkAllNotification = async () => await remarkNotification();
 
   const fetchNotifications = (page: number) => {
+    setLoading(true);
     getNotifications({
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
@@ -65,8 +67,6 @@ const Notifi = () => {
     );
   };
 
-  let content = <NotificationScreenPlaceholder />;
-
   const renderItem = (item: any) => {
     return (
       <NotificationCard
@@ -80,8 +80,10 @@ const Notifi = () => {
     );
   };
 
-  if (!loading && !error) {
-    content = (
+  let content =
+    loading || error ? (
+      <NotificationScreenPlaceholder />
+    ) : (
       <FlatGrid
         refreshControl={refreshControl()}
         itemDimension={responsiveWidth(85)}
@@ -108,7 +110,6 @@ const Notifi = () => {
         }}
       />
     );
-  }
 
   return (
     <>

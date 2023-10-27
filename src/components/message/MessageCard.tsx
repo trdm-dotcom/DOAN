@@ -1,42 +1,39 @@
 import React, {useContext} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {OnlineDotColor} from '../../constants/Constants';
+import {IconSizes} from '../../constants/Constants';
 import {AppContext} from '../../context';
 import {useAppSelector} from '../../reducers/redux/store';
 import Typography from '../../theme/Typography';
 import {parseTimeElapsed} from '../../utils/shared';
-import {NativeImage} from '../shared/NativeImage';
 import {ThemeColors} from '../../constants/Types';
 import {useNavigation} from '@react-navigation/native';
-import {messageSeen} from 'src/reducers/action/chat';
+import {messageSeen} from '../../reducers/action/chat';
+import {space} from '../style';
+import UserAvatar from 'react-native-user-avatar';
 
 const {FontWeights, FontSizes} = Typography;
 
-interface MessageCardProps {
+type MessageCardProps = {
   chatId: string;
   participantId: string;
   avatar: string;
-  handle: string;
+  name: string;
   authorId: string;
-  messageId: string;
   messageBody: string;
   seen: boolean;
   time: string;
-  isOnline: boolean;
-}
+};
 
-const MessageCard: React.FC<MessageCardProps> = ({
+const MessageCard = ({
   chatId,
   participantId,
   avatar,
-  handle,
+  name,
   authorId,
-  messageId,
   messageBody,
   seen,
   time,
-  isOnline,
-}) => {
+}: MessageCardProps) => {
   const user = useAppSelector(state => state.auth.userInfo);
   const {theme} = useContext(AppContext);
   const {parsedTime} = parseTimeElapsed(time);
@@ -51,16 +48,14 @@ const MessageCard: React.FC<MessageCardProps> = ({
       }
     : null;
 
-  const onlineDotColor = OnlineDotColor[isOnline as any];
-
   const setSeenAndNavigate = () => {
     if (authorId !== user.id) {
-      messageSeen(messageId);
+      messageSeen(chatId);
     }
     navigation.navigate('Conversation', {
       chatId,
       avatar,
-      handle,
+      name,
       targetId: participantId,
     });
   };
@@ -72,11 +67,15 @@ const MessageCard: React.FC<MessageCardProps> = ({
       onPress={setSeenAndNavigate}
       style={styles().container}>
       <View style={styles().avatar}>
-        <NativeImage uri={avatar} style={styles(theme).avatarImage} />
-        <View style={[styles().onlineDot, {backgroundColor: onlineDotColor}]} />
+        <UserAvatar
+          size={50}
+          name={name}
+          src={avatar}
+          bgColor={theme.placeholder}
+        />
       </View>
-      <View style={styles().info}>
-        <Text style={styles(theme).handleText}>{handle} </Text>
+      <View style={[styles().info, space(IconSizes.x1).ml]}>
+        <Text style={styles(theme).handleText}>{name} </Text>
         <View style={styles(theme).content}>
           <Text
             numberOfLines={1}

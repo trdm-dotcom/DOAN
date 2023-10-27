@@ -15,7 +15,6 @@ import {responsiveWidth} from 'react-native-responsive-dimensions';
 import EmptyMessages from '../../assets/svg/empty-messages.svg';
 import {
   filterChatParticipants,
-  isUserOnline,
   sortMessageAscendingTime,
 } from '../utils/shared';
 import MessageCard from '../components/message/MessageCard';
@@ -57,48 +56,39 @@ const Chat = ({navigation}: props) => {
   };
 
   const renderItem = ({item}) => {
-    const {id: chatId, participants, messages} = item;
-    const [participant] = filterChatParticipants(user.id, participants);
-    const [lastMessage] = messages;
+    const {id: chatId, users, lastMessage} = item;
+    const [participant] = filterChatParticipants(user.id, users);
 
-    const {id, avatar, handle, lastSeen} = participant;
+    const {id, avatar, name} = participant;
     const {
-      id: messageId,
-      author: {id: authorId},
+      userId: authorId,
       seen,
-      body: messageBody,
+      message: messageBody,
       createdAt: time,
     } = lastMessage;
-
-    const isOnline = isUserOnline(lastSeen);
 
     return (
       <MessageCard
         chatId={chatId}
         participantId={id}
         avatar={avatar}
-        handle={handle}
+        name={name}
         authorId={authorId}
-        messageId={messageId}
         messageBody={messageBody}
         seen={seen}
         time={time}
-        isOnline={isOnline}
       />
     );
   };
 
-  let content = <MessageScreenPlaceholder />;
-
-  if (!loading && !error) {
-    const sortedChats = sortMessageAscendingTime(chats);
-
-    content = (
+  let content =
+    loading || error ? (
+      <MessageScreenPlaceholder />
+    ) : (
       <FlatGrid
         itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
-        data={sortedChats}
-        onEndReached={() => setPageNumber(pageNumber + 1)}
+        data={sortMessageAscendingTime(chats)}
         ListEmptyComponent={() => (
           <SvgBanner
             Svg={EmptyMessages}
@@ -109,9 +99,12 @@ const Chat = ({navigation}: props) => {
         style={styles().messagesList}
         spacing={20}
         renderItem={renderItem}
+        onEndReachedThreshold={0.5}
+        onEndReached={() => {
+          console.log('end reached');
+        }}
       />
     );
-  }
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>

@@ -7,9 +7,9 @@ import {ThemeColors} from '../../constants/Types';
 import Typography from '../../theme/Typography';
 import {FlatGrid} from 'react-native-super-grid';
 import {getCommentsOfPost} from '../../reducers/action/post';
-import {Pagination} from '../../constants/Constants';
 import Modal from 'react-native-modal';
 import AppButton from '../control/AppButton';
+import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentsProps = {
@@ -19,22 +19,30 @@ type CommentsProps = {
 const Comments = ({postId}: CommentsProps) => {
   const {theme} = useContext(AppContext);
   const [comments, setComments] = useState<any>([]);
-  const [pageNumber, setPageNumber] = useState(0);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [commentPressOption, setCommentPressOption] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchComments(postId, pageNumber);
-  }, [postId, pageNumber]);
+    fetchComments(postId);
+  }, [postId]);
 
-  const fetchComments = (post: string, page: number) => {
+  const fetchComments = (post: string) => {
+    setLoading(true);
     getCommentsOfPost({
       postId: post,
-      pageNumber: page,
-      pageSize: Pagination.PAGE_SIZE,
-    }).then(response => {
-      setComments([...comments, ...response]);
-    });
+    })
+      .then(response => {
+        setComments([...comments, ...response]);
+      })
+      .catch(err => {
+        console.log(err);
+        setError(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const renderItem = ({item}) => {
@@ -56,12 +64,17 @@ const Comments = ({postId}: CommentsProps) => {
 
   const toggleModal = (comment: any) => {
     setCommentPressOption(comment);
-    setShowModal(previousState => !previousState);
+    setShowModal(true);
   };
 
-  const onConfirm = async () => {
-    await deleteComment(commentPressOption);
-    setShowModal(false);
+  const onConfirm = () => {
+    deleteComment(commentPressOption).then(() => {
+      setShowModal(false);
+      setComments(
+        comments.filter(it => it.commentId !== commentPressOption.id),
+      );
+      setCommentPressOption(null);
+    });
   };
 
   const deleteComment = async (comment: any) => {
@@ -73,17 +86,16 @@ const Comments = ({postId}: CommentsProps) => {
     <Text style={[styles(theme).commentsHeader, {marginBottom}]}>Comments</Text>
   );
 
-  const marginBottom = comments.length === 0 ? 0 : 20;
-
-  return (
-    <>
+  let content =
+    loading || error ? (
+      <ConnectionsPlaceholder />
+    ) : (
       <FlatGrid
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={ListHeaderComponent}
         data={comments}
         renderItem={renderItem}
         style={styles().listStyle}
-        onEndReached={() => setPageNumber(pageNumber + 1)}
         ListEmptyComponent={() => (
           <ListEmptyComponent
             placeholder="Be the first one to comment"
@@ -92,6 +104,13 @@ const Comments = ({postId}: CommentsProps) => {
           />
         )}
       />
+    );
+
+  const marginBottom = comments.length === 0 ? 0 : 20;
+
+  return (
+    <>
+      {content}
       <Modal
         useNativeDriver
         animationInTiming={400}
@@ -100,7 +119,10 @@ const Comments = ({postId}: CommentsProps) => {
         isVisible={showModal}
         animationIn="fadeIn"
         animationOut="fadeOut"
-        onBackdropPress={modelToggle}>
+        onBackdropPress={() => {
+          modelToggle();
+          setCommentPressOption(null);
+        }}>
         <View
           style={[
             {
@@ -120,7 +142,10 @@ const Comments = ({postId}: CommentsProps) => {
           />
           <AppButton
             label="Cancel"
-            onPress={modelToggle}
+            onPress={() => {
+              modelToggle();
+              setCommentPressOption(null);
+            }}
             loading={false}
             labelStyle={{color: theme.text02}}
             containerStyle={[

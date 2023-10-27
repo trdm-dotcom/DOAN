@@ -25,6 +25,7 @@ import {showError} from '../utils/Toast';
 import IChangePasswordRequest from '../models/request/IChangePasswordRequest';
 import {getHash} from '../utils/Crypto';
 import {apiPost} from '../utils/Api';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -181,18 +182,14 @@ const NewPassword = ({navigation, route}: props) => {
           ]}>
           Your password must be at least 8 characters
         </Text>
-        <View
-          style={[
-            {flex: 1, justifyContent: 'flex-end'},
-            space(IconSizes.x5).mt,
-          ]}>
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (
               <Text
                 style={[
@@ -200,7 +197,7 @@ const NewPassword = ({navigation, route}: props) => {
                   {
                     ...FontWeights.Bold,
                     ...FontSizes.Body,
-                    color: theme.text01,
+                    color: ThemeStatic.white,
                   },
                 ]}>
                 Done

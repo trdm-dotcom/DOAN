@@ -5,7 +5,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {IconSizes} from '../../constants/Constants';
 import {ThemeStatic} from '../../theme/Colors';
 
-const CustomSend: React.FC = sendProps => (
+const CustomSend = sendProps => (
   <Send {...sendProps} containerStyle={styles.container}>
     <FontAwesome name="send" size={IconSizes.x5} color={ThemeStatic.accent} />
   </Send>

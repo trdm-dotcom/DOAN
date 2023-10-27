@@ -26,6 +26,7 @@ import {OtpIdType} from '../models/enum/OtpIdType';
 import {OtpTxtType} from '../models/enum/OtpTxtType';
 import IOtpResponse from '../models/response/IOtpResponse';
 import {apiPost} from '../utils/Api';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -46,7 +47,7 @@ const Reset = ({navigation}: props) => {
   };
 
   const isValidData = () => {
-    const error = checkEmpty(id, 'Please enter your phone number');
+    const error = checkEmpty(id, 'Please enter your email address');
     if (error) {
       showError(error);
       return false;
@@ -66,8 +67,8 @@ const Reset = ({navigation}: props) => {
         if (responseCheckExist.isExist) {
           const bodyGetOtp = {
             id: id,
-            idType: OtpIdType.SMS,
-            txtType: OtpTxtType.VERIFY,
+            idType: OtpIdType.EMAIL,
+            txtType: OtpTxtType.RESET_PASSWORD,
           };
           const responseGetOtp: IOtpResponse = await apiPost<IOtpResponse>(
             '/otp',
@@ -77,7 +78,7 @@ const Reset = ({navigation}: props) => {
             },
           );
           navigation.navigate('Otp', {
-            phoneNumber: id,
+            mail: id,
             otpId: responseGetOtp.otpId,
             nextStep: 'NewPassword',
           });
@@ -134,36 +135,39 @@ const Reset = ({navigation}: props) => {
                 color: theme.text01,
               },
             ]}
-            keyboardType="numeric"
+            keyboardType="email-address"
+            placeholder="Email Address"
             autoFocus
-            placeholder="Phone Number"
             placeholderTextColor={theme.text02}
           />
         </View>
-        <View
-          style={[
-            {flex: 1, justifyContent: 'flex-end'},
-            space(IconSizes.x5).mt,
-          ]}>
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (
-              <Text
-                style={[
-                  styles(theme).centerText,
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Body,
-                    color: theme.text01,
-                  },
-                ]}>
-                Done
-              </Text>
+              <>
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                      color: ThemeStatic.white,
+                    },
+                    styles(theme).centerText,
+                  ]}>
+                  Next
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={IconSizes.x6}
+                  color={ThemeStatic.white}
+                />
+              </>
             )}
           </TouchableOpacity>
         </View>

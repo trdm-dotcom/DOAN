@@ -9,6 +9,8 @@ import {IconSizes} from '../../constants/Constants';
 import {AppContext} from '../../context';
 import Typography from '../../theme/Typography';
 import {useNavigation} from '@react-navigation/native';
+import IconButton from '../control/IconButton';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -36,11 +38,13 @@ const CommentCard = ({
   const {parsedTime} = parseTimeElapsed(time);
   const navigation = useNavigation();
 
+  const isOwnComment = userId === userInfo.id;
+
   const navigateToProfile = () => {
-    if (userId === userInfo.id) {
+    if (isOwnComment) {
       return;
     }
-    navigation.navigate('Profile', {userId: userId});
+    navigation.navigate('Profile', {user: userId});
   };
 
   return (
@@ -85,6 +89,16 @@ const CommentCard = ({
           <Text style={[styles(theme).timeText]}>{parsedTime}</Text>
         </View>
       </View>
+      <IconButton
+        Icon={() => (
+          <Ionicons
+            name="ellipsis-horizontal"
+            size={IconSizes.x6}
+            color={theme.text01}
+          />
+        )}
+        onPress={onPressOption}
+      />
     </View>
   );
 };

@@ -19,7 +19,6 @@ import AppOption from '../components/shared/AppOption';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../theme/Typography';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
-import {NativeImage} from '../components/shared/NativeImage';
 import AppButton from '../components/control/AppButton';
 import {Modalize} from 'react-native-modalize';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
@@ -38,6 +37,7 @@ import IOtpResponse from '../models/response/IOtpResponse';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
+import UserAvatar from 'react-native-user-avatar';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -139,6 +139,7 @@ const Setting = () => {
   const editInfo = async () => {
     await putUserInfo({
       name: name,
+      avatar: userInfo.avatar,
     });
     userInfo.name = name;
     dispatch(updateUserInfo(userInfo));
@@ -217,9 +218,11 @@ const Setting = () => {
                 borderWidth: IconSizes.x00,
                 borderRadius: 110,
               }}>
-              <NativeImage
-                uri={userInfo.avatar}
-                style={styles(theme).avatarImage}
+              <UserAvatar
+                size={110}
+                name={userInfo.name}
+                src={userInfo.avatar}
+                bgColor={theme.placeholder}
               />
               <TouchableOpacity
                 activeOpacity={0.9}

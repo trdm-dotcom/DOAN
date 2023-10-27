@@ -27,7 +27,8 @@ import Header from '../components/header/Header';
 import IFriendResponse from '../models/response/IFriendResponse';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
 import {useFocusEffect} from '@react-navigation/native';
-import ConnectionsPlaceholder from '../components/placeholder/Connections.Placeholder';
+import SearchUsersPlaceholder from '../components/placeholder/SearchUsers.Placeholder';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -184,7 +185,7 @@ const Friend = () => {
     });
   };
 
-  let content = <ConnectionsPlaceholder />;
+  let content = <SearchUsersPlaceholder />;
 
   if (!error && !loading) {
     content = (
@@ -327,7 +328,7 @@ const Friend = () => {
                       labelStyle={{
                         ...FontWeights.Bold,
                         ...FontSizes.Body,
-                        color: theme.text01,
+                        color: ThemeStatic.white,
                       }}
                       containerStyle={{
                         alignItems: 'center',
@@ -340,7 +341,7 @@ const Friend = () => {
                         <Ionicons
                           name="add"
                           size={IconSizes.x6}
-                          color={theme.text01}
+                          color={ThemeStatic.white}
                         />
                       )}
                     />

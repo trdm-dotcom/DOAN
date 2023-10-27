@@ -24,8 +24,6 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
     const [error, setError] = React.useState<boolean>(false);
     const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
 
-    let content = <ConnectionsPlaceholder />;
-
     useEffect(() => {
       fetchBlockedUsers();
     }, []);
@@ -62,8 +60,10 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
       );
     };
 
-    if (!loading && !error) {
-      content = (
+    let content =
+      loading || error ? (
+        <ConnectionsPlaceholder />
+      ) : (
         <FlatGrid
           bounces={false}
           itemDimension={responsiveWidth(85)}
@@ -77,7 +77,6 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
           renderItem={renderItem}
         />
       );
-    }
 
     return (
       <Modalize

@@ -1,7 +1,7 @@
 import React, {useContext} from 'react';
 import {TextInput} from 'react-native';
 import {AppContext} from '../../context';
-import {styles} from 'components/style';
+import {styles} from '../style';
 
 interface SearchBarProps {
   value: string;

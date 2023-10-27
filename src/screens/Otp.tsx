@@ -26,6 +26,7 @@ import Typography from '../theme/Typography';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import Header from '../components/header/Header';
 import IconButton from '../components/control/IconButton';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -33,7 +34,7 @@ type props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
 
 const Otp = ({navigation, route}: props) => {
   const {theme, fcmToken} = useContext(AppContext);
-  const {phoneNumber, otpId, nextStep} = route.params;
+  const {mail, name, phoneNumber, otpId, nextStep} = route.params;
   const [otpValue, setOtpValue] = useState<string>('');
   const [otp, setOtp] = useState<string>(otpId);
   const [minutes, setMinutes] = useState<number>(1);
@@ -45,8 +46,12 @@ const Otp = ({navigation, route}: props) => {
     try {
       setLoading(true);
       const body = {
-        id: phoneNumber ? phoneNumber : fcmToken,
-        idType: phoneNumber ? OtpIdType.SMS : OtpIdType.FIREBASE,
+        id: phoneNumber ? phoneNumber : mail ? mail : fcmToken,
+        idType: phoneNumber
+          ? OtpIdType.SMS
+          : mail
+          ? OtpIdType.EMAIL
+          : OtpIdType.FIREBASE,
         txtType: OtpTxtType.VERIFY,
       };
       const response: IOtpResponse = await apiPost<IOtpResponse>(
@@ -122,6 +127,9 @@ const Otp = ({navigation, route}: props) => {
           },
         );
         navigation.replace(nextStep, {
+          username: mail,
+          mail: mail,
+          name: name,
           phoneNumber: phoneNumber,
           otpKey: response.otpKey,
         });
@@ -222,18 +230,14 @@ const Otp = ({navigation, route}: props) => {
             </TouchableOpacity>
           )}
         </View>
-        <View
-          style={[
-            {flex: 1, justifyContent: 'flex-end'},
-            space(IconSizes.x5).mt,
-          ]}>
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (
               <>
                 <Text
@@ -242,7 +246,7 @@ const Otp = ({navigation, route}: props) => {
                     {
                       ...FontWeights.Bold,
                       ...FontSizes.Body,
-                      color: theme.text01,
+                      color: ThemeStatic.white,
                     },
                   ]}>
                   Next step
@@ -250,7 +254,7 @@ const Otp = ({navigation, route}: props) => {
                 <Ionicons
                   name="arrow-forward"
                   size={IconSizes.x6}
-                  color={theme.text01}
+                  color={ThemeStatic.white}
                 />
               </>
             )}

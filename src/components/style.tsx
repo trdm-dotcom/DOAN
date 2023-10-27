@@ -112,13 +112,13 @@ export const styles = (theme = {} as ThemeColors) =>
     // form field
     inputContainer: {
       borderRadius: 10,
-      marginVertical: CONTENT_SPACING,
+      marginVertical: 10,
       backgroundColor: theme.placeholder,
     },
     inputField: {
       backgroundColor: 'transparent',
       color: theme.text01,
-      paddingVertical: 10,
+      paddingVertical: CONTENT_SPACING,
       paddingHorizontal: CONTENT_SPACING,
     },
     phoneNumberView: {
@@ -127,9 +127,9 @@ export const styles = (theme = {} as ThemeColors) =>
     inputSearchcontainer: {
       ...FontWeights.Regular,
       ...FontSizes.Body,
-      width: '90%',
+      width: '100%',
       alignSelf: 'center',
-      paddingVertical: Platform.select({ios: 10, android: 5}),
+      paddingVertical: Platform.select({ios: 10, android: 15}),
       paddingHorizontal: 20,
       backgroundColor: theme.placeholder,
       color: theme.text01,

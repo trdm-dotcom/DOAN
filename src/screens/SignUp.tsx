@@ -1,4 +1,15 @@
-import React, {useContext, useEffect, useState} from 'react';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../navigators/RootStack';
+import Typography from '../theme/Typography';
+import {useContext, useState} from 'react';
+import {AppContext} from '../context';
+import {checkEmpty} from '../utils/Validate';
+import {showError} from '../utils/Toast';
+import {checkExist} from '../reducers/action/authentications';
+import {OtpIdType} from '../models/enum/OtpIdType';
+import {OtpTxtType} from '../models/enum/OtpTxtType';
+import IOtpResponse from '../models/response/IOtpResponse';
+import {apiPost} from '../utils/Api';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,46 +18,32 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import React from 'react';
 import {space, styles} from '../components/style';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigators/RootStack';
-import {checkEmpty} from '../utils/Validate';
-import {showError} from '../utils/Toast';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderBar from '../components/header/HeaderBar';
-import {AppContext} from '../context';
-import {ICheckExistRequest} from '../models/request/ICheckExistRequest';
-import {ICheckExistResponse} from '../models/response/ICheckExistResponse';
-import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {IconSizes} from '../constants/Constants';
-import Typography from '../theme/Typography';
-import {checkExist} from '../reducers/action/authentications';
-import IOtpResponse from '../models/response/IOtpResponse';
-import {apiPost} from '../utils/Api';
-import {OtpIdType} from '../models/enum/OtpIdType';
-import {OtpTxtType} from '../models/enum/OtpTxtType';
-import Header from '../components/header/Header';
 import IconButton from '../components/control/IconButton';
-import DeviceNumber from 'react-native-device-number';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {IconSizes} from '../constants/Constants';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import Header from '../components/header/Header';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
-type props = NativeStackScreenProps<RootStackParamList, 'PhoneNumber'>;
+type props = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
 
-const PhoneNumber = ({navigation}: props) => {
+const SignUp = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
+  const [mail, setMail] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [isContinue, setIsContinue] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    DeviceNumber.get().then(({mobileNumber}) => {
-      setPhoneNumber(mobileNumber.replace('+84', '0'));
-    });
-  }, []);
+  const [isContinue, setIsContinue] = useState<boolean>(false);
 
   const isValidData = () => {
-    const error = checkEmpty(phoneNumber, 'Please enter your phome number');
+    const error =
+      checkEmpty(mail, 'Please enter your email address') ||
+      checkEmpty(name, 'Please enter your name');
     if (error) {
       showError(error);
       return false;
@@ -54,9 +51,25 @@ const PhoneNumber = ({navigation}: props) => {
     return true;
   };
 
+  const handleOnNameChangeText = (text: string) => {
+    const verify: boolean = text.trim().length > 0;
+    setIsContinue(previousState => previousState && verify);
+    if (verify) {
+      setName(text.trim());
+    }
+  };
+
+  const handleOnMailChangeText = (text: string) => {
+    const verify: boolean = text.trim().length > 0;
+    setIsContinue(previousState => previousState && verify);
+    if (verify) {
+      setMail(text.trim());
+    }
+  };
+
   const handleOnChangePhoneNumber = (text: string) => {
     const verify: boolean = text.trim().length > 0;
-    setIsContinue(verify);
+    setIsContinue(previousState => previousState && verify);
     if (verify) {
       setPhoneNumber(text.trim());
     }
@@ -65,15 +78,22 @@ const PhoneNumber = ({navigation}: props) => {
   const handleContinue = async () => {
     if (isValidData()) {
       try {
-        setLoading(true);
-        const body: ICheckExistRequest = {
-          value: phoneNumber,
-        };
-        const responseCheckExist: ICheckExistResponse = await checkExist(body);
-        if (!responseCheckExist.isExist) {
+        const [responseCheckExistMail, responseCheckExistPhone] =
+          await Promise.all([
+            checkExist({
+              value: mail,
+            }),
+            checkExist({
+              value: mail,
+            }),
+          ]);
+        if (
+          !responseCheckExistMail.isExist &&
+          !responseCheckExistPhone.isExist
+        ) {
           const bodyGetOtp = {
-            id: phoneNumber,
-            idType: OtpIdType.SMS,
+            id: mail,
+            idType: OtpIdType.EMAIL,
             txtType: OtpTxtType.VERIFY,
           };
           const responseGetOtp: IOtpResponse = await apiPost<IOtpResponse>(
@@ -84,12 +104,14 @@ const PhoneNumber = ({navigation}: props) => {
             },
           );
           navigation.navigate('Otp', {
+            mail: mail,
+            name: name,
             phoneNumber: phoneNumber,
             otpId: responseGetOtp.otpId,
-            nextStep: 'Mail',
+            nextStep: 'Password',
           });
         } else {
-          showError('This phone number is already in use');
+          showError('This phone number or email address is already in use');
         }
       } catch (error: any) {
         showError(error.message);
@@ -123,7 +145,7 @@ const PhoneNumber = ({navigation}: props) => {
         behavior={keyboardBehavior}
         keyboardVerticalOffset={20}
         style={[{flex: 1}, space(IconSizes.x10).mt]}>
-        <Header title="Phone Number" />
+        <Header title="Create your account" />
         <Text
           style={[
             {
@@ -136,7 +158,38 @@ const PhoneNumber = ({navigation}: props) => {
         </Text>
         <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
           <TextInput
-            value={phoneNumber}
+            onChangeText={handleOnNameChangeText}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+            ]}
+            autoFocus
+            placeholder="Full Name"
+            placeholderTextColor={theme.text02}
+          />
+        </View>
+        <View style={[styles(theme).inputContainer]}>
+          <TextInput
+            onChangeText={handleOnMailChangeText}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+            ]}
+            keyboardType="email-address"
+            placeholder="Email Address"
+            placeholderTextColor={theme.text02}
+          />
+        </View>
+        <View style={[styles(theme).inputContainer]}>
+          <TextInput
             onChangeText={handleOnChangePhoneNumber}
             style={[
               styles(theme).inputField,
@@ -147,22 +200,18 @@ const PhoneNumber = ({navigation}: props) => {
               },
             ]}
             keyboardType="numeric"
-            autoFocus
+            placeholder="Phone Number"
             placeholderTextColor={theme.text02}
           />
         </View>
-        <View
-          style={[
-            {flex: 1, justifyContent: 'flex-end'},
-            space(IconSizes.x5).mt,
-          ]}>
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
             disabled={!isContinue || loading}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (
               <>
                 <Text
@@ -170,7 +219,7 @@ const PhoneNumber = ({navigation}: props) => {
                     {
                       ...FontWeights.Bold,
                       ...FontSizes.Body,
-                      color: theme.text01,
+                      color: ThemeStatic.white,
                     },
                     styles(theme).centerText,
                   ]}>
@@ -179,7 +228,7 @@ const PhoneNumber = ({navigation}: props) => {
                 <Ionicons
                   name="arrow-forward"
                   size={IconSizes.x6}
-                  color={theme.text01}
+                  color={ThemeStatic.white}
                 />
               </>
             )}
@@ -190,4 +239,4 @@ const PhoneNumber = ({navigation}: props) => {
   );
 };
 
-export default PhoneNumber;
+export default SignUp;

@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   KeyboardAvoidingView,
   Text,
@@ -28,9 +28,9 @@ import {
   userInfo,
 } from '../reducers/redux/authentication.reducer';
 import Header from '../components/header/Header';
-import DeviceNumber from 'react-native-device-number';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import {getUserInfo} from '../reducers/action/user';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -44,17 +44,10 @@ const SignIn = ({navigation}: props) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
 
-  useEffect(() => {
-    DeviceNumber.get().then(({mobileNumber}) => {
-      setUsername(mobileNumber.replace('+84', '0'));
-    });
-  }, []);
-
   const isValidData = () => {
-    const error = checkEmpty(
-      username,
-      'Please enter your phone number or email address',
-    );
+    const error =
+      checkEmpty(username, 'Please enter your email address') ||
+      checkEmpty(password, 'Please enter your password');
     if (error) {
       showError(error);
       return false;
@@ -134,7 +127,7 @@ const SignIn = ({navigation}: props) => {
           ]}>
           Enter your credentials
         </Text>
-        <View style={[styles(theme).inputContainer]}>
+        <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
           <TextInput
             value={username}
             onChangeText={handleOnUsernameChangeText}
@@ -184,7 +177,6 @@ const SignIn = ({navigation}: props) => {
         <View
           style={[
             {
-              flex: 1,
               alignItems: 'flex-end',
             },
             space(IconSizes.x5).mt,
@@ -194,7 +186,7 @@ const SignIn = ({navigation}: props) => {
               style={[
                 styles(theme).centerText,
                 {
-                  ...FontWeights.Regular,
+                  ...FontWeights.Bold,
                   ...FontSizes.Body,
                   color: theme.accent,
                 },
@@ -203,7 +195,7 @@ const SignIn = ({navigation}: props) => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={[styles(theme).row, styles(theme).displayBottom]}>
+        <View style={[styles(theme).row, space(IconSizes.x5).mt]}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleContinue}
@@ -214,7 +206,7 @@ const SignIn = ({navigation}: props) => {
             ]}
             disabled={loading}>
             {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (
               <Text
                 style={[
@@ -222,7 +214,7 @@ const SignIn = ({navigation}: props) => {
                   {
                     ...FontWeights.Bold,
                     ...FontSizes.Body,
-                    color: theme.text01,
+                    color: ThemeStatic.white,
                   },
                 ]}>
                 Done

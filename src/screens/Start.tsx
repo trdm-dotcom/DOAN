@@ -7,6 +7,7 @@ import {IconSizes} from '../constants/Constants';
 import {AppContext} from '../context';
 import AppButton from '../components/control/AppButton';
 import Typography from '../theme/Typography';
+import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -23,7 +24,7 @@ const Start = ({navigation}: props) => {
         <AppButton
           label="Create account"
           loading={false}
-          onPress={() => navigation.navigate('PhoneNumber')}
+          onPress={() => navigation.navigate('SignUp')}
           containerStyle={[
             styles(theme).button,
             styles(theme).buttonPrimary,
@@ -32,7 +33,7 @@ const Start = ({navigation}: props) => {
           labelStyle={{
             ...FontWeights.Bold,
             ...FontSizes.Body,
-            color: theme.text01,
+            color: ThemeStatic.white,
           }}
         />
         <AppButton

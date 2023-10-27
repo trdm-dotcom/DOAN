@@ -9,8 +9,6 @@ import Friend from '../screens/Friend';
 import Notifi from '../screens/Notifi';
 import Setting from '../screens/Setting';
 import Start from '../screens/Start';
-import PhoneNumber from '../screens/PhoneNumber';
-import Mail from '../screens/Mail';
 import Password from '../screens/Password';
 import SignIn from '../screens/SignIn';
 import Reset from '../screens/Reset';
@@ -20,26 +18,28 @@ import {AppContext} from '../context';
 import Feather from 'react-native-vector-icons/Feather';
 import Chat from '../screens/Chat';
 import Conversation from '../screens/Conversation';
+import SignUp from '../screens/SignUp';
 
 export type RootStackParamList = {
   Start: undefined;
   Camera: undefined;
-  PhoneNumber: undefined;
   SignIn: undefined;
   Reset: undefined;
   Main: undefined;
   Chat: undefined;
-  Conversation: undefined;
+  SignUp: undefined;
+  Conversation: {
+    chatId: string;
+    targetId: number;
+    name: string;
+    avatar: string;
+  };
   PostView: {
     post: any;
   };
-  Profile: {userId: number};
+  Profile: {user: number};
   NewPassword: {
     username: string;
-    otpKey: string;
-  };
-  Mail: {
-    phoneNumber: string;
     otpKey: string;
   };
   Password: {
@@ -49,9 +49,11 @@ export type RootStackParamList = {
     otpKey: string;
   };
   Otp: {
-    phoneNumber: string;
+    mail: string;
     otpId: string;
     nextStep: keyof RootStackParamList;
+    name?: string;
+    phoneNumber?: string;
   };
 };
 
@@ -113,9 +115,8 @@ const RootStack = () => {
         ) : (
           <>
             <Stack.Screen name="Start" component={Start} />
-            <Stack.Screen name="PhoneNumber" component={PhoneNumber} />
+            <Stack.Screen name="SignUp" component={SignUp} />
             <Stack.Screen name="Otp" component={Otp} />
-            <Stack.Screen name="Mail" component={Mail} />
             <Stack.Screen name="Password" component={Password} />
             <Stack.Screen name="SignIn" component={SignIn} />
             <Stack.Screen name="Reset" component={Reset} />

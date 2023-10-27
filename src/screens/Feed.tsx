@@ -60,7 +60,7 @@ const Feed = () => {
   };
 
   const refreshControl = () => {
-    const onRefresh = () => userFeedRefetch(1);
+    const onRefresh = () => userFeedRefetch(0);
 
     return (
       <RefreshControl
@@ -71,10 +71,10 @@ const Feed = () => {
     );
   };
 
-  let content = <PostCardPlaceholder />;
-
-  if (!loading && !error) {
-    content = (
+  let content =
+    loading || error ? (
+      <PostCardPlaceholder />
+    ) : (
       <FlatGrid
         refreshControl={refreshControl()}
         itemDimension={responsiveWidth(85)}
@@ -114,7 +114,6 @@ const Feed = () => {
         onEndReached={() => setPageNumber(pageNumber + 1)}
       />
     );
-  }
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>

@@ -33,7 +33,7 @@ const UserCard = ({
     if (userId === user.id) {
       return;
     }
-    navigation.navigate('Profile', {userId: userId});
+    navigation.navigate('Profile', {user: userId});
   };
 
   return (

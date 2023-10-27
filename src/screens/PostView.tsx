@@ -29,6 +29,7 @@ import {getHash} from '../utils/Crypto';
 import {IParam} from '../models/IParam';
 import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomSheet';
 import EditPostBottomSheet from '../components/bottomsheet/EditPostBottomSheet';
+import UserAvatar from 'react-native-user-avatar';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -123,11 +124,13 @@ const PostView = ({navigation, route}: props) => {
   content = (
     <>
       <View style={styles(theme).postViewHeader}>
-        <NativeImage
-          uri={post.author.avatar}
-          style={styles(theme).postViewAvatarImage}
+        <UserAvatar
+          size={50}
+          name={post.author.name}
+          src={post.author.avatar}
+          bgColor={theme.placeholder}
         />
-        <View style={{flex: 1}}>
+        <View style={[{flex: 1}, space(IconSizes.x1).ml]}>
           <Text style={styles(theme).handleText}>{post.author.name}</Text>
           <Text style={styles(theme).timeText}>{readableTime}</Text>
         </View>
@@ -135,7 +138,7 @@ const PostView = ({navigation, route}: props) => {
           onPress={openOptions}
           Icon={() => (
             <Ionicons
-              name="ellipsis-horizontal-outline"
+              name="ellipsis-horizontal"
               size={IconSizes.x6}
               color={theme.text01}
             />
@@ -196,7 +199,7 @@ const PostView = ({navigation, route}: props) => {
         <Text
           onPress={() => {
             if (post.author.userId !== user.id) {
-              navigation.navigate('Profile', {userId: post.author.userId});
+              navigation.navigate('Profile', {user: post.author.userId});
             }
           }}
           style={styles(theme).handleText}>
@@ -230,7 +233,7 @@ const PostView = ({navigation, route}: props) => {
         postId={post.id}
         onUserPress={() => {
           if (post.author.userId !== user.id) {
-            navigation.navigate('Profile', {userId: post.author.userId});
+            navigation.navigate('Profile', {user: post.author.userId});
           }
         }}
       />

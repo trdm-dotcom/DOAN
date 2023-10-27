@@ -2,16 +2,21 @@ import React from 'react';
 import {StyleSheet} from 'react-native';
 import {Bubble} from 'react-native-gifted-chat';
 import posed, {Transition} from 'react-native-pose';
-import {ThemeStatic} from 'src/theme/Colors';
+import {ThemeStatic} from '../../theme/Colors';
 
 const TransitionBubble = posed.View({
   enter: {opacity: 1, x: 0},
   exit: {opacity: 0.5, x: ({offset}) => offset},
 });
 
-const CustomBubble: React.FC = bubbleProps => {
+const CustomBubble = bubbleProps => {
   // @ts-ignore
-  const { user: { _id: authorId }, currentMessage: { user: { _id: currentId } } } = bubbleProps;
+  const {
+    user: {_id: authorId},
+    currentMessage: {
+      user: {_id: currentId},
+    },
+  } = bubbleProps;
 
   const offset = authorId === currentId ? 20 : -20;
 
