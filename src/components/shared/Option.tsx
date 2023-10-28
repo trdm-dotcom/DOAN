@@ -7,21 +7,15 @@ import Typography from '../../theme/Typography';
 
 const {FontWeights, FontSizes} = Typography;
 
-interface OptionProps {
+type OptionProps = {
   label?: string;
   iconName: string;
   onPress?: () => void;
   children?: any;
   color?: string;
-}
+};
 
-const Option: React.FC<OptionProps> = ({
-  label,
-  iconName,
-  onPress,
-  children,
-  color,
-}) => {
+const Option = ({label, iconName, onPress, children, color}: OptionProps) => {
   const {theme} = useContext(AppContext);
 
   if (children) {

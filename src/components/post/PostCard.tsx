@@ -68,7 +68,7 @@ const PostCard = ({
       setSLikes([...sLikes, user.id]);
     }
     // @ts-ignore
-    likeBounceAnimationRef.current.animate();
+    return likeBounceAnimationRef.current.animate();
   };
 
   return (

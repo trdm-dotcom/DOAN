@@ -1,12 +1,12 @@
 import React, {ReactNode, useContext} from 'react';
 import {StyleProp, Text, TouchableOpacity, View, ViewStyle} from 'react-native';
 import {AppContext} from '../../context';
-import {NativeImage} from '../shared/NativeImage';
 import {useAppSelector} from '../../reducers/redux/store';
 import {space, styles} from '../style';
 import {useNavigation} from '@react-navigation/native';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {IconSizes} from '../../constants/Constants';
+import UserAvatar from 'react-native-user-avatar';
 
 type UserCardProps = {
   userId: number;
@@ -42,7 +42,12 @@ const UserCard = ({
       onPress={onPress || navigateToProfile}
       style={[styles(theme).userCardContainer, style]}>
       <View style={[styles(theme).row]}>
-        <NativeImage uri={avatar} style={styles(theme).tinyAvatar} />
+        <UserAvatar
+          size={50}
+          name={name}
+          src={avatar}
+          bgColor={theme.placeholder}
+        />
         <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
           {name}
         </Text>

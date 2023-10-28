@@ -146,7 +146,7 @@ const Camera = ({navigation}: props) => {
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
-        firstChilden={
+        contentLeft={
           <IconButton
             Icon={() => (
               <Ionicons

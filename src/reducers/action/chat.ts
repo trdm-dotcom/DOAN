@@ -17,3 +17,6 @@ export const sendMessage = async (body: IParam) =>
 
 export const messageSeen = async (roomId: string) =>
   await apiPut<any>('/chat/conversation', {params: roomId});
+
+export const getConversationBetween = async (params: IParam) =>
+  await apiGet<any>('/conversation/between', {params: params});

@@ -40,14 +40,6 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
         .finally(() => setLoading(false));
     }, [postId]);
 
-    const ListEmptyComponent = () => (
-      <SvgBanner
-        Svg={EmptyLikesBanner}
-        placeholder="No likes yet"
-        spacing={16}
-      />
-    );
-
     const renderItem = ({item}) => {
       return (
         <UserCard
@@ -68,7 +60,13 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
           data={users}
           itemContainerStyle={styles().listItemContainer}
           contentContainerStyle={styles().listContentContainer}
-          ListEmptyComponent={ListEmptyComponent}
+          ListEmptyComponent={() => (
+            <SvgBanner
+              Svg={EmptyLikesBanner}
+              placeholder="No likes yet"
+              spacing={16}
+            />
+          )}
           style={styles().listContainer}
           spacing={20}
           renderItem={renderItem}

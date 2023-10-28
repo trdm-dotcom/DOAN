@@ -19,6 +19,8 @@ import Feather from 'react-native-vector-icons/Feather';
 import Chat from '../screens/Chat';
 import Conversation from '../screens/Conversation';
 import SignUp from '../screens/SignUp';
+import {ThemeStatic} from '../theme/Colors';
+import Profile from '../screens/Profile';
 
 export type RootStackParamList = {
   Start: undefined;
@@ -93,7 +95,7 @@ const RootStack = () => {
                       } else if (route.name === 'Setting') {
                         iconName = 'user';
                       }
-                      color = focused ? theme.accent : theme.text01;
+                      color = focused ? ThemeStatic.accent : theme.text01;
                       // You can return any component that you like here!
                       return (
                         <Feather name={iconName} size={size} color={color} />
@@ -111,6 +113,7 @@ const RootStack = () => {
             <Stack.Screen name="PostView" component={PostView} />
             <Stack.Screen name="Chat" component={Chat} />
             <Stack.Screen name="Conversation" component={Conversation} />
+            <Stack.Screen name="Profile" component={Profile} />
           </>
         ) : (
           <>

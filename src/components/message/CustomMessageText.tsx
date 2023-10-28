@@ -18,12 +18,12 @@ const CustomMessageText = messageTextProps => (
 
 const styles = StyleSheet.create({
   left: {
-    ...FontWeights.Light,
+    ...FontWeights.Regular,
     ...FontSizes.Body,
     color: ThemeStatic.black,
   },
   right: {
-    ...FontWeights.Light,
+    ...FontWeights.Regular,
     ...FontSizes.Body,
     color: ThemeStatic.white,
   },

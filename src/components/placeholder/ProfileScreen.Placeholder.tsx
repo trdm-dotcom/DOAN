@@ -68,13 +68,6 @@ const ProfileScreenPlaceholder: React.FC<ProfileScreenPlaceholderProps> = ({
               />
             </View>
           )}
-          <PlaceholderLine
-            noMargin
-            color={theme.placeholder}
-            style={styles.aboutPlaceholder}
-            width={100}
-            height={110}
-          />
         </View>
         {new Array(4).fill({}).map((_, index) => (
           <View key={index} style={styles.postContainer}>

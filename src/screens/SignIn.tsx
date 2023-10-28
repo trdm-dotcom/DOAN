@@ -97,7 +97,7 @@ const SignIn = ({navigation}: props) => {
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
-        firstChilden={
+        contentLeft={
           <IconButton
             Icon={() => (
               <Ionicons
@@ -188,7 +188,7 @@ const SignIn = ({navigation}: props) => {
                 {
                   ...FontWeights.Bold,
                   ...FontSizes.Body,
-                  color: theme.accent,
+                  color: ThemeStatic.accent,
                 },
               ]}>
               Forgot Password?

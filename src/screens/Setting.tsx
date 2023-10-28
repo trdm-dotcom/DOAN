@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
-import {ThemeVariant} from '../theme/Colors';
+import {ThemeStatic, ThemeVariant} from '../theme/Colors';
 import {signOut} from '../reducers/action/authentications';
 import {logout} from '../reducers/redux/authentication.reducer';
 import {useAppDispatch, useAppSelector} from '../reducers/redux/store';
@@ -296,11 +296,11 @@ const Setting = () => {
                 <Switch
                   value={isDarkMode}
                   onValueChange={handleSwitch}
-                  thumbColor={isDarkMode ? theme.accent : theme.base}
+                  thumbColor={isDarkMode ? ThemeStatic.accent : theme.base}
                   ios_backgroundColor={theme.base}
                   trackColor={{
                     false: theme.base,
-                    true: theme.accent,
+                    true: ThemeStatic.accent,
                   }}
                 />
               }

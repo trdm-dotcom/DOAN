@@ -36,7 +36,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
       Keyboard.dismiss();
       setComment('');
       await createAsyncDelay(1200);
-      scrollViewRef.current.scrollToEnd();
+      return scrollViewRef.current.scrollToEnd();
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -45,12 +45,16 @@ const CommentInput: React.FC<CommentInputProps> = ({
   };
 
   const Icon = () => (
-    <Ionicons name="send-outline" size={IconSizes.x6} color={theme.accent} />
+    <Ionicons
+      name="send-outline"
+      size={IconSizes.x6}
+      color={ThemeStatic.accent}
+    />
   );
 
   let content = (
     <View style={styles().loading}>
-      <LoadingIndicator color={theme.accent} size={IconSizes.x00} />
+      <LoadingIndicator color={ThemeStatic.accent} size={IconSizes.x00} />
     </View>
   );
 

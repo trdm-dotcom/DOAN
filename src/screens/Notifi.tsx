@@ -21,12 +21,12 @@ const Notifi = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [pageNumber, setPageNumber] = useState(0);
-  const [notifications, setNotifications] = useState<any>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useFocusEffect(
     useCallback(() => {
-      setPageNumber(0);
       remarkAllNotification();
+      setPageNumber(0);
       fetchNotifications(pageNumber);
     }, []),
   );
@@ -44,7 +44,7 @@ const Notifi = () => {
       pageSize: Pagination.PAGE_SIZE,
     })
       .then(res => {
-        setNotifications(res);
+        setNotifications([...notifications, ...res]);
       })
       .catch(err => {
         console.log(err);
@@ -106,7 +106,6 @@ const Notifi = () => {
         renderItem={renderItem}
         onEndReached={() => {
           setPageNumber(pageNumber + 1);
-          fetchNotifications(pageNumber);
         }}
       />
     );

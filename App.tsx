@@ -41,9 +41,10 @@ const SafeAreaApp = () => {
     if (credentials) {
       const token = credentials.token;
       if (token.refExpiredTime > Date.now()) {
-        const userInfoRes: IUserInfoResponse = await getUserInfo();
-        dispatch(userInfo(userInfoRes));
-        dispatch(authenticated());
+        getUserInfo().then((userInfoRes: IUserInfoResponse) => {
+          dispatch(userInfo(userInfoRes));
+          dispatch(authenticated());
+        });
       }
     }
   };

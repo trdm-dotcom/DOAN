@@ -1,13 +1,17 @@
 import React from 'react';
 import {StyleSheet} from 'react-native';
 import {Send} from 'react-native-gifted-chat';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../../constants/Constants';
 import {ThemeStatic} from '../../theme/Colors';
 
 const CustomSend = sendProps => (
   <Send {...sendProps} containerStyle={styles.container}>
-    <FontAwesome name="send" size={IconSizes.x5} color={ThemeStatic.accent} />
+    <Ionicons
+      name="send-outline"
+      size={IconSizes.x6}
+      color={ThemeStatic.accent}
+    />
   </Send>
 );
 

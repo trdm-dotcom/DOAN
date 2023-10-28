@@ -53,10 +53,13 @@ export const disablePost = async (params: IParam) =>
   );
 
 export const getCommentsOfPost = async (params: IParam) =>
-  await apiGet<any>('/social/post/comments', {params: params});
+  await apiGet<any[]>('/social/post/comments', {params: params});
 
 export const getReactionsOfPost = async (params: IParam) =>
-  await apiGet<any>('/social/post/reactions', {params: params});
+  await apiGet<any[]>('/social/post/reactions', {params: params});
 
 export const getPosts = async (params: IParam) =>
-  await apiGet<any>('/social/post', {params: params});
+  await apiGet<any[]>('/social/post', {params: params});
+
+export const getPostOfUser = async (params: IParam) =>
+  await apiGet<any[]>('/social/post/user', {params: params});

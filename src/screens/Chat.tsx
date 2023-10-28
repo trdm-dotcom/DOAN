@@ -101,7 +101,7 @@ const Chat = ({navigation}: props) => {
         renderItem={renderItem}
         onEndReachedThreshold={0.5}
         onEndReached={() => {
-          console.log('end reached');
+          setPageNumber(pageNumber + 1);
         }}
       />
     );
@@ -109,7 +109,7 @@ const Chat = ({navigation}: props) => {
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
-        firstChilden={
+        contentLeft={
           <IconButton
             Icon={() => (
               <Ionicons

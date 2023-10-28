@@ -119,7 +119,7 @@ const Password = ({navigation, route}: props) => {
       {accountCreated ? (
         <>
           <HeaderBar
-            firstChilden={
+            contentLeft={
               <IconButton
                 Icon={() => (
                   <Ionicons
@@ -289,7 +289,7 @@ const Password = ({navigation, route}: props) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 alignSelf: 'center',
-                backgroundColor: theme.accent,
+                backgroundColor: ThemeStatic.accent,
               }}>
               <Ionicons name="add" size={IconSizes.x8} />
             </TouchableOpacity>

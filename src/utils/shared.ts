@@ -92,7 +92,8 @@ export const filterChatParticipants = (userId: string, participants: any[]) =>
 export const sortMessageAscendingTime = array =>
   array.sort(
     (a: any, b: any) =>
-      new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt),
+      new Date(b.lastMessage.createdAt).getTime() -
+      new Date(a.lastMessage.createdAt).getTime(),
   );
 
 export const computeUnreadMessages = (chats, userId: string) =>

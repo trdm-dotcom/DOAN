@@ -98,7 +98,7 @@ export const styles = (theme = {} as ThemeColors) =>
       borderRadius: 10,
     },
     buttonPrimary: {
-      backgroundColor: theme.accent,
+      backgroundColor: ThemeStatic.accent,
       padding: CONTENT_SPACING,
     },
     buttonSecondary: {
@@ -169,12 +169,6 @@ export const styles = (theme = {} as ThemeColors) =>
     },
 
     // friend list
-    tinyAvatar: {
-      height: 50,
-      width: 50,
-      borderRadius: 50,
-      backgroundColor: theme.placeholder,
-    },
     friendListItem: {
       margin: 10,
       padding: 10,

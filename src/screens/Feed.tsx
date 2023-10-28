@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {RefreshControl, View} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
@@ -14,7 +14,7 @@ import LoadingIndicator from '../components/shared/LoadingIndicator';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Feather from 'react-native-vector-icons/Feather';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Header from '../components/header/Header';
 
 const Feed = () => {
@@ -25,9 +25,16 @@ const Feed = () => {
   const [pageNumber, setPageNumber] = useState(0);
   const navigation = useNavigation();
 
+  useFocusEffect(
+    useCallback(() => {
+      setPageNumber(0);
+      userFeedRefetch(0);
+    }, []),
+  );
+
   useEffect(() => {
     userFeedRefetch(pageNumber);
-  }, []);
+  }, [pageNumber]);
 
   const userFeedRefetch = async (page: number) => {
     setLoading(true);
@@ -36,7 +43,7 @@ const Feed = () => {
       pageSize: Pagination.PAGE_SIZE,
     })
       .then(response => {
-        setUserFeed(response);
+        setUserFeed([...userFeed, ...response]);
       })
       .catch(err => {
         console.log(err);
@@ -111,14 +118,16 @@ const Feed = () => {
         spacing={20}
         renderItem={renderItem}
         onEndReachedThreshold={0.5}
-        onEndReached={() => setPageNumber(pageNumber + 1)}
+        onEndReached={() => {
+          setPageNumber(pageNumber + 1);
+        }}
       />
     );
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
-        firstChilden={
+        contentLeft={
           <IconButton
             onPress={() => {
               navigation.navigate('Camera');
@@ -135,7 +144,7 @@ const Feed = () => {
             }}
           />
         }
-        secondChilden={
+        contentRight={
           <IconButton
             onPress={() => {
               navigation.navigate('Chat');

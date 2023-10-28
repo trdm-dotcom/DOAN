@@ -1,15 +1,10 @@
-import axios, {
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from 'axios';
+import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
 import {Token} from '../models/Token';
 import {IRefreshTokenResponse} from '../models/response/IRefreshTokenResponse';
 import {CredentialType, loadToken} from './Storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let token: Token;
+let token: Token = {} as Token;
 
 const instance: AxiosInstance = axios.create({
   baseURL: 'http://192.168.101.7:3000/api/v1',
@@ -19,15 +14,14 @@ const instance: AxiosInstance = axios.create({
   },
 });
 
-const fetchToken = async () => {
+export const fetchToken = async () => {
   const credential: CredentialType | null = await loadToken();
-  if (credential) {
+  if (credential != null) {
     token = credential.token;
   }
 };
 
 const getToken = async () => {
-  await fetchToken();
   return token;
 };
 
@@ -49,18 +43,6 @@ const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
       }
     });
   };
-
-  const onRequestSuccess = async (config: InternalAxiosRequestConfig<any>) => {
-    if (!token) {
-      await fetchToken();
-    }
-    if (token) {
-      config.headers.Authorization = `jwt ${token.accessToken}`;
-    }
-    return config;
-  };
-
-  const onRequestError = async (error: any) => Promise.reject(error);
 
   const onResponseSuccess = (response: AxiosResponse<any>) => response;
 
@@ -92,8 +74,6 @@ const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
     }
     return Promise.reject(error);
   };
-
-  instance.interceptors.request.use(onRequestSuccess, onRequestError);
   instance.interceptors.response.use(onResponseSuccess, onResponseError);
 };
 
@@ -106,10 +86,9 @@ function apiReq<T>(
   const rId: string = Math.floor(Math.random() * Date.now()).toString(8);
 
   headers = {
-    ...{
-      rId: rId,
-    },
     ...headers,
+    rId: rId,
+    Authorization: `jwt ${token.accessToken}`,
   };
 
   return new Promise((resolve, reject) => {

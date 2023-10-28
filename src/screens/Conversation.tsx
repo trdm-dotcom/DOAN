@@ -15,12 +15,17 @@ import CustomInputToolbar from '../components/message/CustomInputToolbar';
 import CustomComposer from '../components/message/CustomComposer';
 import {IParam} from '../models/IParam';
 import {getMessagesByRoomId, sendMessage} from '../reducers/action/chat';
+import HeaderBar from '../components/header/HeaderBar';
+import IconButton from '../components/control/IconButton';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {IconSizes} from '../constants/Constants';
+import ChatHeaderAvatar from '../components/message/ChatHeaderAvatar';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 const Conversation = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
   const user = useAppSelector(state => state.auth.userInfo);
-  const {chatId, targetId} = route.params;
+  const {chatId, targetId, name, avatar} = route.params;
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -50,6 +55,7 @@ const Conversation = ({navigation, route}: props) => {
   const onSend = async updatedMessages => {
     const [updatedMessage] = updatedMessages;
     const body: IParam = {
+      messagesId: updatedMessage._id,
       message: updatedMessage.text,
       recipientId: targetId,
     };
@@ -79,7 +85,7 @@ const Conversation = ({navigation, route}: props) => {
         renderInputToolbar={CustomInputToolbar}
         onSend={onSend}
         onPressAvatar={navigateToProfile}
-        user={{_id: user.id}}
+        user={{_id: user.id, name: user.name, avatar: user.avatar}}
         keyboardShouldPersistTaps={null}
         listViewProps={{
           showsVerticalScrollIndicator: false,
@@ -90,6 +96,30 @@ const Conversation = ({navigation, route}: props) => {
 
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <HeaderBar
+        contentLeft={
+          <>
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="chevron-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+            <ChatHeaderAvatar
+              avatar={avatar}
+              name={name}
+              onPress={navigateToProfile}
+            />
+          </>
+        }
+        title={name}
+      />
       {content}
     </View>
   );

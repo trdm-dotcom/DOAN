@@ -65,13 +65,14 @@ const Friend = () => {
           .finally(() => setLoading(false));
       };
       setPageNumber(0);
+      getContacts();
       fetchInit();
     }, []),
   );
 
   useEffect(() => {
-    getContacts();
-  }, []);
+    fetchListSuggestFriend(contacts, search, pageNumber);
+  }, [pageNumber]);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -223,7 +224,7 @@ const Friend = () => {
                         <Ionicons
                           name="close"
                           size={IconSizes.x6}
-                          color={theme.accent}
+                          color={ThemeStatic.accent}
                           style={{
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -333,7 +334,7 @@ const Friend = () => {
                       containerStyle={{
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: theme.accent,
+                        backgroundColor: ThemeStatic.accent,
                         paddingHorizontal: IconSizes.x5,
                         borderRadius: 50,
                       }}
@@ -352,7 +353,6 @@ const Friend = () => {
                 label="Load More"
                 onPress={() => {
                   setPageNumber(pageNumber + 1);
-                  fetchListSuggestFriend(contacts, search, pageNumber);
                 }}
                 containerStyle={{
                   alignItems: 'center',

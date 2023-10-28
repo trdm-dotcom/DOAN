@@ -44,7 +44,7 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
       updatePost(body).then(() => {
         setLoading(false);
         // @ts-ignore
-        ref.current.close();
+        return ref.current.close();
       });
     };
 

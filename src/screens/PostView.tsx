@@ -61,23 +61,23 @@ const PostView = ({navigation, route}: props) => {
 
   const openOptions = () => {
     // @ts-ignore
-    postOptionsBottomSheetRef.current.open();
+    return postOptionsBottomSheetRef.current.open();
   };
 
   const closeOptions = () => {
     // @ts-ignore
-    postOptionsBottomSheetRef.current.close();
+    return postOptionsBottomSheetRef.current.close();
   };
 
   const onPostEdit = () => {
     closeOptions();
     // @ts-ignore
-    editPostBottomSheetRef.current.open();
+    return editPostBottomSheetRef.current.open();
   };
 
   const openLikes = () => {
     // @ts-ignore
-    likesBottomSheetRef.current.open();
+    return likesBottomSheetRef.current.open();
   };
 
   const onPostDelete = () => {
@@ -247,7 +247,7 @@ const PostView = ({navigation, route}: props) => {
     <GestureHandlerRootView
       style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
-        firstChilden={
+        contentLeft={
           <IconButton
             Icon={() => (
               <Ionicons

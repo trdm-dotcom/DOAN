@@ -1,17 +1,27 @@
-import React, {ReactNode} from 'react';
-import {View} from 'react-native';
+import React, {ReactNode, useContext} from 'react';
+import {StyleProp, Text, TextStyle, View} from 'react-native';
+import Typography from '../../theme/Typography';
+import {AppContext} from '../../context';
+
+const {FontWeights, FontSizes} = Typography;
 
 type HeaderBarProps = {
-  firstChilden?: ReactNode;
-  secondChilden?: ReactNode;
-  thirdChilden?: ReactNode;
+  contentLeft?: ReactNode;
+  title?: string;
+  onTitlePress?: () => void;
+  titleStyle?: StyleProp<TextStyle>;
+  contentRight?: ReactNode;
 };
 
 const HeaderBar = ({
-  firstChilden,
-  secondChilden,
-  thirdChilden,
+  contentLeft,
+  title,
+  onTitlePress,
+  titleStyle,
+  contentRight,
 }: HeaderBarProps) => {
+  const {theme} = useContext(AppContext);
+
   return (
     <View
       style={{
@@ -23,9 +33,29 @@ const HeaderBar = ({
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-        {firstChilden}
-        {secondChilden}
-        {thirdChilden}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+          {contentLeft}
+          {title && (
+            <Text
+              onPress={onTitlePress}
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Label,
+                  color: theme.text01,
+                  marginLeft: 10,
+                },
+                titleStyle,
+              ]}>
+              {title}
+            </Text>
+          )}
+        </View>
+        {contentRight}
       </View>
     </View>
   );

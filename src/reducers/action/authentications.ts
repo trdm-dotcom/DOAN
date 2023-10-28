@@ -3,7 +3,7 @@ import {ILoginResponse} from '../../models/response/ILoginResponse';
 import {IRegisterRequest} from '../../models/request/IRegisterRequest';
 import {ICheckExistRequest} from '../../models/request/ICheckExistRequest';
 import {ICheckExistResponse} from '../../models/response/ICheckExistResponse';
-import {apiPost, apiPut, getToken} from '../../utils/Api';
+import {apiPost, apiPut, fetchToken, getToken} from '../../utils/Api';
 import {IBiometricLoginRequest} from '../../models/request/IBiometricLoginRequest';
 import {removeToken, saveToken} from '../../utils/Storage';
 import {IUpdateUserInfoRequest} from '../../models/request/IUpdateUserInfoRequest';
@@ -89,6 +89,7 @@ export const password = async (body: ILoginRequest) => {
     type: 'password',
     data: body,
   });
+  await fetchToken();
 };
 
 export const biometric = async (body: IBiometricLoginRequest) => {
@@ -106,6 +107,7 @@ export const biometric = async (body: IBiometricLoginRequest) => {
     type: 'biometric',
     data: body,
   });
+  await fetchToken();
 };
 
 export const signOut = async () => {

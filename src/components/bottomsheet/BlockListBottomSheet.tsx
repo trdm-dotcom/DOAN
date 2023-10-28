@@ -18,7 +18,7 @@ interface BlockListBottomSheetProps {
 }
 
 const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
-  ref => {
+  (_, ref) => {
     const {theme} = useContext(AppContext);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = React.useState<boolean>(false);
@@ -40,14 +40,6 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
         setLoading(false);
       }
     };
-
-    const ListEmptyComponent = () => (
-      <SvgBanner
-        Svg={EmptyBlockListBanner}
-        placeholder="No users blocked"
-        spacing={16}
-      />
-    );
 
     const renderItem = (item: any) => {
       return (
@@ -71,7 +63,13 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
           data={blockedUsers}
           itemContainerStyle={styles(theme).listItemContainer}
           contentContainerStyle={styles(theme).listContentContainer}
-          ListEmptyComponent={ListEmptyComponent}
+          ListEmptyComponent={() => (
+            <SvgBanner
+              Svg={EmptyBlockListBanner}
+              placeholder="No users blocked"
+              spacing={16}
+            />
+          )}
           style={styles(theme).listContainer}
           spacing={20}
           renderItem={renderItem}

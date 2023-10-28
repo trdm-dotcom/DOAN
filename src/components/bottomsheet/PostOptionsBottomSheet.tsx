@@ -23,12 +23,12 @@ const PostOptionsBottomSheet: React.FC<PostOptionsBottomSheetProps> =
 
     const onPostUnfriend = () => {
       // @ts-ignore
-      ref.current.close();
+      return ref.current.close();
     };
 
     const onPostBlock = () => {
       // @ts-ignore
-      ref.current.close();
+      return ref.current.close();
     };
 
     let content = (

@@ -7,6 +7,7 @@ import {ThemeColors} from '../../constants/Types';
 import Typography from '../../theme/Typography';
 import {IconSizes} from '../../constants/Constants';
 import {space} from '../../components/style';
+import {ThemeStatic} from '../../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -53,7 +54,7 @@ const ConfirmationModal = ({
             },
             space(IconSizes.x5).mt,
           ]}
-          labelStyle={{color: color || theme.accent}}
+          labelStyle={{color: color || ThemeStatic.accent}}
         />
         <AppButton
           label="Cancel"
