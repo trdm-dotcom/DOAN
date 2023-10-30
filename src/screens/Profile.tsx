@@ -75,6 +75,8 @@ const Profile = ({navigation, route}: props) => {
     }).then(res => {
       setSortedPosts([...sortedPosts, ...res]);
     });
+
+    return () => {};
   }, [pageNumber]);
 
   const profileOptionsBottomSheetRef = useRef();
@@ -160,6 +162,7 @@ const Profile = ({navigation, route}: props) => {
           onEndReached={() => {
             setPageNumber(pageNumber + 1);
           }}
+          keyExtractor={item => item.id.toString()}
         />
         <ConnectionsBottomSheet
           viewMode

@@ -70,7 +70,7 @@ const RootStack = () => {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={isAuthenticated ? 'Main' : 'Start'}
-        screenOptions={{headerShown: false}}>
+        screenOptions={{headerShown: false, animation: 'fade'}}>
         {isAuthenticated ? (
           <>
             <Stack.Screen name="Main">

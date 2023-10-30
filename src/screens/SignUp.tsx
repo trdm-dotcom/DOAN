@@ -27,6 +27,7 @@ import {IconSizes} from '../constants/Constants';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import Header from '../components/header/Header';
 import {ThemeStatic} from '../theme/Colors';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -52,27 +53,21 @@ const SignUp = ({navigation}: props) => {
   };
 
   const handleOnNameChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
+    const verify: boolean = text.length > 0;
     setIsContinue(previousState => previousState && verify);
-    if (verify) {
-      setName(text.trim());
-    }
+    setName(text);
   };
 
   const handleOnMailChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
+    const verify: boolean = text.length > 0;
     setIsContinue(previousState => previousState && verify);
-    if (verify) {
-      setMail(text.trim());
-    }
+    setMail(text);
   };
 
   const handleOnChangePhoneNumber = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
+    const verify: boolean = text.length > 0;
     setIsContinue(previousState => previousState && verify);
-    if (verify) {
-      setPhoneNumber(text.trim());
-    }
+    setPhoneNumber(text);
   };
 
   const handleContinue = async () => {
@@ -156,84 +151,91 @@ const SignUp = ({navigation}: props) => {
           ]}>
           Enter your phone number
         </Text>
-        <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
-          <TextInput
-            onChangeText={handleOnNameChangeText}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              },
-            ]}
-            autoFocus
-            placeholder="Full Name"
-            placeholderTextColor={theme.text02}
-          />
-        </View>
-        <View style={[styles(theme).inputContainer]}>
-          <TextInput
-            onChangeText={handleOnMailChangeText}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              },
-            ]}
-            keyboardType="email-address"
-            placeholder="Email Address"
-            placeholderTextColor={theme.text02}
-          />
-        </View>
-        <View style={[styles(theme).inputContainer]}>
-          <TextInput
-            onChangeText={handleOnChangePhoneNumber}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              },
-            ]}
-            keyboardType="numeric"
-            placeholder="Phone Number"
-            placeholderTextColor={theme.text02}
-          />
-        </View>
-        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={handleContinue}
-            style={[styles(theme).button, styles(theme).buttonPrimary]}
-            disabled={!isContinue || loading}>
-            {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
-            ) : (
-              <>
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: ThemeStatic.white,
-                    },
-                    styles(theme).centerText,
-                  ]}>
-                  Next
-                </Text>
-                <Ionicons
-                  name="arrow-forward"
-                  size={IconSizes.x6}
+        <Animated.View
+          style={[{flex: 1}, space(IconSizes.x5).mt]}
+          entering={FadeInDown.delay(200).duration(1000).springify()}>
+          <View style={[styles(theme).inputContainer]}>
+            <TextInput
+              onChangeText={handleOnNameChangeText}
+              style={[
+                styles(theme).inputField,
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Body,
+                  color: theme.text01,
+                },
+              ]}
+              autoFocus
+              placeholder="Full Name"
+              placeholderTextColor={theme.text02}
+            />
+          </View>
+          <View style={[styles(theme).inputContainer]}>
+            <TextInput
+              onChangeText={handleOnMailChangeText}
+              style={[
+                styles(theme).inputField,
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Body,
+                  color: theme.text01,
+                },
+              ]}
+              keyboardType="email-address"
+              placeholder="Email Address"
+              placeholderTextColor={theme.text02}
+            />
+          </View>
+          <View style={[styles(theme).inputContainer]}>
+            <TextInput
+              onChangeText={handleOnChangePhoneNumber}
+              style={[
+                styles(theme).inputField,
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Body,
+                  color: theme.text01,
+                },
+              ]}
+              keyboardType="numeric"
+              placeholder="Phone Number"
+              placeholderTextColor={theme.text02}
+            />
+          </View>
+          <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={handleContinue}
+              style={[styles(theme).button, styles(theme).buttonPrimary]}
+              disabled={!isContinue || loading}>
+              {loading ? (
+                <LoadingIndicator
+                  size={IconSizes.x1}
                   color={ThemeStatic.white}
                 />
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+              ) : (
+                <>
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: ThemeStatic.white,
+                      },
+                      styles(theme).centerText,
+                    ]}>
+                    Next
+                  </Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={IconSizes.x6}
+                    color={ThemeStatic.white}
+                  />
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </View>
   );

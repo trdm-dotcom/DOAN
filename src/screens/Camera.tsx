@@ -9,7 +9,6 @@ import {
   CameraDevices,
   Camera as CameraVision,
   PhotoFile,
-  // VideoFile,
   useCameraDevices,
 } from 'react-native-vision-camera';
 import {AppContext} from '../context';
@@ -174,46 +173,48 @@ const Camera = ({navigation}: props) => {
           </>
         )}
       </View>
-      {device && showCamera && (
-        <View style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
-          <CameraVision
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            device={device}
-            isActive={showCamera}
-            photo
-            enableZoomGesture
-            orientation="portrait"
-            onInitialized={onCameraInitialized}
-          />
-          <View
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                padding: IconSizes.x4,
-              },
-            ]}>
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name={torch === 'on' ? 'flash' : 'flash-outline'}
-                  size={IconSizes.x6}
-                  color={torch === 'on' ? theme.accent : theme.text01}
-                />
-              )}
-              onPress={() => {
-                torch === 'off' ? setTorch('on') : setTorch('off');
-              }}
-              style={{
-                padding: IconSizes.x1,
-                borderRadius: 50,
-              }}
+      <View style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
+        {device && showCamera && (
+          <>
+            <CameraVision
+              ref={cameraRef}
+              style={StyleSheet.absoluteFill}
+              device={device}
+              isActive={showCamera}
+              photo
+              enableZoomGesture
+              orientation="portrait"
+              onInitialized={onCameraInitialized}
             />
-          </View>
-        </View>
-      )}
+            <View
+              style={[
+                {
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  padding: IconSizes.x4,
+                },
+              ]}>
+              <IconButton
+                Icon={() => (
+                  <Ionicons
+                    name={torch === 'on' ? 'flash' : 'flash-outline'}
+                    size={IconSizes.x6}
+                    color={torch === 'on' ? theme.accent : theme.text01}
+                  />
+                )}
+                onPress={() => {
+                  torch === 'off' ? setTorch('on') : setTorch('off');
+                }}
+                style={{
+                  padding: IconSizes.x1,
+                  borderRadius: 50,
+                }}
+              />
+            </View>
+          </>
+        )}
+      </View>
       {!showCamera && (
         <KeyboardAvoidingView
           behavior={keyboardBehavior}

@@ -62,6 +62,7 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
             style={styles().listContainer}
             spacing={20}
             renderItem={renderItem}
+            keyExtractor={item => item.id.toString()}
           />
         </View>
       </Modalize>

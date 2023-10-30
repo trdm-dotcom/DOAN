@@ -46,25 +46,14 @@ const ConfirmationModal = ({
           label={label}
           onPress={onConfirm}
           loading={false}
-          containerStyle={[
-            {
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingHorizontal: IconSizes.x5,
-            },
-            space(IconSizes.x5).mt,
-          ]}
-          labelStyle={{color: color || ThemeStatic.accent}}
+          labelStyle={{...FontWeights.Bold, color: color || ThemeStatic.accent}}
         />
         <AppButton
           label="Cancel"
           onPress={toggle}
           loading={false}
-          labelStyle={{color: theme.text02}}
-          containerStyle={[
-            space(IconSizes.x5).mt,
-            {backgroundColor: theme.base},
-          ]}
+          labelStyle={{...FontWeights.Bold, color: theme.text02}}
+          containerStyle={[{backgroundColor: theme.base}]}
         />
       </View>
     </Modal>

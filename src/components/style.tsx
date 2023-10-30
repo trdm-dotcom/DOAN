@@ -95,18 +95,11 @@ export const styles = (theme = {} as ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 10,
+      borderRadius: 40,
+      padding: CONTENT_SPACING,
     },
     buttonPrimary: {
       backgroundColor: ThemeStatic.accent,
-      padding: CONTENT_SPACING,
-    },
-    buttonSecondary: {
-      flexDirection: 'row',
-      borderRadius: 10,
-      padding: CONTENT_SPACING,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
 
     // form field

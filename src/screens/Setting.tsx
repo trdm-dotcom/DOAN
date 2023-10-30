@@ -136,15 +136,24 @@ const Setting = () => {
     }
   };
 
-  const editInfo = async () => {
-    await putUserInfo({
+  const editInfo = () => {
+    setLoading(true);
+    putUserInfo({
       name: name,
       avatar: userInfo.avatar,
-    });
-    userInfo.name = name;
-    dispatch(updateUserInfo(userInfo));
-    // @ts-ignore
-    modalizeRef.current.close();
+    })
+      .then(() => {
+        userInfo.name = name;
+        dispatch(updateUserInfo(userInfo));
+        // @ts-ignore
+        modalizeRef.current.close();
+      })
+      .catch((err: any) => {
+        showError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const verifyOtp = async () => {
@@ -264,7 +273,6 @@ const Setting = () => {
                   justifyContent: 'center',
                   backgroundColor: theme.placeholder,
                   paddingHorizontal: IconSizes.x5,
-                  height: IconSizes.x9,
                   borderRadius: 50,
                 },
               ]}
@@ -624,13 +632,12 @@ const Setting = () => {
                 activeOpacity={0.9}
                 onPress={handleOnPress}
                 disabled={!isContinue || loading}
-                style={[
-                  styles(theme).button,
-                  styles(theme).buttonPrimary,
-                  {flex: 1},
-                ]}>
+                style={[styles(theme).button, styles(theme).buttonPrimary]}>
                 {loading ? (
-                  <LoadingIndicator size={IconSizes.x1} color={theme.text01} />
+                  <LoadingIndicator
+                    size={IconSizes.x1}
+                    color={ThemeStatic.white}
+                  />
                 ) : progess === 'changePass' ? (
                   <>
                     <Text
@@ -657,7 +664,7 @@ const Setting = () => {
                       {
                         ...FontWeights.Bold,
                         ...FontSizes.Body,
-                        color: theme.text01,
+                        color: ThemeStatic.white,
                       },
                     ]}>
                     Done

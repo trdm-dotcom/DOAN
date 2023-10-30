@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {RefreshControl, View} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
@@ -14,7 +14,7 @@ import LoadingIndicator from '../components/shared/LoadingIndicator';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Feather from 'react-native-vector-icons/Feather';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Header from '../components/header/Header';
 
 const Feed = () => {
@@ -25,15 +25,9 @@ const Feed = () => {
   const [pageNumber, setPageNumber] = useState(0);
   const navigation = useNavigation();
 
-  useFocusEffect(
-    useCallback(() => {
-      setPageNumber(0);
-      userFeedRefetch(0);
-    }, []),
-  );
-
   useEffect(() => {
     userFeedRefetch(pageNumber);
+    return () => {};
   }, [pageNumber]);
 
   const userFeedRefetch = async (page: number) => {
@@ -119,8 +113,9 @@ const Feed = () => {
         renderItem={renderItem}
         onEndReachedThreshold={0.5}
         onEndReached={() => {
-          setPageNumber(pageNumber + 1);
+          // setPageNumber(pageNumber + 1);
         }}
+        keyExtractor={item => item.id.toString()}
       />
     );
 

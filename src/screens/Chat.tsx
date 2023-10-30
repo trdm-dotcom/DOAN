@@ -103,6 +103,7 @@ const Chat = ({navigation}: props) => {
         onEndReached={() => {
           setPageNumber(pageNumber + 1);
         }}
+        keyExtractor={item => item.id.toString()}
       />
     );
 

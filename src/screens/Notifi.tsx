@@ -27,12 +27,12 @@ const Notifi = () => {
     useCallback(() => {
       remarkAllNotification();
       setPageNumber(0);
-      fetchNotifications(pageNumber);
     }, []),
   );
 
   useEffect(() => {
     fetchNotifications(pageNumber);
+    return () => {};
   }, [pageNumber]);
 
   const remarkAllNotification = async () => await remarkNotification();
@@ -107,6 +107,7 @@ const Notifi = () => {
         onEndReached={() => {
           setPageNumber(pageNumber + 1);
         }}
+        keyExtractor={item => item.id.toString()}
       />
     );
 

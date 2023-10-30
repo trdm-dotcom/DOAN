@@ -1,4 +1,4 @@
-import React, {Ref, forwardRef, useContext, useEffect} from 'react';
+import React, {Ref, forwardRef, useContext, useEffect, useState} from 'react';
 import {View} from 'react-native';
 import {Modalize} from 'react-native-modalize';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
@@ -9,9 +9,9 @@ import BottomSheetHeader from '../header/BottomSheetHeader';
 import UserCard from '../user/UserCard';
 import SvgBanner from '../SvgBanner';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
-import {showError} from '../../utils/Toast';
 import {getBlockList} from '../../reducers/action/friend';
 import {styles} from '../style';
+import {Pagination} from 'src/constants/Constants';
 
 interface BlockListBottomSheetProps {
   ref: Ref<any>;
@@ -23,22 +23,29 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = React.useState<boolean>(false);
     const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
+    const [pageNumber, setPageNumber] = useState<number>(0);
 
     useEffect(() => {
       fetchBlockedUsers();
-    }, []);
+      return () => {};
+    }, [pageNumber]);
 
-    const fetchBlockedUsers = async () => {
-      try {
-        setLoading(true);
-        const responsive = await getBlockList();
-        setBlockedUsers(responsive);
-      } catch (err: any) {
-        setError(true);
-        showError(err.message);
-      } finally {
-        setLoading(false);
-      }
+    const fetchBlockedUsers = () => {
+      setLoading(true);
+      getBlockList({
+        pageNumber: pageNumber,
+        pageSize: Pagination.PAGE_SIZE,
+      })
+        .then(res => {
+          setBlockedUsers([...blockedUsers, ...res]);
+        })
+        .catch(err => {
+          console.log(err);
+          setError(true);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     };
 
     const renderItem = (item: any) => {
@@ -73,6 +80,9 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
           style={styles(theme).listContainer}
           spacing={20}
           renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => setPageNumber(pageNumber + 1)}
         />
       );
 

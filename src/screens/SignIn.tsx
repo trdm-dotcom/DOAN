@@ -31,6 +31,7 @@ import Header from '../components/header/Header';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import {getUserInfo} from '../reducers/action/user';
 import {ThemeStatic} from '../theme/Colors';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -56,17 +57,11 @@ const SignIn = ({navigation}: props) => {
   };
 
   const handleOnUsernameChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    if (verify) {
-      setUsername(text.trim());
-    }
+    setUsername(text);
   };
 
   const handleOnPassChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    if (verify) {
-      setPassword(text.trim());
-    }
+    setPassword(text);
   };
 
   const handleContinue = async () => {
@@ -127,112 +122,118 @@ const SignIn = ({navigation}: props) => {
           ]}>
           Enter your credentials
         </Text>
-        <View style={[styles(theme).inputContainer, space(IconSizes.x5).mt]}>
-          <TextInput
-            value={username}
-            onChangeText={handleOnUsernameChangeText}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              },
-            ]}
-            autoFocus
-            placeholder="Phone Or Email"
-            placeholderTextColor={theme.text02}
-          />
-        </View>
-        <View style={[styles(theme).inputContainer, styles(theme).row]}>
-          <TextInput
-            onChangeText={handleOnPassChangeText}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              },
-              {flex: 1},
-            ]}
-            secureTextEntry={!isPasswordVisible}
-            placeholder="Password"
-            placeholderTextColor={theme.text02}
-          />
-          <IconButton
-            onPress={() => {
-              setPasswordVisible(!isPasswordVisible);
-            }}
-            style={{marginHorizontal: CONTENT_SPACING}}
-            Icon={() => (
-              <Ionicons
-                name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-                size={IconSizes.x6}
-                color={theme.text01}
-              />
-            )}
-          />
-        </View>
-        <View
-          style={[
-            {
-              alignItems: 'flex-end',
-            },
-            space(IconSizes.x5).mt,
-          ]}>
-          <TouchableOpacity onPress={() => navigation.navigate('Reset')}>
-            <Text
+        <Animated.View
+          style={[{flex: 1}, space(IconSizes.x5).mt]}
+          entering={FadeInDown.delay(200).duration(1000).springify()}>
+          <View style={[styles(theme).inputContainer]}>
+            <TextInput
+              onChangeText={handleOnUsernameChangeText}
               style={[
-                styles(theme).centerText,
+                styles(theme).inputField,
                 {
                   ...FontWeights.Bold,
                   ...FontSizes.Body,
-                  color: ThemeStatic.accent,
+                  color: theme.text01,
                 },
-              ]}>
-              Forgot Password?
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={[styles(theme).row, space(IconSizes.x5).mt]}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={handleContinue}
+              ]}
+              autoFocus
+              placeholder="Phone Or Email"
+              placeholderTextColor={theme.text02}
+            />
+          </View>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <TextInput
+              onChangeText={handleOnPassChangeText}
+              style={[
+                styles(theme).inputField,
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Body,
+                  color: theme.text01,
+                },
+                {flex: 1},
+              ]}
+              secureTextEntry={!isPasswordVisible}
+              placeholder="Password"
+              placeholderTextColor={theme.text02}
+            />
+            <IconButton
+              onPress={() => {
+                setPasswordVisible(!isPasswordVisible);
+              }}
+              style={{marginHorizontal: CONTENT_SPACING}}
+              Icon={() => (
+                <Ionicons
+                  name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+              )}
+            />
+          </View>
+          <View
             style={[
-              styles(theme).button,
-              styles(theme).buttonPrimary,
-              {flex: 1},
-            ]}
-            disabled={loading}>
-            {loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
-            ) : (
+              {
+                alignItems: 'flex-end',
+              },
+              space(IconSizes.x5).mt,
+            ]}>
+            <TouchableOpacity onPress={() => navigation.navigate('Reset')}>
               <Text
                 style={[
                   styles(theme).centerText,
                   {
                     ...FontWeights.Bold,
                     ...FontSizes.Body,
-                    color: ThemeStatic.white,
+                    color: ThemeStatic.accent,
                   },
                 ]}>
-                Done
+                Forgot Password?
               </Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => {}}
-            style={[styles(theme).button, space(IconSizes.x5).ml]}
-            disabled={loading}>
-            <Ionicons
-              name="finger-print"
-              size={IconSizes.x9}
-              color={theme.text01}
-            />
-          </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles(theme).row, space(IconSizes.x5).mt]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={handleContinue}
+              style={[
+                styles(theme).button,
+                styles(theme).buttonPrimary,
+                {flex: 1},
+              ]}
+              disabled={loading}>
+              {loading ? (
+                <LoadingIndicator
+                  size={IconSizes.x1}
+                  color={ThemeStatic.white}
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles(theme).centerText,
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                      color: ThemeStatic.white,
+                    },
+                  ]}>
+                  Done
+                </Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => {}}
+              style={[styles(theme).button, space(IconSizes.x5).ml]}
+              disabled={loading}>
+              <Ionicons
+                name="finger-print"
+                size={IconSizes.x9}
+                color={theme.text01}
+              />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </View>
   );

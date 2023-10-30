@@ -103,6 +103,7 @@ const Comments = ({postId}: CommentsProps) => {
             spacing={10}
           />
         )}
+        keyExtractor={item => item.id.toString()}
       />
     );
 
