@@ -1,10 +1,15 @@
 import React, {useContext, useEffect, useRef, useState} from 'react';
 import {RootStackParamList} from '../navigators/RootStack';
 import {AppContext} from '../context';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes, Pagination, PostDimensions} from '../constants/Constants';
+import {
+  FETCHING_HEIGHT,
+  IconSizes,
+  Pagination,
+  PostDimensions,
+} from '../constants/Constants';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import HeaderBar from '../components/header/HeaderBar';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
@@ -14,20 +19,32 @@ import ProfileScreenPlaceholder from '../components/placeholder/ProfileScreen.Pl
 import {FlatGrid} from 'react-native-super-grid';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
-import UserInteractions from '../components/profile/UserInteractions';
 import ProfileCard from '../components/profile/ProfileCard';
 import PostThumbnail from '../components/post/PostThumbnail';
 import {getUserInfo} from '../reducers/action/user';
 import {getPostOfUser} from '../reducers/action/post';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {getFriendList} from '../reducers/action/friend';
+import {checkFriend, getFriendOfUser} from '../reducers/action/friend';
 import ConnectionsBottomSheet from '../components/shared/ConnectionsBottomSheet';
+import {
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import {getConversationBetween} from '../reducers/action/chat';
+import Typography from '../theme/Typography';
+
+const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 const Profile = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
-  const {user} = route.params;
+  const {userId} = route.params;
 
+  const [isFriend, setIsFriend] = useState<boolean>(false);
   const [blockConfirmationModal, setBlockConfirmationModal] =
     useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -36,20 +53,21 @@ const Profile = ({navigation, route}: props) => {
   const [sortedPosts, setSortedPosts] = useState<any[]>([]);
   const [pageNumber, setPageNumber] = useState<number>(0);
   const [friends, setFriends] = useState<any[]>([]);
+  const [offsetY, setOffsetY] = useState(0);
 
   useEffect(() => {
     const fetchData = () => {
       setLoading(true);
+      setError(false);
       Promise.all([
-        getUserInfo({userId: user}),
-        getPostOfUser({
-          targetId: user,
-          pageNumber: pageNumber,
-          pageSize: Pagination.PAGE_SIZE,
-        }),
-        getFriendList({
+        getUserInfo({userId: userId}),
+        getFriendOfUser({
+          friend: userId,
           pageNumber: 0,
           pageSize: Pagination.PAGE_SIZE,
+        }),
+        checkFriend({
+          friend: userId,
         }),
       ])
         .catch(err => {
@@ -58,8 +76,8 @@ const Profile = ({navigation, route}: props) => {
         })
         .then(res => {
           setUserProfile(res[0]);
-          setSortedPosts(res[1]);
-          setFriends(res[2]);
+          setFriends(res[1]);
+          setIsFriend(res[2].isFriend);
         })
         .finally(() => setLoading(false));
     };
@@ -68,16 +86,19 @@ const Profile = ({navigation, route}: props) => {
   }, []);
 
   useEffect(() => {
-    getPostOfUser({
-      targetId: user,
-      pageNumber: pageNumber,
-      pageSize: Pagination.PAGE_SIZE,
-    }).then(res => {
-      setSortedPosts([...sortedPosts, ...res]);
-    });
-
+    fetchPosts(pageNumber);
     return () => {};
   }, [pageNumber]);
+
+  const fetchPosts = (page: number) => {
+    getPostOfUser({
+      targetId: userId,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    }).then(res => {
+      setSortedPosts(page === 0 ? res : [...sortedPosts, ...res]);
+    });
+  };
 
   const profileOptionsBottomSheetRef = useRef();
   const friendsBottomSheetRef = useRef();
@@ -111,17 +132,90 @@ const Profile = ({navigation, route}: props) => {
     toggleBlockConfirmationModal();
   };
 
+  const messageInteraction = async () => {
+    const conversation = await getConversationBetween({recipientId: userId});
+    navigation.navigate('Conversation', {
+      chatId: conversation.chatId,
+      avatar: userProfile.avatar,
+      name: userProfile.name,
+      targetId: userId,
+    });
+  };
+
+  const followInteraction = () => {};
+
   const ListHeaderComponent = () => {
     return (
       <ProfileCard
         avatar={userProfile.avatar}
         name={userProfile.name}
         renderInteractions={() => (
-          <UserInteractions
-            targetId={user}
-            avatar={userProfile.avatar}
-            name={userProfile.name}
-          />
+          <View
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 20,
+              },
+            ]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={followInteraction}
+              style={[
+                {
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 5,
+                  paddingVertical: 7,
+                  borderRadius: 40,
+                  backgroundColor: theme.accent,
+                },
+              ]}>
+              {loading || error ? (
+                <LoadingIndicator size={IconSizes.x0} color={theme.white} />
+              ) : (
+                <Text
+                  style={[
+                    {
+                      ...FontWeights.Light,
+                      ...FontSizes.Caption,
+                      color: theme.white,
+                    },
+                  ]}>
+                  {`${isFriend ? 'UNFRIEND' : 'ADD FRIEND'}`}
+                </Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={messageInteraction}
+              disabled={loading || error || !isFriend}
+              style={[
+                {
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: 5,
+                  paddingVertical: 7,
+                  borderRadius: 40,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: theme.accent,
+                },
+              ]}>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Light,
+                    ...FontSizes.Caption,
+                    color: theme.accent,
+                  },
+                ]}>
+                MESSAGE
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
         posts={sortedPosts.length}
         friends={friends.length}
@@ -130,10 +224,54 @@ const Profile = ({navigation, route}: props) => {
     );
   };
 
-  const renderItem = ({item}) => {
-    const {id, uri} = item;
+  function onScroll(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+  }
+
+  function onScrollEndDrag(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+    if (y <= -FETCHING_HEIGHT && !loading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
+
+  function onRelease() {
+    if (offsetY <= -FETCHING_HEIGHT && !loading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
+
+  const refreshControl = () => {
+    const onRefresh = () => setPageNumber(0);
+
     return (
-      <PostThumbnail id={id} uri={uri} dimensions={PostDimensions.Medium} />
+      <RefreshControl
+        tintColor={theme.text02}
+        refreshing={loading}
+        onRefresh={onRefresh}
+      />
+    );
+  };
+
+  const renderItem = ({item}) => {
+    return (
+      <PostThumbnail
+        id={item.id}
+        uri={item.source}
+        dimensions={PostDimensions.Medium}
+      />
+    );
+  };
+
+  const handleStateChange = (friend: any) => {
+    setFriends(
+      friends.map(item => (item.friendId === friend.friendId ? friend : item)),
     );
   };
 
@@ -143,12 +281,31 @@ const Profile = ({navigation, route}: props) => {
     ) : (
       <>
         <FlatGrid
+          refreshControl={refreshControl()}
           staticDimension={responsiveWidth(85)}
           ListHeaderComponent={ListHeaderComponent}
           itemDimension={150}
           data={sortedPosts}
           ListEmptyComponent={() => (
             <ListEmptyComponent listType="posts" spacing={30} />
+          )}
+          ListFooterComponent={() => (
+            <View
+              style={[
+                {
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+                space(IconSizes.x1).mt,
+              ]}>
+              {loading && (
+                <LoadingIndicator
+                  size={IconSizes.x1}
+                  color={theme.placeholder}
+                />
+              )}
+            </View>
           )}
           style={[
             {
@@ -158,17 +315,17 @@ const Profile = ({navigation, route}: props) => {
           ]}
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
-          onEndReachedThreshold={0.5}
-          onEndReached={() => {
-            setPageNumber(pageNumber + 1);
-          }}
+          onScroll={onScroll}
+          onScrollEndDrag={onScrollEndDrag}
+          onResponderRelease={onRelease}
           keyExtractor={item => item.id.toString()}
         />
         <ConnectionsBottomSheet
           viewMode
           ref={friendsBottomSheetRef}
-          data={friends}
+          datas={friends}
           name={userProfile.name}
+          onStateChange={handleStateChange}
         />
       </>
     );
@@ -193,6 +350,12 @@ const Profile = ({navigation, route}: props) => {
             />
           </>
         }
+        title="Profile"
+        titleStyle={{
+          ...FontWeights.Bold,
+          ...FontSizes.Label,
+          color: theme.text01,
+        }}
         contentRight={
           <IconButton
             onPress={onProfileOptionsOpen}

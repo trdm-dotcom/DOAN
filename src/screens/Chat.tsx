@@ -1,58 +1,90 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
-import {View} from 'react-native';
-import {styles} from '../components/style';
+import {RefreshControl, View} from 'react-native';
+import {space, styles} from '../components/style';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes, Pagination} from '../constants/Constants';
+import {FETCHING_HEIGHT, IconSizes, Pagination} from '../constants/Constants';
 import Header from '../components/header/Header';
-import SearchBar from '../components/header/SearchBar';
 import MessageScreenPlaceholder from '../components/placeholder/MessageScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import SvgBanner from '../components/SvgBanner';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
-import EmptyMessages from '../../assets/svg/empty-messages.svg';
-import {
-  filterChatParticipants,
-  sortMessageAscendingTime,
-} from '../utils/shared';
+import {filterChatParticipants} from '../utils/shared';
 import MessageCard from '../components/message/MessageCard';
 import {useAppSelector} from '../reducers/redux/store';
 import {getConversations} from '../reducers/action/chat';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import ListEmptyComponent from '../components/shared/ListEmptyComponent';
+import {useDispatch, useSelector} from 'react-redux';
+import AnimatedSearchBar from '../components/control/AnimatedSearchBar';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 const Chat = ({navigation}: props) => {
+  const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
+  const {chats, isLoading, error} = useSelector((state: any) => state.chat);
+
   const user = useAppSelector(state => state.auth.userInfo);
-  const [chatSearch, setChatSearch] = useState('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
+  const [search, setSearch] = useState<any>(null);
   const [pageNumber, setPageNumber] = useState<number>(0);
-  const [chats, setChats] = useState<any[]>([]);
+  const [offsetY, setOffsetY] = useState(0);
 
   useEffect(() => {
-    fetchMessages(pageNumber);
+    fetchMessages(pageNumber, search);
+    return () => {};
   }, [pageNumber]);
 
-  const fetchMessages = async (page: number) => {
-    setLoading(true);
+  const fetchMessages = async (page: number, searchChat: any) => {
     getConversations({
+      search: searchChat,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(res => {
-        setChats([...chats, ...res]);
-      })
-      .catch(err => {
-        console.log(err);
-        setError(true);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    })(dispatch);
+  };
+
+  function onScroll(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+  }
+
+  function onScrollEndDrag(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+    if (y <= -FETCHING_HEIGHT && !isLoading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
+
+  function onRelease() {
+    if (offsetY <= -FETCHING_HEIGHT && !isLoading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
+
+  const refreshControl = () => {
+    const onRefresh = () => {
+      setPageNumber(0);
+      fetchMessages(0, null);
+    };
+
+    return (
+      <RefreshControl
+        tintColor={theme.text02}
+        refreshing={isLoading}
+        onRefresh={onRefresh}
+      />
+    );
+  };
+
+  const setChatSearch = (text: string) => {
+    fetchMessages(pageNumber, text);
   };
 
   const renderItem = ({item}) => {
@@ -82,27 +114,38 @@ const Chat = ({navigation}: props) => {
   };
 
   let content =
-    loading || error ? (
+    isLoading || error ? (
       <MessageScreenPlaceholder />
     ) : (
       <FlatGrid
+        refreshControl={refreshControl()}
         itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
-        data={sortMessageAscendingTime(chats)}
+        data={chats}
         ListEmptyComponent={() => (
-          <SvgBanner
-            Svg={EmptyMessages}
-            spacing={16}
-            placeholder="No messages"
-          />
+          <ListEmptyComponent listType="messages" spacing={30} />
         )}
-        style={styles().messagesList}
+        ListFooterComponent={() => (
+          <View
+            style={[
+              {
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+              space(IconSizes.x1).mt,
+            ]}>
+            {isLoading && (
+              <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+            )}
+          </View>
+        )}
+        style={styles(theme).flatGridList}
         spacing={20}
         renderItem={renderItem}
-        onEndReachedThreshold={0.5}
-        onEndReached={() => {
-          setPageNumber(pageNumber + 1);
-        }}
+        onScroll={onScroll}
+        onScrollEndDrag={onScrollEndDrag}
+        onResponderRelease={onRelease}
         keyExtractor={item => item.id.toString()}
       />
     );
@@ -126,10 +169,17 @@ const Chat = ({navigation}: props) => {
         }
       />
       <Header title="Messages" />
-      <SearchBar
-        value={chatSearch}
+      <AnimatedSearchBar
+        value={search}
+        placeholder="Search"
+        onBlur={() => {
+          setSearch(null);
+          setPageNumber(0);
+        }}
+        onFocus={() => {
+          setPageNumber(0);
+        }}
         onChangeText={setChatSearch}
-        placeholder="Search for chats..."
       />
       {content}
     </View>

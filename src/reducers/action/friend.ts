@@ -55,5 +55,8 @@ export const unblockUser = async (id: number) =>
 export const getBlockList = async (queryParams: IParam) =>
   await apiGet<any[]>('/user/friend/block', {params: queryParams});
 
-export const checkFriend = async (body: IParam) =>
-  await apiPost<any>('/user/checkFriend', {data: body});
+export const checkFriend = async (queryParams: IParam) =>
+  await apiGet<any>('/user/checkFriend', {params: queryParams});
+
+export const getFriendOfUser = async (queryParams: IParam) =>
+  await apiGet<any>('/user/friendOfUser', {params: queryParams});

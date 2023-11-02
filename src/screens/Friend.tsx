@@ -45,7 +45,6 @@ const Friend = () => {
     [],
   );
   const [listFriend, setListFriend] = useState<IFriendResponse[]>([]);
-  const [contacts, setContacts] = useState<any>(null);
   const [search, setSearch] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [friendRejected, setFriendRejected] = useState<any>(null);
@@ -54,25 +53,26 @@ const Friend = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchInit = () => {
-        setLoading(true);
-        Promise.all([fetchListRequestFriend(), fetchListFriend()])
-          .catch(err => {
-            console.log(err);
-            setError(true);
-          })
-          .finally(() => setLoading(false));
-      };
       fetchInit();
     }, []),
   );
 
-  useEffect(() => {
-    getContacts();
-  }, []);
+  const fetchInit = () => {
+    setLoading(true);
+    Promise.all([
+      fetchListRequestFriend(),
+      fetchListFriend(),
+      fetchListSuggestFriend(null, pageNumber),
+    ])
+      .catch(err => {
+        console.log(err);
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    fetchListSuggestFriend(contacts, search, pageNumber);
+    fetchListSuggestFriend(search, pageNumber);
     return () => {};
   }, [pageNumber]);
 
@@ -100,7 +100,7 @@ const Friend = () => {
     }
   };
 
-  const getContacts = useCallback(async () => {
+  const getContacts = async () => {
     const contactsPermission = await requestPermission();
     console.log(`Read contacts permission status: ${contactsPermission}`);
     if (contactsPermission) {
@@ -113,25 +113,24 @@ const Friend = () => {
           }),
         );
       });
-      setContacts(listPhone);
+      return listPhone;
     }
-  }, []);
+    return null;
+  };
 
-  const fetchListSuggestFriend = (
-    listContact: string[],
-    searchFriend: any,
-    page: number,
-  ) => {
-    getSuggestFriend({
-      phone: listContact,
-      search: searchFriend,
-      pageNumber: page,
-      pageSize: Pagination.PAGE_SIZE,
-    }).then(response =>
-      setListFriendSuggest(
-        page === 0 ? response : [...listfriendSuggest, ...response],
-      ),
-    );
+  const fetchListSuggestFriend = (searchFriend: any, page: number) => {
+    getContacts().then(listPhone => {
+      getSuggestFriend({
+        phone: searchFriend == null ? listPhone : null,
+        search: searchFriend,
+        pageNumber: page,
+        pageSize: Pagination.PAGE_SIZE,
+      }).then(response =>
+        setListFriendSuggest(
+          page === 0 ? response : [...listfriendSuggest, ...response],
+        ),
+      );
+    });
   };
 
   const fetchListRequestFriend = () => {
@@ -148,12 +147,9 @@ const Friend = () => {
     }).then(response => setListFriend(response));
   };
 
-  const handleOnChangeText = async (event: any) => {
-    event.persist();
-    const text = event.nativeEvent.text;
-    setListFriendSuggest([]);
-    setContacts(null);
+  const handleOnChangeText = async (text: string) => {
     setSearch(text);
+    fetchListSuggestFriend(text, pageNumber);
   };
 
   const deleteConfirmationToggle = () => {
@@ -161,27 +157,25 @@ const Friend = () => {
   };
 
   const deleteFriend = () => {
+    setShowModal(false);
     rejectFriend(friendRejected)
       .then(() => {
-        setListFriend(
-          listFriend.filter(item => item.friendId !== friendRejected),
-        );
+        setListFriend(listFriend.filter(item => item.id !== friendRejected));
       })
       .catch(err => {
         showError(err.message);
       })
       .finally(() => {
-        setShowModal(false);
         setFriendRejected(null);
       });
   };
 
   const addFriend = async (friend: IFriendResponse) => {
-    const response = await requestAddFriend(friend.id);
+    const response = await requestAddFriend(friend.friendId);
     setListFriendSuggest(
-      listfriendSuggest.filter(item => item.id !== friend.id),
+      listfriendSuggest.filter(item => item.friendId !== friend.friendId),
     );
-    friend.friendId = response.id;
+    friend.id = response.id;
     setListRequestFriend([...listRequestFriend, friend]);
   };
 
@@ -213,7 +207,7 @@ const Friend = () => {
               </View>
               {listRequestFriend.map(item => (
                 <UserCardPress
-                  userId={item.id}
+                  userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
                   style={[space(IconSizes.x1).mt]}
@@ -226,7 +220,7 @@ const Friend = () => {
                     }
                     setListRequestFriend(
                       listRequestFriend.filter(
-                        request => request.friendId !== item.id,
+                        request => request.id !== item.id,
                       ),
                     );
                   }}
@@ -279,7 +273,7 @@ const Friend = () => {
               </View>
               {listFriend.map(item => (
                 <UserCard
-                  userId={item.id}
+                  userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
                   style={[space(IconSizes.x1).mt]}
@@ -302,7 +296,7 @@ const Friend = () => {
                       }}
                       onPress={() => {
                         deleteConfirmationToggle();
-                        setFriendRejected(item.friendId);
+                        setFriendRejected(item.id);
                       }}
                     />
                   }
@@ -332,7 +326,7 @@ const Friend = () => {
               </View>
               {listfriendSuggest.map(item => (
                 <UserCardPress
-                  userId={item.id}
+                  userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
                   style={[space(IconSizes.x1).mt]}
@@ -342,24 +336,24 @@ const Friend = () => {
                       <Ionicons
                         name="add"
                         size={IconSizes.x6}
-                        color={ThemeStatic.white}
+                        color={ThemeStatic.accent}
                       />
                       <Text
                         style={[
                           {
                             ...FontWeights.Bold,
                             ...FontSizes.Body,
-                            color: ThemeStatic.white,
+                            color: ThemeStatic.accent,
                             marginLeft: 5,
                           },
                         ]}>
-                        Add
+                        Add Friend
                       </Text>
                     </>
                   )}
                   buttonStyle={{
-                    backgroundColor: ThemeStatic.accent,
-                    width: 100,
+                    backgroundColor: ThemeStatic.white,
+                    paddingHorizontal: IconSizes.x1,
                   }}
                 />
               ))}
@@ -404,8 +398,17 @@ const Friend = () => {
             <AnimatedSearchBar
               value={search}
               placeholder="Search"
-              onBlur={() => {}}
-              onFocus={() => {}}
+              onBlur={() => {
+                setSearch(null);
+                setPageNumber(0);
+                fetchInit();
+              }}
+              onFocus={() => {
+                setListFriendSuggest([]);
+                setListFriend([]);
+                setListRequestFriend([]);
+                setPageNumber(0);
+              }}
               onChangeText={handleOnChangeText}
             />
             <View style={[styles(theme).row, space(IconSizes.x5).mv]}>

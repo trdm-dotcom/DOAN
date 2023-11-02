@@ -1,35 +1,40 @@
 import React, {useContext} from 'react';
 import {StyleSheet, TouchableOpacity} from 'react-native';
 import {AppContext} from '../../context';
-import UserAvatar from 'react-native-user-avatar';
+import {ThemeColors} from '../../constants/Types';
+import {NativeImage} from '../shared/NativeImage';
 
-const ChatHeaderAvatar = ({avatar, name, onPress}) => {
+type ChatHeaderAvatarProps = {
+  avatar: string;
+  onPress: () => void;
+};
+
+const ChatHeaderAvatar = ({avatar, onPress}: ChatHeaderAvatarProps) => {
   const {theme} = useContext(AppContext);
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={styles().container}
       activeOpacity={0.9}
       onPress={onPress}>
-      <UserAvatar
-        size={40}
-        name={name}
-        src={avatar}
-        bgColor={theme.placeholder}
-      />
+      <NativeImage uri={avatar} style={styles(theme).tinyImage} />
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-    marginLeft: 10,
-    borderRadius: 40,
-  },
-  avatarImage: {
-    flex: 1,
-  },
-});
+const styles = (theme = {} as ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      overflow: 'hidden',
+      marginLeft: 10,
+      borderRadius: 40,
+    },
+    tinyImage: {
+      height: 40,
+      width: 40,
+      borderRadius: 40,
+      backgroundColor: theme.placeholder,
+    },
+  });
 
 export default ChatHeaderAvatar;

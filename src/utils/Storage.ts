@@ -60,7 +60,8 @@ export const loadToken = (): Promise<CredentialType | null> => {
         syncInBackground: false,
       })
       .then((credential: CredentialType) => resolve(credential))
-      .catch(() => {
+      .catch((err:any) => {
+        console.log(err);
         resolve(null);
       });
   });

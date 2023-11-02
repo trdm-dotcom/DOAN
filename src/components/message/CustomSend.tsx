@@ -8,7 +8,7 @@ import {ThemeStatic} from '../../theme/Colors';
 const CustomSend = sendProps => (
   <Send {...sendProps} containerStyle={styles.container}>
     <Ionicons
-      name="send-outline"
+      name="paper-plane"
       size={IconSizes.x6}
       color={ThemeStatic.accent}
     />

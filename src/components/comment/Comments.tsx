@@ -1,15 +1,14 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../../context';
 import CommentCard from './CommentCard';
-import {Text, StyleSheet, View} from 'react-native';
+import {Text, StyleSheet} from 'react-native';
 import ListEmptyComponent from '../shared/ListEmptyComponent';
 import {ThemeColors} from '../../constants/Types';
 import Typography from '../../theme/Typography';
-import {FlatGrid} from 'react-native-super-grid';
-import {getCommentsOfPost} from '../../reducers/action/post';
-import Modal from 'react-native-modal';
-import AppButton from '../control/AppButton';
+import {deleteComment, getCommentsOfPost} from '../../reducers/action/post';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
+import {showError} from '../../utils/Toast';
+import ConfirmationModal from '../shared/ConfirmationModal';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentsProps = {
@@ -26,7 +25,7 @@ const Comments = ({postId}: CommentsProps) => {
 
   useEffect(() => {
     fetchComments(postId);
-  }, [postId]);
+  }, []);
 
   const fetchComments = (post: string) => {
     setLoading(true);
@@ -45,65 +44,53 @@ const Comments = ({postId}: CommentsProps) => {
       });
   };
 
-  const renderItem = ({item}) => {
-    return (
-      <CommentCard
-        userId={item.userId}
-        avatar={item.avatar}
-        name={item.name}
-        comment={item.comment}
-        time={item.createdAt}
-        onPressOption={() => toggleModal(item)}
-      />
-    );
-  };
-
-  const modelToggle = () => {
-    setShowModal(previousState => !previousState);
-  };
-
   const toggleModal = (comment: any) => {
     setCommentPressOption(comment);
     setShowModal(true);
   };
 
   const onConfirm = () => {
-    deleteComment(commentPressOption).then(() => {
-      setShowModal(false);
-      setComments(
-        comments.filter(it => it.commentId !== commentPressOption.id),
-      );
-      setCommentPressOption(null);
-    });
+    setShowModal(false);
+    deleteComment({postId: postId, commentId: commentPressOption.id})
+      .then(() => {
+        setComments(
+          comments.filter(comment => comment.id !== commentPressOption.id),
+        );
+      })
+      .catch(err => {
+        showError(err.message);
+      })
+      .finally(() => {
+        setCommentPressOption(null);
+      });
   };
 
-  const deleteComment = async (comment: any) => {
-    const newComments = comments.filter(it => it.commentId !== comment.id);
-    setComments(newComments);
+  const deleteConfirmationToggle = () => {
+    setShowModal(previousState => !previousState);
+    setCommentPressOption(null);
   };
-
-  const ListHeaderComponent = () => (
-    <Text style={[styles(theme).commentsHeader, {marginBottom}]}>Comments</Text>
-  );
 
   let content =
     loading || error ? (
       <ConnectionsPlaceholder />
-    ) : (
-      <FlatGrid
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={ListHeaderComponent}
-        data={comments}
-        renderItem={renderItem}
-        style={styles().listStyle}
-        ListEmptyComponent={() => (
-          <ListEmptyComponent
-            placeholder="Be the first one to comment"
-            placeholderStyle={styles().placeholderStyle}
-            spacing={10}
+    ) : comments.length > 0 ? (
+      comments.map(comment => {
+        return (
+          <CommentCard
+            userId={comment.userId}
+            avatar={comment.avatar}
+            name={comment.name}
+            comment={comment.comment}
+            time={comment.createdAt}
+            onPressOption={() => toggleModal(comment)}
           />
-        )}
-        keyExtractor={item => item.id.toString()}
+        );
+      })
+    ) : (
+      <ListEmptyComponent
+        placeholder="Be the first one to comment"
+        placeholderStyle={styles().placeholderStyle}
+        spacing={10}
       />
     );
 
@@ -111,51 +98,18 @@ const Comments = ({postId}: CommentsProps) => {
 
   return (
     <>
+      <Text style={[styles(theme).commentsHeader, {marginBottom}]}>
+        Comments
+      </Text>
       {content}
-      <Modal
-        useNativeDriver
-        animationInTiming={400}
-        animationOutTiming={400}
-        hideModalContentWhileAnimating
+      <ConfirmationModal
+        label="Delete"
+        title="Are you sure you want to delete this comment?"
+        color="red"
         isVisible={showModal}
-        animationIn="fadeIn"
-        animationOut="fadeOut"
-        onBackdropPress={() => {
-          modelToggle();
-          setCommentPressOption(null);
-        }}>
-        <View
-          style={[
-            {
-              padding: 20,
-              borderRadius: 10,
-              backgroundColor: theme.base,
-            },
-          ]}>
-          <AppButton
-            label={'Delete'}
-            onPress={onConfirm}
-            loading={false}
-            containerStyle={[
-              {marginTop: 10},
-              {backgroundColor: theme.placeholder},
-            ]}
-          />
-          <AppButton
-            label="Cancel"
-            onPress={() => {
-              modelToggle();
-              setCommentPressOption(null);
-            }}
-            loading={false}
-            labelStyle={{color: theme.text02}}
-            containerStyle={[
-              {marginTop: 10},
-              {backgroundColor: theme.placeholder},
-            ]}
-          />
-        </View>
-      </Modal>
+        toggle={deleteConfirmationToggle}
+        onConfirm={onConfirm}
+      />
     </>
   );
 };

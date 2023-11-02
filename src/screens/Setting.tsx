@@ -9,6 +9,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   ScrollView,
+  Platform,
 } from 'react-native';
 import {ThemeStatic, ThemeVariant} from '../theme/Colors';
 import {signOut} from '../reducers/action/authentications';
@@ -37,7 +38,11 @@ import IOtpResponse from '../models/response/IOtpResponse';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
-import UserAvatar from 'react-native-user-avatar';
+import ImagePicker from 'react-native-image-crop-picker';
+import storage from '@react-native-firebase/storage';
+import {BallIndicator} from 'react-native-indicators';
+import AvatarOptionsBottomSheet from '../components/bottomsheet/AvatarOptionBottomSheet';
+import {NativeImage} from '../components/shared/NativeImage';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -52,6 +57,7 @@ const Setting = () => {
     useState(false);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState<string>(userInfo.name);
+  const [avatar, setAvatar] = useState<string>(userInfo.avatar);
   const [progess, setProgess] = useState<
     null | 'changePass' | 'editInfo' | 'verifyOtp'
   >(null);
@@ -65,10 +71,83 @@ const Setting = () => {
   const [seconds, setSeconds] = useState<number>(30);
 
   const modalizeRef = useRef();
+  const avatarOptionsBottomSheetRef = useRef();
 
   const modalizeOpen = () => {
     // @ts-ignore
-    modalizeRef.current.open();
+    return modalizeRef.current.open();
+  };
+
+  const modalizeClose = () => {
+    // @ts-ignore
+    return modalizeRef.current.close();
+  };
+
+  const openOptions = () => {
+    // @ts-ignore
+    return avatarOptionsBottomSheetRef.current.open();
+  };
+
+  const closeOptions = () => {
+    // @ts-ignore
+    return avatarOptionsBottomSheetRef.current.close();
+  };
+
+  const onOpenCamera = () => {
+    closeOptions();
+    ImagePicker.openCamera({
+      width: 300,
+      height: 300,
+      cropping: true,
+      compressImageQuality: 0.8,
+    })
+      .then(image => {
+        if (image && !Array.isArray(image)) {
+          uploadImage(image.path)
+            .then(url => {
+              setAvatar(url);
+              editInfo(name, url);
+            })
+            .catch(err => {
+              showError(err.message);
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
+  const onOpenGallery = () => {
+    closeOptions();
+    ImagePicker.openPicker({
+      width: 300,
+      height: 300,
+      cropping: true,
+      compressImageQuality: 0.8,
+    })
+      .then(image => {
+        if (image && !Array.isArray(image)) {
+          setLoading(true);
+          uploadImage(image.path)
+            .then(url => {
+              setAvatar(url);
+              editInfo(name, url);
+            })
+            .catch(err => {
+              showError(err.message);
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
   };
 
   useEffect(() => {
@@ -136,17 +215,17 @@ const Setting = () => {
     }
   };
 
-  const editInfo = () => {
+  const editInfo = (nameEdit: string, avatarEdit: string) => {
     setLoading(true);
     putUserInfo({
-      name: name,
-      avatar: userInfo.avatar,
+      name: nameEdit,
+      avatar: avatarEdit,
     })
       .then(() => {
         userInfo.name = name;
+        userInfo.avatar = avatar;
         dispatch(updateUserInfo(userInfo));
-        // @ts-ignore
-        modalizeRef.current.close();
+        modalizeClose();
       })
       .catch((err: any) => {
         showError(err.message);
@@ -157,23 +236,31 @@ const Setting = () => {
   };
 
   const verifyOtp = async () => {
-    const bodyVerifyOtp = {otpId: otpId, otpValue: otpValue};
-    const response: IVerifyOtpResponse = await apiPost<IVerifyOtpResponse>(
-      '/otp/verify',
-      {data: bodyVerifyOtp},
-      {
+    setLoading(true);
+    try {
+      const bodyVerifyOtp = {otpId: otpId, otpValue: otpValue};
+      const response: IVerifyOtpResponse = await apiPost<IVerifyOtpResponse>(
+        '/otp/verify',
+        {data: bodyVerifyOtp},
+        {
+          'Content-Type': 'application/json',
+        },
+      );
+      const body: IChangePasswordRequest = {
+        otpKey: response.otpKey,
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+        hash: getHash('PASSWORD'),
+      };
+      await apiPost<any>('/user/changePassword', body, {
         'Content-Type': 'application/json',
-      },
-    );
-    const body: IChangePasswordRequest = {
-      otpKey: response.otpKey,
-      oldPassword: oldPassword,
-      newPassword: newPassword,
-      hash: getHash('PASSWORD'),
-    };
-    await apiPost<any>('/user/changePassword', body);
-    // @ts-ignore
-    modalizeRef.current.close();
+      });
+      modalizeClose();
+    } catch (err: any) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const changePass = async () => {
@@ -196,7 +283,7 @@ const Setting = () => {
         case 'changePass':
           return await changePass();
         case 'editInfo':
-          return await editInfo();
+          return await editInfo(name, avatar);
         case 'verifyOtp':
           return verifyOtp();
         default:
@@ -208,6 +295,18 @@ const Setting = () => {
       setLoading(false);
     }
   };
+
+  const uploadImage = async (uri: string) => {
+    const filename = uri.substring(uri.lastIndexOf('/') + 1);
+    const uploadUri = uri.replace('file://', '');
+    const imageRef = storage().ref(filename);
+    await imageRef.putFile(uploadUri, {
+      cacheControl: 'no-store', // disable caching
+    });
+    return imageRef.getDownloadURL();
+  };
+
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
     <>
@@ -225,17 +324,13 @@ const Setting = () => {
                 padding: IconSizes.x00,
                 borderColor: theme.placeholder,
                 borderWidth: IconSizes.x00,
-                borderRadius: 110,
+                borderRadius: 120,
               }}>
-              <UserAvatar
-                size={110}
-                name={userInfo.name}
-                src={userInfo.avatar}
-                bgColor={theme.placeholder}
-              />
+              <NativeImage uri={avatar} style={styles(theme).avatarImage} />
               <TouchableOpacity
                 activeOpacity={0.9}
-                onPress={() => {}}
+                disabled={loading}
+                onPress={openOptions}
                 style={{
                   position: 'absolute',
                   borderRadius: 100,
@@ -244,9 +339,16 @@ const Setting = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   alignSelf: 'center',
-                  backgroundColor: theme.accent,
                 }}>
-                <Ionicons name="add" size={IconSizes.x8} />
+                {loading ? (
+                  <BallIndicator size={IconSizes.x8} color={theme.text01} />
+                ) : (
+                  <Ionicons
+                    name="camera"
+                    size={IconSizes.x8}
+                    color={theme.text01}
+                  />
+                )}
               </TouchableOpacity>
             </View>
             <View
@@ -446,7 +548,10 @@ const Setting = () => {
           scrollViewProps={{showsVerticalScrollIndicator: false}}
           modalStyle={[styles(theme).modalizeContainer]}
           adjustToContentHeight>
-          <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
+          <KeyboardAvoidingView
+            behavior={keyboardBehavior}
+            keyboardVerticalOffset={20}
+            style={[{flex: 1}, space(IconSizes.x10).mt]}>
             {progess === 'editInfo' && (
               <>
                 <BottomSheetHeader
@@ -619,7 +724,9 @@ const Setting = () => {
                       color: theme.text02,
                     },
                   ]}>
-                  Your password must be at least 8 characters
+                  Your password must be at least 8 characters, at least one
+                  number and both lower and uppercase letters and special
+                  characters
                 </Text>
               </>
             )}
@@ -674,6 +781,11 @@ const Setting = () => {
             </View>
           </KeyboardAvoidingView>
         </Modalize>
+        <AvatarOptionsBottomSheet
+          ref={avatarOptionsBottomSheetRef}
+          onOpenCamera={onOpenCamera}
+          onOpenGallery={onOpenGallery}
+        />
       </GestureHandlerRootView>
     </>
   );

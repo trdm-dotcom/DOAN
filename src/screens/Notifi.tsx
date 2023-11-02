@@ -1,59 +1,72 @@
 import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {RefreshControl, View} from 'react-native';
-import {styles} from '../components/style';
+import {space, styles} from '../components/style';
 import {AppContext} from '../context';
-import {Pagination} from '../constants/Constants';
+import {FETCHING_HEIGHT, IconSizes, Pagination} from '../constants/Constants';
 import NotificationScreenPlaceholder from '../components/placeholder/NotificationScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
-import SvgBanner from '../components/SvgBanner';
 import NotificationCard from '../components/notification/NotificationCard';
-import EmptyNotifications from '../../assets/svg/empty-notifications.svg';
 import {
   getNotifications,
   remarkNotification,
 } from '../reducers/action/notification';
 import {useFocusEffect} from '@react-navigation/native';
 import Header from '../components/header/Header';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
+import ListEmptyComponent from '../components/shared/ListEmptyComponent';
+import {useDispatch, useSelector} from 'react-redux';
 
 const Notifi = () => {
+  const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
+  const {notifications, isLoading, error} = useSelector(
+    (state: any) => state.notification,
+  );
   const [pageNumber, setPageNumber] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [offsetY, setOffsetY] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       remarkAllNotification();
-      setPageNumber(0);
     }, []),
   );
 
   useEffect(() => {
     fetchNotifications(pageNumber);
-    return () => {};
   }, [pageNumber]);
 
-  const remarkAllNotification = async () => await remarkNotification();
+  const remarkAllNotification = () => remarkNotification()(dispatch);
 
   const fetchNotifications = (page: number) => {
-    setLoading(true);
     getNotifications({
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(res => {
-        setNotifications([...notifications, ...res]);
-      })
-      .catch(err => {
-        console.log(err);
-        setError(true);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    })(dispatch);
   };
+
+  function onScroll(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+  }
+
+  function onScrollEndDrag(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+    if (y <= -FETCHING_HEIGHT && !isLoading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
+
+  function onRelease() {
+    if (offsetY <= -FETCHING_HEIGHT && !isLoading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
 
   const refreshControl = () => {
     const onRefresh = () => fetchNotifications(1);
@@ -61,7 +74,7 @@ const Notifi = () => {
     return (
       <RefreshControl
         tintColor={theme.text02}
-        refreshing={loading}
+        refreshing={isLoading}
         onRefresh={onRefresh}
       />
     );
@@ -81,7 +94,7 @@ const Notifi = () => {
   };
 
   let content =
-    loading || error ? (
+    isLoading || error ? (
       <NotificationScreenPlaceholder />
     ) : (
       <FlatGrid
@@ -90,23 +103,29 @@ const Notifi = () => {
         showsVerticalScrollIndicator={false}
         data={notifications}
         ListEmptyComponent={() => (
-          <SvgBanner
-            Svg={EmptyNotifications}
-            spacing={20}
-            placeholder="No notifications yet"
-          />
+          <ListEmptyComponent listType="notifications" spacing={30} />
         )}
-        style={[
-          {
-            flex: 1,
-            paddingHorizontal: 4,
-          },
-        ]}
+        ListFooterComponent={() => (
+          <View
+            style={[
+              {
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+              space(IconSizes.x1).mt,
+            ]}>
+            {isLoading && (
+              <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+            )}
+          </View>
+        )}
+        style={styles(theme).flatGridList}
         spacing={20}
         renderItem={renderItem}
-        onEndReached={() => {
-          setPageNumber(pageNumber + 1);
-        }}
+        onScroll={onScroll}
+        onScrollEndDrag={onScrollEndDrag}
+        onResponderRelease={onRelease}
         keyExtractor={item => item.id.toString()}
       />
     );

@@ -4,47 +4,77 @@ import {space, styles} from '../components/style';
 import {AppContext} from '../context';
 import PostCard from '../components/post/PostCard';
 import PostCardPlaceholder from '../components/placeholder/PostCard.Placeholder';
-import SvgBanner from '../components/SvgBanner';
-import EmptyFeed from '../../assets/svg/empty-feed.svg';
 import {FlatGrid} from 'react-native-super-grid';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {IconSizes, Pagination} from '../constants/Constants';
+import {FETCHING_HEIGHT, IconSizes, Pagination} from '../constants/Constants';
 import {getPosts} from '../reducers/action/post';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Feather from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
-import Header from '../components/header/Header';
+import ListEmptyComponent from '../components/shared/ListEmptyComponent';
+import {useDispatch, useSelector} from 'react-redux';
+import {getSocket} from '../utils/Socket';
 
 const Feed = () => {
+  const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
-  const [userFeed, setUserFeed] = useState<any[]>([]);
+  const {posts, isLoading, error} = useSelector((state: any) => state.post);
+
   const [pageNumber, setPageNumber] = useState(0);
   const navigation = useNavigation();
+  const [offsetY, setOffsetY] = useState(0);
 
   useEffect(() => {
-    userFeedRefetch(pageNumber);
-    return () => {};
+    const socket = getSocket();
+    socket.on('post.reaction', (data: any) => {
+      dispatch({
+        type: 'updateReactionPost',
+        payload: data,
+      });
+    });
+    socket.on('post.comment', (data: any) => {
+      dispatch({
+        type: 'updateCommentPost',
+        payload: data,
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchFeed(pageNumber);
   }, [pageNumber]);
 
-  const userFeedRefetch = async (page: number) => {
-    setLoading(true);
+  const fetchFeed = (page: number) => {
     getPosts({
-      pageNumber: page,
-      pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(response => {
-        setUserFeed([...userFeed, ...response]);
-      })
-      .catch(err => {
-        console.log(err);
-        setError(true);
-      })
-      .finally(() => setLoading(false));
+      page: page,
+      limit: Pagination.PAGE_SIZE,
+    })(dispatch);
   };
+
+  function onScroll(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+  }
+
+  function onScrollEndDrag(event: any) {
+    const {nativeEvent} = event;
+    const {contentOffset} = nativeEvent;
+    const {y} = contentOffset;
+    setOffsetY(y);
+    if (y <= -FETCHING_HEIGHT && !isLoading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
+
+  function onRelease() {
+    if (offsetY <= -FETCHING_HEIGHT && !isLoading) {
+      setPageNumber(pageNumber + 1);
+    }
+  }
 
   const renderItem = ({item}) => {
     return (
@@ -61,32 +91,31 @@ const Feed = () => {
   };
 
   const refreshControl = () => {
-    const onRefresh = () => userFeedRefetch(0);
+    const onRefresh = () => {
+      setPageNumber(0);
+      fetchFeed(0);
+    };
 
     return (
       <RefreshControl
         tintColor={theme.text02}
-        refreshing={loading}
+        refreshing={isLoading}
         onRefresh={onRefresh}
       />
     );
   };
 
   let content =
-    loading || error ? (
+    isLoading || error ? (
       <PostCardPlaceholder />
     ) : (
       <FlatGrid
         refreshControl={refreshControl()}
         itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
-        data={userFeed}
+        data={posts}
         ListEmptyComponent={() => (
-          <SvgBanner
-            Svg={EmptyFeed}
-            spacing={20}
-            placeholder={'No new posts'}
-          />
+          <ListEmptyComponent listType="posts" spacing={30} />
         )}
         ListFooterComponent={() => (
           <View
@@ -98,7 +127,7 @@ const Feed = () => {
               },
               space(IconSizes.x1).mt,
             ]}>
-            {loading && (
+            {isLoading && (
               <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
             )}
           </View>
@@ -107,14 +136,12 @@ const Feed = () => {
           {
             flex: 1,
           },
-          space(IconSizes.x5).mt,
         ]}
         spacing={20}
         renderItem={renderItem}
-        onEndReachedThreshold={0.5}
-        onEndReached={() => {
-          // setPageNumber(pageNumber + 1);
-        }}
+        onScroll={onScroll}
+        onScrollEndDrag={onScrollEndDrag}
+        onResponderRelease={onRelease}
         keyExtractor={item => item.id.toString()}
       />
     );
@@ -161,7 +188,6 @@ const Feed = () => {
           />
         }
       />
-      <Header title="Feed" />
       {content}
     </View>
   );

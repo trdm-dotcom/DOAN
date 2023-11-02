@@ -46,7 +46,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
 
   const Icon = () => (
     <Ionicons
-      name="send-outline"
+      name="paper-plane"
       size={IconSizes.x6}
       color={ThemeStatic.accent}
     />
@@ -88,11 +88,6 @@ const styles = (theme = {} as ThemeColors) =>
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 8,
-      paddingHorizontal: 20,
-      borderTopColor: ThemeStatic.translucent,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      backgroundColor: theme.base,
     },
     commentAvatarImage: {
       height: 30,
@@ -103,7 +98,7 @@ const styles = (theme = {} as ThemeColors) =>
     },
     commentTextInput: {
       flex: 1,
-      ...FontWeights.Light,
+      ...FontWeights.Regular,
       ...FontSizes.Body,
       paddingVertical: Platform.select({ios: 8, android: 6}),
       paddingHorizontal: 20,

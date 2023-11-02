@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useRef, useState} from 'react';
 import {
   KeyboardAvoidingView,
   Text,
@@ -31,11 +31,14 @@ import {
 } from '../reducers/redux/authentication.reducer';
 import Header from '../components/header/Header';
 import IconButton from '../components/control/IconButton';
-import UserAvatar from 'react-native-user-avatar';
-import {launchImageLibrary} from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-crop-picker';
 import {getUserInfo, putUserInfo} from '../reducers/action/user';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import {ThemeStatic} from '../theme/Colors';
+import storage from '@react-native-firebase/storage';
+import {BallIndicator} from 'react-native-indicators';
+import AvatarOptionsBottomSheet from '../components/bottomsheet/AvatarOptionBottomSheet';
+import {NativeImage} from '../components/shared/NativeImage';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -52,6 +55,8 @@ const Password = ({navigation, route}: props) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [accountCreated, setAccountCreated] = useState<boolean>(false);
   const [avatarSrc, setAvatarSrc] = useState<any>(undefined);
+
+  const avatarOptionsBottomSheetRef = useRef();
 
   const isValidData = () => {
     const error =
@@ -95,12 +100,26 @@ const Password = ({navigation, route}: props) => {
     }
   };
 
+  const openOptions = () => {
+    // @ts-ignore
+    return avatarOptionsBottomSheetRef.current.open();
+  };
+
+  const closeOptions = () => {
+    // @ts-ignore
+    return avatarOptionsBottomSheetRef.current.close();
+  };
+
   const onNext = async () => {
     try {
       setLoading(true);
+      let avatar: any = null;
+      if (avatarSrc != null) {
+        avatar = await uploadImage(avatarSrc);
+      }
       await putUserInfo({
         name: name,
-        avatar: avatarSrc,
+        avatar: avatar,
       });
       const userInfoRes: IUserInfoResponse = await getUserInfo();
       dispatch(userInfo(userInfoRes));
@@ -110,6 +129,52 @@ const Password = ({navigation, route}: props) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const uploadImage = async (uri: string) => {
+    const filename = uri.substring(uri.lastIndexOf('/') + 1);
+    const uploadUri = uri.replace('file://', '');
+    const imageRef = storage().ref(filename);
+    await imageRef.putFile(uploadUri, {
+      cacheControl: 'no-store', // disable caching
+    });
+    return imageRef.getDownloadURL();
+  };
+
+  const onOpenCamera = () => {
+    closeOptions();
+    ImagePicker.openCamera({
+      width: 300,
+      height: 300,
+      cropping: true,
+      compressImageQuality: 0.8,
+    })
+      .then(image => {
+        if (image && !Array.isArray(image)) {
+          setAvatarSrc(image.path);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
+  const onOpenGallery = () => {
+    closeOptions();
+    ImagePicker.openPicker({
+      width: 300,
+      height: 300,
+      cropping: true,
+      compressImageQuality: 0.8,
+    })
+      .then(image => {
+        if (image && !Array.isArray(image)) {
+          setAvatarSrc(image.path);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
   };
 
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
@@ -222,7 +287,8 @@ const Password = ({navigation, route}: props) => {
                   color: theme.text02,
                 },
               ]}>
-              Your password must be at least 8 characters
+              Your password must be at least 8 characters, at least one number
+              and both lower and uppercase letters and special characters
             </Text>
             <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
               <TouchableOpacity
@@ -262,25 +328,11 @@ const Password = ({navigation, route}: props) => {
               borderWidth: IconSizes.x00,
               borderRadius: 110,
             }}>
-            <UserAvatar
-              size={110}
-              name={name}
-              src={avatarSrc}
-              bgColor={theme.placeholder}
-            />
+            <NativeImage uri={avatarSrc} style={styles(theme).avatarImage} />
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() => {
-                launchImageLibrary({
-                  selectionLimit: 1,
-                  mediaType: 'photo',
-                  quality: 1,
-                }).then(result => {
-                  if (result && result.assets) {
-                    setAvatarSrc(result.assets[0].uri);
-                  }
-                });
-              }}
+              disabled={loading}
+              onPress={openOptions}
               style={{
                 position: 'absolute',
                 borderRadius: 100,
@@ -289,9 +341,16 @@ const Password = ({navigation, route}: props) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 alignSelf: 'center',
-                backgroundColor: ThemeStatic.accent,
               }}>
-              <Ionicons name="add" size={IconSizes.x8} />
+              {loading ? (
+                <BallIndicator size={IconSizes.x8} color={theme.text01} />
+              ) : (
+                <Ionicons
+                  name="camera"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
             </TouchableOpacity>
           </View>
           <Header title="Welcome" />
@@ -325,6 +384,11 @@ const Password = ({navigation, route}: props) => {
               )}
             </TouchableOpacity>
           </View>
+          <AvatarOptionsBottomSheet
+            ref={avatarOptionsBottomSheetRef}
+            onOpenCamera={onOpenCamera}
+            onOpenGallery={onOpenGallery}
+          />
         </View>
       )}
     </View>

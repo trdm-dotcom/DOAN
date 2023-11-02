@@ -1,4 +1,4 @@
-import React, {createRef, useContext, useRef, useState} from 'react';
+import React, {createRef, useRef, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {useAppSelector} from '../../reducers/redux/store';
 import {parseComments, parseLikes, parseTimeElapsed} from '../../utils/shared';
@@ -14,8 +14,6 @@ import {
 } from 'react-native-gesture-handler';
 import {postLike} from '../../reducers/action/post';
 import LikeBounceAnimation from './LikeBounceAnimation';
-import UserAvatar from 'react-native-user-avatar';
-import {AppContext} from '../../context';
 import {space} from '../style';
 
 const {FontWeights, FontSizes} = Typography;
@@ -45,7 +43,6 @@ const PostCard = ({
   comments,
   caption,
 }: PostCardProps) => {
-  const {theme} = useContext(AppContext);
   const navigation = useNavigation();
   const user = useAppSelector(state => state.auth.userInfo);
 
@@ -76,16 +73,7 @@ const PostCard = ({
       <TapGestureHandler
         onActivated={() =>
           navigation.navigate('PostView', {
-            post: {
-              id,
-              author,
-              time,
-              uri,
-              likes: sLikes,
-              comments,
-              caption,
-              createdAt: time,
-            },
+            postId: id,
           })
         }
         numberOfTaps={1}
@@ -99,12 +87,7 @@ const PostCard = ({
             <NativeImage uri={uri} style={styles.postImage} />
             <LikeBounceAnimation ref={likeBounceAnimationRef} />
             <View style={styles.upperContent}>
-              <UserAvatar
-                size={50}
-                name={author.name}
-                src={author.avatar}
-                bgColor={theme.placeholder}
-              />
+              <NativeImage uri={author.avatar} style={styles.avatarImage} />
               <View style={[space(IconSizes.x1).ml]}>
                 <Text style={styles.handleText}>{author.name}</Text>
                 <Text style={styles.timeText}>{readableTime}</Text>

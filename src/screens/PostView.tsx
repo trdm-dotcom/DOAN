@@ -1,7 +1,14 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
-import React, {createRef, useContext, useRef, useState} from 'react';
-import {KeyboardAvoidingView, Platform, Text, View} from 'react-native';
+import React, {createRef, useContext, useEffect, useRef, useState} from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
 import HeaderBar from '../components/header/HeaderBar';
@@ -18,7 +25,7 @@ import Comments from '../components/comment/Comments';
 import Typography from '../theme/Typography';
 import {ThemeStatic} from '../theme/Colors';
 import BounceView from '../components/shared/BounceView';
-import {deletePost, postLike} from '../reducers/action/post';
+import {deletePost, getPostDetail, postLike} from '../reducers/action/post';
 import {
   GestureHandlerRootView,
   TapGestureHandler,
@@ -29,16 +36,26 @@ import {getHash} from '../utils/Crypto';
 import {IParam} from '../models/IParam';
 import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomSheet';
 import EditPostBottomSheet from '../components/bottomsheet/EditPostBottomSheet';
-import UserAvatar from 'react-native-user-avatar';
+import {useDispatch, useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'PostView'>;
 const PostView = ({navigation, route}: props) => {
+  const dispatch = useDispatch();
   const user = useAppSelector(state => state.auth.userInfo);
 
   const {theme} = useContext(AppContext);
-  const {post} = route.params;
+  const {postId} = route.params;
+
+  const {post, isLoading, error} = useSelector((state: any) => state.post);
+
+  const [isLiked, setIsLiked] = useState(post.reactions.includes(user.id));
+  const [likes, setLikes] = useState(post.reactions);
+  const [isConfirmModalDeleteVisible, setIsConfirmModalDeleteVisible] =
+    useState(false);
+  const [isConfirmModalHideVisible, setIsConfirmModalHideVisible] =
+    useState(false);
 
   const scrollViewRef = useRef();
   const postOptionsBottomSheetRef = useRef();
@@ -47,16 +64,18 @@ const PostView = ({navigation, route}: props) => {
   const doubleTapRef = useRef();
   const likeBounceAnimationRef = createRef();
 
-  const [isLiked, setIsLiked] = useState(post.likes.includes(user.id));
-  const [likes, setLikes] = useState(post.likes);
-  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-
-  let content = <PostViewScreenPlaceholder />;
-
   const {readableTime} = parseTimeElapsed(post.createdAt);
 
-  const confirmationToggle = () => {
-    setIsConfirmModalVisible(!isConfirmModalVisible);
+  useEffect(() => {
+    getPostDetail({post: postId})(dispatch);
+  }, []);
+
+  const confirmationDeleteToggle = () => {
+    setIsConfirmModalDeleteVisible(previousState => !previousState);
+  };
+
+  const confirmationHideToggle = () => {
+    setIsConfirmModalHideVisible(previousState => !previousState);
   };
 
   const openOptions = () => {
@@ -82,7 +101,12 @@ const PostView = ({navigation, route}: props) => {
 
   const onPostDelete = () => {
     closeOptions();
-    confirmationToggle();
+    confirmationDeleteToggle();
+  };
+
+  const onPostDisable = () => {
+    closeOptions();
+    confirmationHideToggle();
   };
 
   const likeInteractionHandler = (liked: boolean) => {
@@ -121,95 +145,110 @@ const PostView = ({navigation, route}: props) => {
     return originalPath;
   };
 
-  content = (
-    <>
-      <View style={styles(theme).postViewHeader}>
-        <UserAvatar
-          size={50}
-          name={post.author.name}
-          src={post.author.avatar}
-          bgColor={theme.placeholder}
-        />
-        <View style={[{flex: 1}, space(IconSizes.x1).ml]}>
-          <Text style={styles(theme).handleText}>{post.author.name}</Text>
-          <Text style={styles(theme).timeText}>{readableTime}</Text>
-        </View>
-        <IconButton
-          onPress={openOptions}
-          Icon={() => (
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={IconSizes.x6}
-              color={theme.text01}
+  let content =
+    isLoading || error ? (
+      <PostViewScreenPlaceholder />
+    ) : (
+      <>
+        <View style={[styles(theme).row, {justifyContent: 'space-between'}]}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => {
+              if (user.id !== post.author.id) {
+                navigation.replace('Profile', {userId: post.author.id});
+              }
+            }}
+            style={styles(theme).postViewHeader}>
+            <NativeImage
+              uri={post.author.avatar}
+              style={styles(theme).tinyImage}
+            />
+            <View style={[space(IconSizes.x1).ml]}>
+              <Text style={styles(theme).handleText}>{post.author.name}</Text>
+              <Text style={styles(theme).timeText}>{readableTime}</Text>
+            </View>
+          </TouchableOpacity>
+          {post.author.id === user.id && (
+            <IconButton
+              onPress={openOptions}
+              Icon={() => (
+                <Ionicons
+                  name="ellipsis-horizontal"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+              )}
             />
           )}
-        />
-      </View>
-      <TapGestureHandler
-        maxDelayMs={300}
-        ref={doubleTapRef}
-        onActivated={() => likeInteractionHandler(isLiked)}
-        numberOfTaps={2}>
-        <View>
-          <NativeImage uri={post.uri} style={styles(theme).postViewImage} />
-          <LikeBounceAnimation ref={likeBounceAnimationRef} />
         </View>
-      </TapGestureHandler>
-      <View
-        style={[
-          {
-            flexDirection: 'row',
-            marginTop: 20,
-          },
-        ]}>
-        <BounceView
-          scale={1.5}
-          moveSlop={15}
-          delay={40}
-          onPress={() => likeInteractionHandler(isLiked)}>
-          <Ionicons
-            name={isLiked ? 'heart' : 'heart-outline'}
-            color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
-            size={IconSizes.x6}
-          />
-        </BounceView>
-        <Text
-          onPress={openLikes}
+        <TapGestureHandler
+          maxDelayMs={300}
+          ref={doubleTapRef}
+          onActivated={() => likeInteractionHandler(isLiked)}
+          numberOfTaps={2}>
+          <View>
+            <NativeImage
+              uri={post.source}
+              style={styles(theme).postViewImage}
+            />
+            <LikeBounceAnimation ref={likeBounceAnimationRef} />
+          </View>
+        </TapGestureHandler>
+        <View
           style={[
             {
-              ...FontWeights.Regular,
-              ...FontSizes.Body,
-              marginLeft: 10,
-              color: theme.text01,
+              flexDirection: 'row',
+              marginTop: 20,
             },
           ]}>
-          {parseLikes(likes.length)}
-        </Text>
-      </View>
-      <Text
-        style={[
-          {
-            ...FontWeights.Light,
-            ...FontSizes.Body,
-            color: theme.text01,
-            marginTop: 10,
-            marginBottom: 20,
-          },
-        ]}>
+          <BounceView
+            scale={1.5}
+            moveSlop={15}
+            delay={40}
+            onPress={() => likeInteractionHandler(isLiked)}>
+            <Ionicons
+              name={isLiked ? 'heart' : 'heart-outline'}
+              color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
+              size={IconSizes.x6}
+            />
+          </BounceView>
+          <Text
+            onPress={openLikes}
+            style={[
+              {
+                ...FontWeights.Regular,
+                ...FontSizes.Body,
+                marginLeft: 10,
+                color: theme.text01,
+              },
+            ]}>
+            {parseLikes(likes.length)}
+          </Text>
+        </View>
         <Text
-          onPress={() => {
-            if (post.author.userId !== user.id) {
-              navigation.navigate('Profile', {user: post.author.userId});
-            }
-          }}
-          style={styles(theme).handleText}>
-          {post.author.name}{' '}
+          style={[
+            {
+              ...FontWeights.Light,
+              ...FontSizes.Body,
+              color: theme.text01,
+              marginTop: 10,
+              marginBottom: 20,
+            },
+          ]}>
+          <Text
+            onPress={() => {
+              if (post.author.id !== user.id) {
+                navigation.navigate('Profile', {userId: post.author.id});
+              }
+            }}
+            style={styles(theme).handleText}>
+            {post.author.name}{' '}
+          </Text>
+          {post.caption}
         </Text>
-        {post.caption}
-      </Text>
-      <Comments postId={post.id} />
-    </>
-  );
+        <Comments postId={post.id} />
+      </>
+    );
 
   let bottomSheets = (
     <>
@@ -218,25 +257,25 @@ const PostView = ({navigation, route}: props) => {
         post={post}
         onPostEdit={onPostEdit}
         onPostDelete={onPostDelete}
-        onPostDiable={doDisablePost}
+        onPostDiable={onPostDisable}
       />
       <ConfirmationModal
         label="Delete"
         title="Are you sure you want to delete this post?"
         color={ThemeStatic.delete}
-        isVisible={isConfirmModalVisible}
-        toggle={confirmationToggle}
+        isVisible={isConfirmModalDeleteVisible}
+        toggle={confirmationDeleteToggle}
         onConfirm={doDeletePost}
       />
-      <LikesBottomSheet
-        ref={likesBottomSheetRef}
-        postId={post.id}
-        onUserPress={() => {
-          if (post.author.userId !== user.id) {
-            navigation.navigate('Profile', {user: post.author.userId});
-          }
-        }}
+      <ConfirmationModal
+        label="Yes"
+        title="Are you sure you want to hide this post?"
+        color={ThemeStatic.delete}
+        isVisible={isConfirmModalHideVisible}
+        toggle={confirmationHideToggle}
+        onConfirm={doDisablePost}
       />
+      <LikesBottomSheet ref={likesBottomSheetRef} postId={post.id} />
       <EditPostBottomSheet post={post} ref={editPostBottomSheetRef} />
     </>
   );
@@ -266,10 +305,11 @@ const PostView = ({navigation, route}: props) => {
         behavior={keyboardBehavior}
         keyboardVerticalOffset={20}
         style={[{flex: 1}, space(IconSizes.x1).mt]}>
-        <View
-          style={[{flex: 1}, space(IconSizes.x1).pt, space(IconSizes.x5).ph]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={[{flex: 1}, space(IconSizes.x1).pt]}>
           {content}
-        </View>
+        </ScrollView>
         <CommentInput postId={post.id} scrollViewRef={scrollViewRef} />
       </KeyboardAvoidingView>
       {bottomSheets}

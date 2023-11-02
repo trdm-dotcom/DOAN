@@ -19,7 +19,7 @@ const PostOptionsBottomSheet: React.FC<PostOptionsBottomSheetProps> =
     const {theme} = useContext(AppContext);
     const user = useAppSelector(state => state.auth.userInfo);
 
-    const isOwnPost = user.id === post.author.userId;
+    const isOwnPost = user.id === post.author!.id;
 
     const onPostUnfriend = () => {
       // @ts-ignore

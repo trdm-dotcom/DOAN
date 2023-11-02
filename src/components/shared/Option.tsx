@@ -57,7 +57,7 @@ const Option = ({label, iconName, onPress, children, color}: OptionProps) => {
       <Text
         style={[
           {
-            ...FontWeights.Regular,
+            ...FontWeights.Bold,
             ...FontSizes.Body,
             marginLeft: 10,
           },

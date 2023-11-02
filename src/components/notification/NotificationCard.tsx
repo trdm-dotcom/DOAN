@@ -6,8 +6,8 @@ import {parseTimeElapsed} from '../../utils/shared';
 import {ThemeColors} from '../../constants/Types';
 import {IconSizes, NotificationType} from '../../constants/Constants';
 import {useNavigation} from '@react-navigation/native';
-import UserAvatar from 'react-native-user-avatar';
 import {space} from '../style';
+import {NativeImage} from '../shared/NativeImage';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -37,7 +37,7 @@ const NotificationCard = ({
       return;
     }
     if (type === NotificationType.FOLLOW) {
-      navigation.navigate('Profile', {user: resourceId});
+      navigation.navigate('Profile', {userId: resourceId});
     } else if (
       type === NotificationType.LIKE ||
       type === NotificationType.COMMENT
@@ -51,12 +51,7 @@ const NotificationCard = ({
       activeOpacity={0.9}
       onPress={navigateAction}
       style={styles().container}>
-      <UserAvatar
-        size={50}
-        name={name}
-        src={avatar}
-        bgColor={theme.placeholder}
-      />
+      <NativeImage uri={avatar} style={styles(theme).avatarImage} />
       <View style={[styles().info, space(IconSizes.x1).ml]}>
         <Text style={styles(theme).notificationText}>
           <Text style={styles(theme).handleText}>{name} </Text>

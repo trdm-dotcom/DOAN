@@ -6,9 +6,9 @@ import {space, styles} from '../style';
 import {useNavigation} from '@react-navigation/native';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {IconSizes} from '../../constants/Constants';
-import UserAvatar from 'react-native-user-avatar';
 import {ThemeStatic} from '../../theme/Colors';
 import {BallIndicator} from 'react-native-indicators';
+import {NativeImage} from '../shared/NativeImage';
 
 type UserCardProps = {
   userId: number;
@@ -40,7 +40,7 @@ const UserCardPress = ({
     if (userId === user.id) {
       return;
     }
-    navigation.navigate('Profile', {user: userId});
+    navigation.navigate('Profile', {userId: userId});
   };
 
   return (
@@ -49,12 +49,7 @@ const UserCardPress = ({
       onPress={navigateToProfile}
       style={[styles(theme).userCardContainer, style]}>
       <View style={[styles(theme).row]}>
-        <UserAvatar
-          size={50}
-          name={name}
-          src={avatar}
-          bgColor={theme.placeholder}
-        />
+        <NativeImage uri={avatar} style={styles(theme).tinyImage} />
         <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
           {name}
         </Text>

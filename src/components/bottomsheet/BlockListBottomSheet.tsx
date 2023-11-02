@@ -1,39 +1,41 @@
-import React, {Ref, forwardRef, useContext, useEffect, useState} from 'react';
-import {View} from 'react-native';
+import React, {Ref, forwardRef, useContext, useState} from 'react';
 import {Modalize} from 'react-native-modalize';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {FlatGrid} from 'react-native-super-grid';
-import EmptyBlockListBanner from '../../../assets/svg/empty-blocklist.svg';
 import {AppContext} from '../../context';
 import BottomSheetHeader from '../header/BottomSheetHeader';
 import UserCard from '../user/UserCard';
-import SvgBanner from '../SvgBanner';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {getBlockList} from '../../reducers/action/friend';
-import {styles} from '../style';
-import {Pagination} from 'src/constants/Constants';
+import {space, styles} from '../style';
+import {
+  FETCHING_HEIGHT,
+  IconSizes,
+  Pagination,
+} from '../../constants/Constants';
+import ListEmptyComponent from '../shared/ListEmptyComponent';
 
 interface BlockListBottomSheetProps {
   ref: Ref<any>;
+  onUserPress: (userId: number) => void;
 }
 
 const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
-  (_, ref) => {
+  ({onUserPress}, ref) => {
     const {theme} = useContext(AppContext);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = React.useState<boolean>(false);
     const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
     const [pageNumber, setPageNumber] = useState<number>(0);
+    const [offsetY, setOffsetY] = useState(0);
 
-    useEffect(() => {
-      fetchBlockedUsers();
-      return () => {};
-    }, [pageNumber]);
+    const handleOpen = () => {
+      setPageNumber(0);
+      fetchBlockedUsers(0);
+    };
 
-    const fetchBlockedUsers = () => {
+    const fetchBlockedUsers = (page: number) => {
       setLoading(true);
       getBlockList({
-        pageNumber: pageNumber,
+        pageNumber: page,
         pageSize: Pagination.PAGE_SIZE,
       })
         .then(res => {
@@ -48,57 +50,72 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
         });
     };
 
+    function onScroll(event: any) {
+      const {nativeEvent} = event;
+      const {contentOffset} = nativeEvent;
+      const {y} = contentOffset;
+      setOffsetY(y);
+    }
+
+    function onScrollEndDrag(event: any) {
+      const {nativeEvent} = event;
+      const {contentOffset} = nativeEvent;
+      const {y} = contentOffset;
+      setOffsetY(y);
+      if (y <= -FETCHING_HEIGHT && !loading) {
+        setPageNumber(pageNumber + 1);
+        fetchBlockedUsers(pageNumber + 1);
+      }
+    }
+
+    function onRelease() {
+      if (offsetY <= -FETCHING_HEIGHT && !loading) {
+        setPageNumber(pageNumber + 1);
+        fetchBlockedUsers(pageNumber + 1);
+      }
+    }
+
     const renderItem = (item: any) => {
       return (
         <UserCard
           userId={item.id}
           avatar={item.avatar}
           name={item.name}
-          onPress={() => null}
+          onPress={() => onUserPress(item.id)}
+          style={[space(IconSizes.x1).mt]}
         />
       );
     };
-
-    let content =
-      loading || error ? (
-        <ConnectionsPlaceholder />
-      ) : (
-        <FlatGrid
-          bounces={false}
-          itemDimension={responsiveWidth(85)}
-          showsVerticalScrollIndicator={false}
-          data={blockedUsers}
-          itemContainerStyle={styles(theme).listItemContainer}
-          contentContainerStyle={styles(theme).listContentContainer}
-          ListEmptyComponent={() => (
-            <SvgBanner
-              Svg={EmptyBlockListBanner}
-              placeholder="No users blocked"
-              spacing={16}
-            />
-          )}
-          style={styles(theme).listContainer}
-          spacing={20}
-          renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
-          onEndReachedThreshold={0.5}
-          onEndReached={() => setPageNumber(pageNumber + 1)}
-        />
-      );
 
     return (
       <Modalize
         //@ts-ignore
         ref={ref}
-        scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={styles(theme).modalizeContainer}
-        adjustToContentHeight>
-        <BottomSheetHeader
-          heading="Blocked Users"
-          subHeading={"Below are the users you've blocked"}
-        />
-        <View style={styles(theme).modalizeContent}>{content}</View>
-      </Modalize>
+        onOpen={handleOpen}
+        adjustToContentHeight
+        HeaderComponent={
+          <BottomSheetHeader
+            heading="Blocked Users"
+            subHeading={"Below are the users you've blocked"}
+          />
+        }
+        flatListProps={{
+          data: blockedUsers,
+          renderItem: renderItem,
+          keyExtractor: item => item.id,
+          onScroll: onScroll,
+          onScrollEndDrag: onScrollEndDrag,
+          onResponderRelease: onRelease,
+          showsVerticalScrollIndicator: false,
+          ListEmptyComponent: () =>
+            loading || error ? (
+              <ConnectionsPlaceholder />
+            ) : (
+              <ListEmptyComponent listType="users blocked" spacing={30} />
+            ),
+        }}
+      />
     );
   },
 );

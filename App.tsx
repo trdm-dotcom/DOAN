@@ -1,8 +1,8 @@
 import React, {useContext, useEffect} from 'react';
 import RootStack from './src/navigators/RootStack';
 import {Provider} from 'react-redux';
-import getStore, {useAppDispatch} from './src/reducers/redux/store';
-import {setupAxiosInterceptors} from './src/utils/Api';
+import getStore from './src/reducers/redux/store';
+import {fetchToken, setupAxiosInterceptors} from './src/utils/Api';
 import {
   getFcmTokenFromLocalStorage,
   notificationListener,
@@ -23,9 +23,11 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {getUserInfo} from './src/reducers/action/user';
 import {IUserInfoResponse} from './src/models/response/IUserInfoResponse';
+import {connectSocket} from './src/utils/Socket';
+import {useDispatch} from 'react-redux';
 
 const SafeAreaApp = () => {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
   const {theme, toggleTheme, setFcmToken} = useContext(AppContext);
   const [loading, setLoading] = React.useState(true);
 
@@ -41,9 +43,11 @@ const SafeAreaApp = () => {
     if (credentials) {
       const token = credentials.token;
       if (token.refExpiredTime > Date.now()) {
-        getUserInfo().then((userInfoRes: IUserInfoResponse) => {
-          dispatch(userInfo(userInfoRes));
-          dispatch(authenticated());
+        fetchToken().then(() => {
+          getUserInfo().then((userInfoRes: IUserInfoResponse) => {
+            dispatch(authenticated());
+            dispatch(userInfo(userInfoRes));
+          });
         });
       }
     }
@@ -69,6 +73,7 @@ const SafeAreaApp = () => {
 
   useEffect(() => {
     initializeApp();
+    connectSocket();
   }, []);
 
   return (

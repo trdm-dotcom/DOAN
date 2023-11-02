@@ -34,6 +34,7 @@ export const SCREEN_HEIGHT = Platform.select<number>({
 export const MAX_ZOOM_FACTOR = 20;
 export const SCALE_FULL_ZOOM = 3;
 export const CAPTURE_BUTTON_SIZE = 78;
+export const FETCHING_HEIGHT = 300;
 
 export const IconSizes: IconSizesType = {
   x00: 4,

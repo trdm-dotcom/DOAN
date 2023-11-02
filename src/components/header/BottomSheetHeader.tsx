@@ -31,7 +31,7 @@ const styles = (theme = {} as ThemeColors) =>
     },
     subHeading: {
       ...FontWeights.Regular,
-      ...FontSizes.SubHeading,
+      ...FontSizes.Caption,
       marginTop: 2,
       color: theme.text02,
     },

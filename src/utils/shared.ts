@@ -96,6 +96,12 @@ export const sortMessageAscendingTime = array =>
       new Date(a.lastMessage.createdAt).getTime(),
   );
 
+export const sortPostDescendingTime = array =>
+  array.sort(
+    (a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
 export const computeUnreadMessages = (chats, userId: string) =>
   chats.filter(({messages}) => {
     const [lastMessage] = messages;

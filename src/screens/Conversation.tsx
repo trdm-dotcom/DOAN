@@ -20,6 +20,7 @@ import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import ChatHeaderAvatar from '../components/message/ChatHeaderAvatar';
+import {showError} from '../utils/Toast';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 const Conversation = ({navigation, route}: props) => {
@@ -59,11 +60,19 @@ const Conversation = ({navigation, route}: props) => {
       message: updatedMessage.text,
       recipientId: targetId,
     };
-    sendMessage(body);
+    sendMessage(body)
+      .then(() => {
+        setMessages(previousMessages =>
+          GiftedChat.prepend(previousMessages, updatedMessages),
+        );
+      })
+      .catch(err => {
+        showError(err.message);
+      });
   };
 
   const navigateToProfile = () => {
-    navigation.navigate('Profile', {user: targetId});
+    navigation.navigate('Profile', {userId: targetId});
   };
 
   let content =
@@ -111,11 +120,7 @@ const Conversation = ({navigation, route}: props) => {
                 navigation.goBack();
               }}
             />
-            <ChatHeaderAvatar
-              avatar={avatar}
-              name={name}
-              onPress={navigateToProfile}
-            />
+            <ChatHeaderAvatar avatar={avatar} onPress={navigateToProfile} />
           </>
         }
         title={name}

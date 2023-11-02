@@ -19,7 +19,7 @@ const {FontWeights, FontSizes} = Typography;
 
 type AnimatedSearchBarProps = {
   value: string | null;
-  onChangeText: (text: string) => void;
+  onChangeText: (text: any) => void;
   onFocus?: any;
   onBlur?: any;
   placeholder: string;
@@ -55,7 +55,7 @@ const AnimatedSearchBar = ({
   const onCancel = () => {
     setFocused(false);
     Keyboard.dismiss();
-    onChangeText('');
+    onChangeText(null);
     onBlur();
   };
 
@@ -90,7 +90,7 @@ const styles = (theme = {} as ThemeColors) =>
       alignItems: 'center',
     },
     animatedSearchBar: {
-      ...FontWeights.Light,
+      ...FontWeights.Regular,
       ...FontSizes.Body,
       paddingVertical: Platform.select({ios: 10, android: 10}),
       paddingHorizontal: 20,

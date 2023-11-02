@@ -63,7 +63,9 @@ const NewPassword = ({navigation, route}: props) => {
           newPassword: password,
           hash: getHash('PASSWORD'),
         };
-        await apiPost<any>('/user/resetPassword', body);
+        await apiPost<any>('/user/resetPassword', body, {
+          'Content-Type': 'application/json',
+        });
       } catch (error: any) {
         showError(error.message);
       } finally {
@@ -180,7 +182,8 @@ const NewPassword = ({navigation, route}: props) => {
               color: theme.text02,
             },
           ]}>
-          Your password must be at least 8 characters
+          Your password must be at least 8 characters, at least one number and
+          both lower and uppercase letters and special characters
         </Text>
         <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
           <TouchableOpacity

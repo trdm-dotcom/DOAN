@@ -1,16 +1,11 @@
 import React, {useContext} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ImageBackground,
-} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {ThemeColors} from '../../constants/Types';
 import {AppContext} from '../../context';
 import {ThemeStatic} from '../../theme/Colors';
 import Typography from '../../theme/Typography';
+import {NativeImage} from '../shared/NativeImage';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -43,23 +38,17 @@ const ProfileCard = ({
           <Text style={styles(theme).connectionsText}>{posts}</Text>
           <Text style={styles(theme).connectionsType}>POSTS</Text>
         </View>
-        <ImageBackground
-          source={{uri: avatar ? avatar : ''}}
-          style={styles(theme).avatar}
-          imageStyle={styles(theme).avatarImage}>
+        <View style={styles(theme).avatar}>
+          <NativeImage uri={avatar} style={styles(theme).avatarImage} />
           {editable && (
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={onEdit}
               style={styles(theme).editProfile}>
-              <Ionicons
-                name="create-outline"
-                size={16}
-                color={ThemeStatic.white}
-              />
+              <Ionicons name="add" size={16} color={ThemeStatic.white} />
             </TouchableOpacity>
           )}
-        </ImageBackground>
+        </View>
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onFriendsOpen}
@@ -93,6 +82,7 @@ const styles = (theme = {} as ThemeColors) =>
       width: 120,
     },
     avatarImage: {
+      flex: 1,
       backgroundColor: theme.placeholder,
       borderRadius: 120,
     },

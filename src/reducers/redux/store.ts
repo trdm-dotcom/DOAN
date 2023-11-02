@@ -1,23 +1,21 @@
 import {AnyAction, ThunkAction, configureStore} from '@reduxjs/toolkit';
 import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
 import {AuthenticationSlice} from './authentication.reducer';
+import {postReducer} from './post.reducer';
+import {notifiReducer} from './notification.reducer';
+import {chatReducer} from './chat.reducer';
 
 const store = configureStore({
   reducer: {
     auth: AuthenticationSlice.reducer,
+    post: postReducer,
+    notification: notifiReducer,
+    chat: chatReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActionPaths: [
-          'payload.headers',
-          'payload.config',
-          'payload.request',
-          'error',
-          'meta.arg',
-        ],
-      },
-      immutableCheck: {warnAfter: 128},
+      serializableCheck: false,
+      immutableCheck: false,
     }),
 });
 

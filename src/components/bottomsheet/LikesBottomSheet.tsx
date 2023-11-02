@@ -1,35 +1,50 @@
-import React, {Ref, forwardRef, useContext, useEffect, useState} from 'react';
-import {View} from 'react-native';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
+import React, {Ref, forwardRef, useContext, useState} from 'react';
 import {AppContext} from '../../context';
 import {Modalize} from 'react-native-modalize';
 import UserCard from '../user/UserCard';
-import SvgBanner from '../SvgBanner';
-import EmptyLikesBanner from '../../../assets/svg/empty-likes.svg';
-import {FlatGrid} from 'react-native-super-grid';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {showError} from '../../utils/Toast';
-import {styles} from '../style';
+import {space, styles} from '../style';
 import {getReactionsOfPost} from '../../reducers/action/post';
 import BottomSheetHeader from '../header/BottomSheetHeader';
+import ListEmptyComponent from '../shared/ListEmptyComponent';
+import {IconSizes} from '../../constants/Constants';
+import {useNavigation} from '@react-navigation/native';
+import {useAppSelector} from '../../reducers/redux/store';
 
 interface LikesBottomSheetProps {
   ref: Ref<any>;
   postId: string;
-  onUserPress: (userId: number) => void;
 }
 
 const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
-  ({postId, onUserPress}, ref) => {
+  ({postId}, ref) => {
     const {theme} = useContext(AppContext);
+    const navigation = useNavigation();
     const [users, setUsers] = useState<IUserInfoResponse[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<boolean>(false);
+    const user = useAppSelector(state => state.auth.userInfo);
 
-    let content = <ConnectionsPlaceholder />;
+    const renderItem = ({item}) => {
+      return (
+        <UserCard
+          userId={item.id}
+          avatar={item.avatar}
+          name={item.name}
+          onPress={event => {
+            event.persist(); // Duỵ trì sự kiện gốc
+            if (item.id !== user.id) {
+              navigation.navigate('Profile', {userId: item.id});
+            }
+          }}
+          style={[space(IconSizes.x1).mt]}
+        />
+      );
+    };
 
-    useEffect(() => {
+    const handleOpen = () => {
       setLoading(true);
       getReactionsOfPost({postId: postId})
         .then(res => setUsers(res))
@@ -38,54 +53,32 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
           showError(err.message);
         })
         .finally(() => setLoading(false));
-    }, [postId]);
-
-    const renderItem = ({item}) => {
-      return (
-        <UserCard
-          userId={item.userId}
-          avatar={item.avatar}
-          name={item.name}
-          onPress={() => onUserPress(item.id)}
-        />
-      );
     };
-
-    if (!error && !loading) {
-      content = (
-        <FlatGrid
-          bounces={false}
-          itemDimension={responsiveWidth(85)}
-          showsVerticalScrollIndicator={false}
-          data={users}
-          itemContainerStyle={styles().listItemContainer}
-          contentContainerStyle={styles().listContentContainer}
-          ListEmptyComponent={() => (
-            <SvgBanner
-              Svg={EmptyLikesBanner}
-              placeholder="No likes yet"
-              spacing={16}
-            />
-          )}
-          style={styles().listContainer}
-          spacing={20}
-          renderItem={renderItem}
-        />
-      );
-    }
 
     return (
       <Modalize
         ref={ref}
-        scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight>
-        <BottomSheetHeader
-          heading="Likes"
-          subHeading="Users who liked this post"
-        />
-        <View style={[styles(theme).modalizeContent]}>{content}</View>
-      </Modalize>
+        onOpen={handleOpen}
+        HeaderComponent={
+          <BottomSheetHeader
+            heading="Likes"
+            subHeading="Users who liked this post"
+          />
+        }
+        flatListProps={{
+          data: users,
+          renderItem: renderItem,
+          keyExtractor: item => item.id,
+          showsVerticalScrollIndicator: false,
+          ListEmptyComponent: () =>
+            loading || error ? (
+              <ConnectionsPlaceholder />
+            ) : (
+              <ListEmptyComponent listType="likes" spacing={30} />
+            ),
+        }}
+      />
     );
   },
 );

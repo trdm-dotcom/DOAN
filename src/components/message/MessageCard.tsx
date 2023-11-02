@@ -9,7 +9,7 @@ import {ThemeColors} from '../../constants/Types';
 import {useNavigation} from '@react-navigation/native';
 import {messageSeen} from '../../reducers/action/chat';
 import {space} from '../style';
-import UserAvatar from 'react-native-user-avatar';
+import {NativeImage} from '../shared/NativeImage';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -67,12 +67,7 @@ const MessageCard = ({
       onPress={setSeenAndNavigate}
       style={styles().container}>
       <View style={styles().avatar}>
-        <UserAvatar
-          size={50}
-          name={name}
-          src={avatar}
-          bgColor={theme.placeholder}
-        />
+        <NativeImage uri={avatar} style={styles(theme).avatarImage} />
       </View>
       <View style={[styles().info, space(IconSizes.x1).ml]}>
         <Text style={styles(theme).handleText}>{name} </Text>

@@ -20,21 +20,21 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  AppStateStatus,
+  AppState,
 } from 'react-native';
 import {space, styles} from '../components/style';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import {useIsFocused} from '@react-navigation/core';
-import {useIsForeground} from '../hook/useIsForeground';
 import IconButton from '../components/control/IconButton';
 import {NativeImage} from '../components/shared/NativeImage';
-import {NativeVideo} from '../components/shared/NativeVideo';
 import Header from '../components/header/Header';
 import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import HeaderBar from '../components/header/HeaderBar';
 import Typography from '../theme/Typography';
-import {launchImageLibrary} from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import {getHash} from '../utils/Crypto';
 import {upPost} from '../reducers/action/post';
@@ -43,6 +43,20 @@ import {BallIndicator} from 'react-native-indicators';
 import {ThemeStatic} from '../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;
+
+const useIsForeground = (): boolean => {
+  const [isForeground, setIsForeground] = useState(true);
+
+  useEffect(() => {
+    const onChange = (state: AppStateStatus): void => {
+      setIsForeground(state === 'active');
+    };
+    const listener = AppState.addEventListener('change', onChange);
+    return () => listener.remove();
+  }, [setIsForeground]);
+
+  return isForeground;
+};
 
 type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 const Camera = ({navigation}: props) => {
@@ -84,7 +98,7 @@ const Camera = ({navigation}: props) => {
           enableAutoStabilization: true,
           skipMetadata: true,
         });
-        setImageSource(photo.path);
+        setImageSource(`file://${photo.path}`);
         setShowCamera(false);
       }
     } finally {
@@ -94,6 +108,7 @@ const Camera = ({navigation}: props) => {
 
   const doUpPost = async () => {
     try {
+      setLoading(true);
       const source = await uploadImage(imageSource);
       const body: IParam = {
         source: source,
@@ -112,22 +127,27 @@ const Camera = ({navigation}: props) => {
   const download = () => {};
 
   const openGallery = () => {
-    launchImageLibrary({
-      selectionLimit: 1,
-      mediaType: 'photo',
-      quality: 1,
-    }).then(result => {
-      if (result && result.assets) {
-        setMode('photo');
-        setImageSource(result.assets[0].uri);
-        setShowCamera(false);
-      }
-    });
+    ImagePicker.openPicker({
+      width: 300,
+      height: 400,
+      cropping: true,
+      compressImageQuality: 0.8,
+    })
+      .then(image => {
+        if (image && !Array.isArray(image)) {
+          setMode('photo');
+          setImageSource(image.path);
+          setShowCamera(false);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
   };
 
   const uploadImage = async (uri: string) => {
     const filename = uri.substring(uri.lastIndexOf('/') + 1);
-    const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+    const uploadUri = uri.replace('file://', '');
     const imageRef = storage().ref(filename);
     await imageRef.putFile(uploadUri, {
       cacheControl: 'no-store', // disable caching
@@ -214,49 +234,41 @@ const Camera = ({navigation}: props) => {
             </View>
           </>
         )}
+        {!showCamera && (
+          <KeyboardAvoidingView
+            behavior={keyboardBehavior}
+            keyboardVerticalOffset={20}
+            style={StyleSheet.absoluteFill}>
+            {mode === 'photo' && (
+              <>
+                <NativeImage
+                  uri={imageSource}
+                  style={StyleSheet.absoluteFill}
+                />
+              </>
+            )}
+            <TextInput
+              onChangeText={(text: string) => {
+                if (text && text.trim().length > 0) {
+                  setCaption(text.trim());
+                }
+              }}
+              style={[
+                styles(theme).inputField,
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Body,
+                  color: theme.text01,
+                  flex: 1,
+                },
+              ]}
+              autoFocus
+              placeholder="Add a caption..."
+              placeholderTextColor={theme.text02}
+            />
+          </KeyboardAvoidingView>
+        )}
       </View>
-      {!showCamera && (
-        <KeyboardAvoidingView
-          behavior={keyboardBehavior}
-          keyboardVerticalOffset={20}
-          style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
-          {mode === 'photo' && (
-            <>
-              <NativeImage
-                uri={`file://${imageSource}`}
-                style={StyleSheet.absoluteFill}
-              />
-            </>
-          )}
-          {mode === 'video' && (
-            <>
-              <NativeVideo
-                uri={`file://${imageSource}`}
-                style={StyleSheet.absoluteFill}
-              />
-            </>
-          )}
-          <TextInput
-            onChangeText={(text: string) => {
-              if (text && text.trim().length > 0) {
-                setCaption(text.trim());
-              }
-            }}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-                flex: 1,
-              },
-            ]}
-            autoFocus
-            placeholder="Add a caption..."
-            placeholderTextColor={theme.text02}
-          />
-        </KeyboardAvoidingView>
-      )}
       <View
         style={[
           styles(theme).row,

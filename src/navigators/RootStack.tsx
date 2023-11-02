@@ -37,9 +37,9 @@ export type RootStackParamList = {
     avatar: string;
   };
   PostView: {
-    post: any;
+    postId: string;
   };
-  Profile: {user: number};
+  Profile: {userId: number};
   NewPassword: {
     username: string;
     otpKey: string;
@@ -80,6 +80,7 @@ const RootStack = () => {
                     initialRouteName: 'Feed',
                     tabBarShowLabel: false,
                     headerShown: false,
+                    tabBarHideOnKeyboard: true,
                     tabBarStyle: {
                       backgroundColor: theme.base,
                       height: 60,

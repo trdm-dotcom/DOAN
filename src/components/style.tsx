@@ -218,9 +218,15 @@ export const styles = (theme = {} as ThemeColors) =>
       color: theme.text02,
     },
     // messages
-    messagesList: {
+    flatGridList: {
       flex: 1,
       paddingHorizontal: 4,
+    },
+    tinyImage: {
+      height: 50,
+      width: 50,
+      borderRadius: 50,
+      backgroundColor: theme.placeholder,
     },
 
     //group options settings
@@ -240,10 +246,10 @@ export const styles = (theme = {} as ThemeColors) =>
       color: theme.text01,
     },
     avatarImage: {
-      height: 110,
-      width: 110,
+      height: 120,
+      width: 120,
       backgroundColor: theme.placeholder,
-      borderRadius: 110,
+      borderRadius: 120,
     },
     profileNameContainer: {
       alignItems: 'center',

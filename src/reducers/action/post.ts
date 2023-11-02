@@ -1,8 +1,6 @@
+import {Dispatch} from '@reduxjs/toolkit';
 import {IParam} from '../../models/IParam';
 import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
-
-export const deleteComment = async (params: IParam) =>
-  await apiDelete<any>('/social/comment', {params: params});
 
 export const addComment = async (data: IParam) =>
   await apiPost<any>(
@@ -22,14 +20,29 @@ export const postLike = async (data: IParam) =>
     },
   );
 
-export const upPost = async (data: IParam) =>
-  await apiPost<any>(
-    '/social/post',
-    {data: data},
-    {
-      'Content-Type': 'application/json',
-    },
-  );
+export const upPost = (data: IParam) => async (dispatch: Dispatch<any>) => {
+  try {
+    dispatch({
+      type: 'postCreateRequest',
+    });
+    const res = await apiPost<any>(
+      '/social/post',
+      {data: data},
+      {
+        'Content-Type': 'application/json',
+      },
+    );
+    dispatch({
+      type: 'postCreateSuccess',
+      payload: res,
+    });
+  } catch (error: any) {
+    dispatch({
+      type: 'postCreateFailed',
+      payload: error.message,
+    });
+  }
+};
 
 export const deletePost = async (params: IParam) =>
   await apiDelete<any>('/social/post', {params: params});
@@ -58,8 +71,45 @@ export const getCommentsOfPost = async (params: IParam) =>
 export const getReactionsOfPost = async (params: IParam) =>
   await apiGet<any[]>('/social/post/reactions', {params: params});
 
-export const getPosts = async (params: IParam) =>
-  await apiGet<any[]>('/social/post', {params: params});
+export const getPosts = (params: IParam) => async (dispatch: Dispatch<any>) => {
+  try {
+    dispatch({
+      type: 'getAllPostsRequest',
+    });
+    const res = await apiGet<any[]>('/social/post', {params: params});
+    dispatch({
+      type: 'getAllPostsSuccess',
+      payload: res,
+    });
+  } catch (error: any) {
+    dispatch({
+      type: 'getAllPostsFailed',
+      payload: error.message,
+    });
+  }
+};
 
 export const getPostOfUser = async (params: IParam) =>
   await apiGet<any[]>('/social/post/user', {params: params});
+
+export const deleteComment = async (params: IParam) =>
+  await apiDelete<any>('/social/post/comments', {params: params});
+
+export const getPostDetail =
+  (params: IParam) => async (dispatch: Dispatch<any>) => {
+    try {
+      dispatch({
+        type: 'getPostRequest',
+      });
+      const res = await apiGet<any>('/social/post/detail', {params: params});
+      dispatch({
+        type: 'getPostSuccess',
+        payload: res,
+      });
+    } catch (error: any) {
+      dispatch({
+        type: 'getPostFailed',
+        payload: error.message,
+      });
+    }
+  };
