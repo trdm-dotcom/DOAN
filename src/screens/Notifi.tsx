@@ -2,10 +2,14 @@ import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {RefreshControl, View} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
-import {FETCHING_HEIGHT, IconSizes, Pagination} from '../constants/Constants';
+import {
+  FETCHING_HEIGHT,
+  IconSizes,
+  Pagination,
+  SCREEN_WIDTH,
+} from '../constants/Constants';
 import NotificationScreenPlaceholder from '../components/placeholder/NotificationScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
 import NotificationCard from '../components/notification/NotificationCard';
 import {
   getNotifications,
@@ -80,15 +84,14 @@ const Notifi = () => {
     );
   };
 
-  const renderItem = (item: any) => {
+  const renderItem = ({item}) => {
     return (
       <NotificationCard
-        notificationText={item.content}
-        avatar={item.avatar}
-        name={item.name}
+        avatar={item.author.avatar}
+        name={item.author.name}
         type={item.type}
-        resourceId={item.resourceId}
-        time={item.createdAt}
+        resourceId={item.sourceId}
+        time={item.date}
       />
     );
   };
@@ -99,8 +102,8 @@ const Notifi = () => {
     ) : (
       <FlatGrid
         refreshControl={refreshControl()}
-        itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
+        itemDimension={SCREEN_WIDTH}
         data={notifications}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="notifications" spacing={30} />

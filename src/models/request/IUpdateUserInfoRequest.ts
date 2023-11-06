@@ -1,5 +1,5 @@
 export interface IUpdateUserInfoRequest {
   name?: string;
-  birthDay?: string;
+  about?: string;
   avatar?: string;
 }

@@ -4,7 +4,8 @@ import {Modalize} from 'react-native-modalize';
 import {AppContext} from '../../context';
 import {ThemeStatic} from '../../theme/Colors';
 import Option from '../shared/Option';
-import {useAppSelector} from '../../reducers/redux/store';
+import {styles} from '../style';
+import {useSelector} from 'react-redux';
 
 interface PostOptionsBottomSheetProps {
   ref: React.Ref<any>;
@@ -17,7 +18,7 @@ interface PostOptionsBottomSheetProps {
 const PostOptionsBottomSheet: React.FC<PostOptionsBottomSheetProps> =
   React.forwardRef(({post, onPostEdit, onPostDelete, onPostDiable}, ref) => {
     const {theme} = useContext(AppContext);
-    const user = useAppSelector(state => state.auth.userInfo);
+    const {user} = useSelector((state: any) => state.user);
 
     const isOwnPost = user.id === post.author!.id;
 
@@ -67,12 +68,7 @@ const PostOptionsBottomSheet: React.FC<PostOptionsBottomSheetProps> =
         //@ts-ignore
         ref={ref}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={[
-          {
-            padding: 20,
-            backgroundColor: theme.base,
-          },
-        ]}
+        modalStyle={[styles(theme).modalizeContainer]}
         adjustToContentHeight>
         <View
           style={[

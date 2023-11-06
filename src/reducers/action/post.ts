@@ -1,4 +1,4 @@
-import {Dispatch} from '@reduxjs/toolkit';
+import {Dispatch} from 'react';
 import {IParam} from '../../models/IParam';
 import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 
@@ -20,29 +20,14 @@ export const postLike = async (data: IParam) =>
     },
   );
 
-export const upPost = (data: IParam) => async (dispatch: Dispatch<any>) => {
-  try {
-    dispatch({
-      type: 'postCreateRequest',
-    });
-    const res = await apiPost<any>(
-      '/social/post',
-      {data: data},
-      {
-        'Content-Type': 'application/json',
-      },
-    );
-    dispatch({
-      type: 'postCreateSuccess',
-      payload: res,
-    });
-  } catch (error: any) {
-    dispatch({
-      type: 'postCreateFailed',
-      payload: error.message,
-    });
-  }
-};
+export const upPost = (data: IParam) =>
+  apiPost<any>(
+    '/social/post',
+    {data: data},
+    {
+      'Content-Type': 'application/json',
+    },
+  );
 
 export const deletePost = async (params: IParam) =>
   await apiDelete<any>('/social/post', {params: params});
@@ -95,21 +80,5 @@ export const getPostOfUser = async (params: IParam) =>
 export const deleteComment = async (params: IParam) =>
   await apiDelete<any>('/social/post/comments', {params: params});
 
-export const getPostDetail =
-  (params: IParam) => async (dispatch: Dispatch<any>) => {
-    try {
-      dispatch({
-        type: 'getPostRequest',
-      });
-      const res = await apiGet<any>('/social/post/detail', {params: params});
-      dispatch({
-        type: 'getPostSuccess',
-        payload: res,
-      });
-    } catch (error: any) {
-      dispatch({
-        type: 'getPostFailed',
-        payload: error.message,
-      });
-    }
-  };
+export const getPostDetail = async (params: IParam) =>
+  await apiGet<any>('/social/post/detail', {params: params});

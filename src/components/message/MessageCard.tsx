@@ -2,7 +2,6 @@ import React, {useContext} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {IconSizes} from '../../constants/Constants';
 import {AppContext} from '../../context';
-import {useAppSelector} from '../../reducers/redux/store';
 import Typography from '../../theme/Typography';
 import {parseTimeElapsed} from '../../utils/shared';
 import {ThemeColors} from '../../constants/Types';
@@ -10,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import {messageSeen} from '../../reducers/action/chat';
 import {space} from '../style';
 import {NativeImage} from '../shared/NativeImage';
+import {useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -34,7 +34,7 @@ const MessageCard = ({
   seen,
   time,
 }: MessageCardProps) => {
-  const user = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
   const {parsedTime} = parseTimeElapsed(time);
   const navigation = useNavigation();
@@ -91,7 +91,7 @@ const styles = (theme = {} as ThemeColors) =>
   StyleSheet.create({
     container: {
       flexDirection: 'row',
-      borderRadius: 5,
+      borderRadius: 10,
     },
     avatar: {
       height: 50,

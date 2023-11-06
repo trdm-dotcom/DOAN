@@ -5,8 +5,12 @@ import {AppContext} from '../context';
 import PostCard from '../components/post/PostCard';
 import PostCardPlaceholder from '../components/placeholder/PostCard.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {FETCHING_HEIGHT, IconSizes, Pagination} from '../constants/Constants';
+import {
+  FETCHING_HEIGHT,
+  IconSizes,
+  Pagination,
+  SCREEN_WIDTH,
+} from '../constants/Constants';
 import {getPosts} from '../reducers/action/post';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import HeaderBar from '../components/header/HeaderBar';
@@ -15,7 +19,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
-import {getSocket} from '../utils/Socket';
 
 const Feed = () => {
   const dispatch = useDispatch();
@@ -25,22 +28,6 @@ const Feed = () => {
   const [pageNumber, setPageNumber] = useState(0);
   const navigation = useNavigation();
   const [offsetY, setOffsetY] = useState(0);
-
-  useEffect(() => {
-    const socket = getSocket();
-    socket.on('post.reaction', (data: any) => {
-      dispatch({
-        type: 'updateReactionPost',
-        payload: data,
-      });
-    });
-    socket.on('post.comment', (data: any) => {
-      dispatch({
-        type: 'updateCommentPost',
-        payload: data,
-      });
-    });
-  }, []);
 
   useEffect(() => {
     fetchFeed(pageNumber);
@@ -111,8 +98,8 @@ const Feed = () => {
     ) : (
       <FlatGrid
         refreshControl={refreshControl()}
-        itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
+        itemDimension={SCREEN_WIDTH}
         data={posts}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="posts" spacing={30} />

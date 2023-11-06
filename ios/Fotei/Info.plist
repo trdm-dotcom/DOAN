@@ -69,8 +69,10 @@
 		<string>Sniglet-Regular.ttf</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
+	<string>$(PRODUCT_NAME) requires to access camera for uploading photos to your profile or posts</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs access to your Microphone.</string>
+	<string>$(PRODUCT_NAME) requires to access Audio recording to record and uplod videos</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like to upload photos from your photo gallery</string>
 </dict>
 </plist>

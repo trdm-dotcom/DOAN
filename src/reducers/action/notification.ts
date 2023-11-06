@@ -8,9 +8,7 @@ export const getNotifications =
       dispatch({
         type: 'getNotificationRequest',
       });
-
       const res = await apiGet<any[]>('/notification', {params: params});
-
       dispatch({
         type: 'getNotificationSuccess',
         payload: res,

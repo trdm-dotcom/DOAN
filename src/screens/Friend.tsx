@@ -207,6 +207,7 @@ const Friend = () => {
               </View>
               {listRequestFriend.map(item => (
                 <UserCardPress
+                  key={item.id}
                   userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
@@ -247,6 +248,7 @@ const Friend = () => {
                       />
                     )
                   }
+                  indicatorColor={ThemeStatic.accent}
                 />
               ))}
             </>
@@ -273,6 +275,7 @@ const Friend = () => {
               </View>
               {listFriend.map(item => (
                 <UserCard
+                  key={item.id}
                   userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
@@ -326,35 +329,28 @@ const Friend = () => {
               </View>
               {listfriendSuggest.map(item => (
                 <UserCardPress
+                  key={item.id}
                   userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
                   style={[space(IconSizes.x1).mt]}
                   handlerOnPress={() => addFriend(item)}
-                  ChildrenButton={() => (
-                    <>
-                      <Ionicons
-                        name="add"
-                        size={IconSizes.x6}
-                        color={ThemeStatic.accent}
-                      />
-                      <Text
-                        style={[
-                          {
-                            ...FontWeights.Bold,
-                            ...FontSizes.Body,
-                            color: ThemeStatic.accent,
-                            marginLeft: 5,
-                          },
-                        ]}>
-                        Add Friend
-                      </Text>
-                    </>
-                  )}
                   buttonStyle={{
-                    backgroundColor: ThemeStatic.white,
-                    paddingHorizontal: IconSizes.x1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme.placeholder,
+                    padding: IconSizes.x1,
+                    borderRadius: 50,
+                    width: 50,
                   }}
+                  ChildrenButton={() => (
+                    <Ionicons
+                      name="add"
+                      size={IconSizes.x6}
+                      color={ThemeStatic.accent}
+                    />
+                  )}
+                  indicatorColor={ThemeStatic.accent}
                 />
               ))}
               <AppButton
@@ -370,6 +366,7 @@ const Friend = () => {
                   backgroundColor: theme.placeholder,
                   paddingHorizontal: IconSizes.x5,
                   paddingVertical: IconSizes.x1,
+                  marginTop: IconSizes.x5,
                 }}
                 Icon={() => (
                   <Ionicons
@@ -392,8 +389,7 @@ const Friend = () => {
         <ScrollView
           stickyHeaderIndices={[0]}
           showsVerticalScrollIndicator={false}>
-          <View
-            style={[styles(theme).defaultBackground, space(IconSizes.x5).pv]}>
+          <View style={[styles(theme).defaultBackground]}>
             <Header title="Your friend" />
             <AnimatedSearchBar
               value={search}

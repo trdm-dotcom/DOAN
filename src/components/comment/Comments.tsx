@@ -9,6 +9,7 @@ import {deleteComment, getCommentsOfPost} from '../../reducers/action/post';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {showError} from '../../utils/Toast';
 import ConfirmationModal from '../shared/ConfirmationModal';
+import {getSocket} from '../../utils/Socket';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentsProps = {
@@ -22,9 +23,15 @@ const Comments = ({postId}: CommentsProps) => {
   const [commentPressOption, setCommentPressOption] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const socket = getSocket();
 
   useEffect(() => {
     fetchComments(postId);
+    socket.on('comment', (data: any) => {
+      if (data.to === postId) {
+        setComments([...comments, ...[data.data.comments]]);
+      }
+    });
   }, []);
 
   const fetchComments = (post: string) => {
@@ -33,7 +40,7 @@ const Comments = ({postId}: CommentsProps) => {
       postId: post,
     })
       .then(response => {
-        setComments([...comments, ...response]);
+        setComments(response);
       })
       .catch(err => {
         console.log(err);
@@ -77,6 +84,7 @@ const Comments = ({postId}: CommentsProps) => {
       comments.map(comment => {
         return (
           <CommentCard
+            key={comment.id}
             userId={comment.userId}
             avatar={comment.avatar}
             name={comment.name}

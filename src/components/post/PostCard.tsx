@@ -1,6 +1,5 @@
 import React, {createRef, useRef, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {useAppSelector} from '../../reducers/redux/store';
 import {parseComments, parseLikes, parseTimeElapsed} from '../../utils/shared';
 import {NativeImage} from '../shared/NativeImage';
 import {IconSizes, PostDimensions} from '../../constants/Constants';
@@ -15,6 +14,7 @@ import {
 import {postLike} from '../../reducers/action/post';
 import LikeBounceAnimation from './LikeBounceAnimation';
 import {space} from '../style';
+import {useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -44,12 +44,11 @@ const PostCard = ({
   caption,
 }: PostCardProps) => {
   const navigation = useNavigation();
-  const user = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
 
   const {readableTime} = parseTimeElapsed(time);
   const readableComments = parseComments(comments.length);
   const [isLiked, setIsLiked] = useState(likes.includes(user.id));
-  const [sLikes, setSLikes] = useState(likes);
 
   const likeBounceAnimationRef = createRef();
   const doubleTapRef = useRef();
@@ -62,7 +61,7 @@ const PostCard = ({
       };
       postLike(body);
       setIsLiked(!liked);
-      setSLikes([...sLikes, user.id]);
+      likes.push(user.id);
     }
     // @ts-ignore
     return likeBounceAnimationRef.current.animate();
@@ -108,7 +107,7 @@ const PostCard = ({
                     size={IconSizes.x6}
                   />
                   <Text style={styles.likesText}>
-                    {parseLikes(sLikes.length)}
+                    {parseLikes(likes.length)}
                   </Text>
                 </View>
                 <View style={{flexDirection: 'row', marginLeft: IconSizes.x1}}>

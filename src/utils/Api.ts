@@ -88,8 +88,11 @@ function apiReq<T>(
   headers = {
     ...headers,
     rId: rId,
-    Authorization: `jwt ${token.accessToken}`,
   };
+
+  if (token.accessToken != null) {
+    headers['Authorization'] = `jwt ${token.accessToken}`;
+  }
 
   return new Promise((resolve, reject) => {
     const options: AxiosRequestConfig = {

@@ -1,16 +1,16 @@
 import {AnyAction, ThunkAction, configureStore} from '@reduxjs/toolkit';
 import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
-import {AuthenticationSlice} from './authentication.reducer';
 import {postReducer} from './post.reducer';
 import {notifiReducer} from './notification.reducer';
 import {chatReducer} from './chat.reducer';
+import {userReducer} from './user.reducer';
 
 const store = configureStore({
   reducer: {
-    auth: AuthenticationSlice.reducer,
     post: postReducer,
     notification: notifiReducer,
     chat: chatReducer,
+    user: userReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

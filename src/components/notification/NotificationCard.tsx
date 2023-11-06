@@ -4,7 +4,11 @@ import Typography from '../../theme/Typography';
 import {AppContext} from '../../context';
 import {parseTimeElapsed} from '../../utils/shared';
 import {ThemeColors} from '../../constants/Types';
-import {IconSizes, NotificationType} from '../../constants/Constants';
+import {
+  IconSizes,
+  NotificationText,
+  NotificationType,
+} from '../../constants/Constants';
 import {useNavigation} from '@react-navigation/native';
 import {space} from '../style';
 import {NativeImage} from '../shared/NativeImage';
@@ -12,7 +16,6 @@ import {NativeImage} from '../shared/NativeImage';
 const {FontWeights, FontSizes} = Typography;
 
 type NotificationCardPros = {
-  notificationText: string;
   avatar: string;
   name: string;
   resourceId: string;
@@ -21,7 +24,6 @@ type NotificationCardPros = {
 };
 
 const NotificationCard = ({
-  notificationText,
   avatar,
   resourceId,
   name,
@@ -33,10 +35,11 @@ const NotificationCard = ({
   const {readableTime} = parseTimeElapsed(time);
 
   const navigateAction = () => {
-    if (resourceId == null || resourceId === '') {
+    console.log('navigateAction', resourceId, resourceId == null);
+    if (resourceId == null) {
       return;
     }
-    if (type === NotificationType.FOLLOW) {
+    if (type === NotificationType.REQUEST) {
       navigation.navigate('Profile', {userId: resourceId});
     } else if (
       type === NotificationType.LIKE ||
@@ -55,7 +58,7 @@ const NotificationCard = ({
       <View style={[styles().info, space(IconSizes.x1).ml]}>
         <Text style={styles(theme).notificationText}>
           <Text style={styles(theme).handleText}>{name} </Text>
-          {notificationText}
+          {NotificationText[type]}
         </Text>
         <Text style={styles(theme).timeText}>{readableTime}</Text>
       </View>

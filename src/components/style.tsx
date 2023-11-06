@@ -8,7 +8,6 @@ import {
 import {ThemeColors} from '../constants/Types';
 import Typography from '../theme/Typography';
 import {ThemeStatic} from '../theme/Colors';
-import {responsiveHeight} from 'react-native-responsive-dimensions';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -69,7 +68,7 @@ export const styles = (theme = {} as ThemeColors) =>
     container: {
       flex: 1,
       paddingHorizontal: SAFE_AREA_PADDING.paddingHorizontal,
-      paddingVertical: SAFE_AREA_PADDING.paddingVertical,
+      paddingTop: SAFE_AREA_PADDING.paddingVertical,
     },
     flashMessageTitle: {
       ...Typography.FontWeights.Light,
@@ -95,7 +94,7 @@ export const styles = (theme = {} as ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 40,
+      borderRadius: 10,
       padding: CONTENT_SPACING,
     },
     buttonPrimary: {
@@ -107,6 +106,7 @@ export const styles = (theme = {} as ThemeColors) =>
       borderRadius: 10,
       marginVertical: 10,
       backgroundColor: theme.placeholder,
+      paddingHorizontal: CONTENT_SPACING,
     },
     inputField: {
       backgroundColor: 'transparent',
@@ -174,15 +174,9 @@ export const styles = (theme = {} as ThemeColors) =>
 
     // modalize
     modalizeContainer: {
-      marginTop: 40,
-      flex: 1,
       backgroundColor: theme.base,
       paddingHorizontal: SAFE_AREA_PADDING.paddingHorizontal,
       paddingVertical: SAFE_AREA_PADDING.paddingVertical,
-    },
-    modalizeContent: {
-      flex: 1,
-      paddingBottom: responsiveHeight(5),
     },
     listContainer: {
       flex: 1,
@@ -191,7 +185,7 @@ export const styles = (theme = {} as ThemeColors) =>
       width: '100%',
     },
     listContentContainer: {
-      // alignItems: 'center',
+      alignItems: 'center',
       justifyContent: 'flex-start',
     },
 

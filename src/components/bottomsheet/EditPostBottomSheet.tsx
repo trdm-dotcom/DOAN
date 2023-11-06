@@ -5,7 +5,6 @@ import {space, styles} from '../style';
 import {
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
@@ -17,8 +16,8 @@ import Typography from '../../theme/Typography';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {updatePost} from '../../reducers/action/post';
 import {getHash} from '../../utils/Crypto';
-import {BallIndicator} from 'react-native-indicators';
 import {ThemeStatic} from '../../theme/Colors';
+import {MaterialIndicator} from 'react-native-indicators';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -52,22 +51,28 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
 
     return (
       <Modalize
-        //@ts-ignore
         ref={ref}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={styles(theme).modalizeContainer}
         adjustToContentHeight>
         <BottomSheetHeader heading="Edit Post" subHeading="Edit your post" />
-        <View style={styles(theme).modalizeContent}>
-          <KeyboardAvoidingView
-            behavior={keyboardBehavior}
-            keyboardVerticalOffset={20}
-            style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
-            <NativeImage uri={post.uri} style={StyleSheet.absoluteFill} />
+        <KeyboardAvoidingView
+          behavior={keyboardBehavior}
+          keyboardVerticalOffset={20}>
+          <NativeImage
+            uri={post.uri}
+            style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}
+          />
+          <View
+            style={[
+              styles(theme).inputContainer,
+              {borderRadius: 40},
+              space(IconSizes.x8).mt,
+            ]}>
             <TextInput
               value={caption}
               onChangeText={(text: string) => {
-                setCaption(text);
+                setCaption(text.trim());
               }}
               style={[
                 styles(theme).inputField,
@@ -75,45 +80,47 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
                   ...FontWeights.Bold,
                   ...FontSizes.Body,
                   color: theme.text01,
-                  flex: 1,
                 },
               ]}
               autoFocus
               placeholder="Add a caption..."
               placeholderTextColor={theme.text02}
             />
-          </KeyboardAvoidingView>
-          <View
-            style={[
-              styles(theme).row,
-              {
-                justifyContent: 'space-around',
-                alignItems: 'center',
-              },
-              space(IconSizes.x8).mv,
-            ]}>
-            <TouchableOpacity
-              onPress={doUpdatePost}
-              activeOpacity={0.9}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
-                padding: IconSizes.x7,
-                borderRadius: 50,
-              }}
-              disabled={loading}>
-              {loading ? (
-                <BallIndicator size={IconSizes.x9} color={ThemeStatic.white} />
-              ) : (
-                <Ionicons
-                  name="paper-plane"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
-            </TouchableOpacity>
           </View>
+        </KeyboardAvoidingView>
+        <View
+          style={[
+            styles(theme).row,
+            {
+              justifyContent: 'space-around',
+              alignItems: 'center',
+            },
+            space(IconSizes.x8).mv,
+          ]}>
+          <TouchableOpacity
+            onPress={doUpdatePost}
+            activeOpacity={0.9}
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              padding: IconSizes.x7,
+              borderRadius: 50,
+            }}
+            disabled={loading}>
+            {loading ? (
+              <MaterialIndicator
+                size={IconSizes.x9}
+                color={ThemeStatic.white}
+              />
+            ) : (
+              <Ionicons
+                name="paper-plane"
+                size={IconSizes.x9}
+                color={theme.text01}
+              />
+            )}
+          </TouchableOpacity>
         </View>
       </Modalize>
     );

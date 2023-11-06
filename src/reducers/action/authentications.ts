@@ -3,10 +3,9 @@ import {ILoginResponse} from '../../models/response/ILoginResponse';
 import {IRegisterRequest} from '../../models/request/IRegisterRequest';
 import {ICheckExistRequest} from '../../models/request/ICheckExistRequest';
 import {ICheckExistResponse} from '../../models/response/ICheckExistResponse';
-import {apiPost, apiPut, fetchToken, getToken} from '../../utils/Api';
+import {apiPost, fetchToken, getToken} from '../../utils/Api';
 import {IBiometricLoginRequest} from '../../models/request/IBiometricLoginRequest';
 import {removeToken, saveToken} from '../../utils/Storage';
-import {IUpdateUserInfoRequest} from '../../models/request/IUpdateUserInfoRequest';
 
 type AuthenticationType = {
   type: 'password' | 'biometric';
@@ -49,18 +48,6 @@ export const registerNewAccount = async (
     },
   );
 
-export const updateUserInfo = async (
-  body: IUpdateUserInfoRequest,
-): Promise<any> => {
-  return await apiPut<any>(
-    '/user/info',
-    {data: body},
-    {
-      'Content-Type': 'application/json',
-    },
-  );
-};
-
 export const checkExist = async (
   body: ICheckExistRequest,
 ): Promise<ICheckExistResponse> =>
@@ -69,7 +56,7 @@ export const checkExist = async (
 export const register = async (body: IRegisterRequest) => {
   await registerNewAccount(body);
   await password({
-    username: body.username,
+    username: body.phoneNumber,
     password: body.password,
     hash: body.hash,
     grant_type: 'password',

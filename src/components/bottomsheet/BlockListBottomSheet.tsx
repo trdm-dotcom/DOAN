@@ -2,9 +2,8 @@ import React, {Ref, forwardRef, useContext, useState} from 'react';
 import {Modalize} from 'react-native-modalize';
 import {AppContext} from '../../context';
 import BottomSheetHeader from '../header/BottomSheetHeader';
-import UserCard from '../user/UserCard';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
-import {getBlockList} from '../../reducers/action/friend';
+import {getBlockList, unblockUser} from '../../reducers/action/friend';
 import {space, styles} from '../style';
 import {
   FETCHING_HEIGHT,
@@ -12,14 +11,19 @@ import {
   Pagination,
 } from '../../constants/Constants';
 import ListEmptyComponent from '../shared/ListEmptyComponent';
+import {ThemeStatic} from '../../theme/Colors';
+import {Text} from 'react-native';
+import Typography from '../../theme/Typography';
+import UserCardPress from '../user/UserCardPress';
+
+const {FontWeights, FontSizes} = Typography;
 
 interface BlockListBottomSheetProps {
   ref: Ref<any>;
-  onUserPress: (userId: number) => void;
 }
 
 const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
-  ({onUserPress}, ref) => {
+  (_, ref) => {
     const {theme} = useContext(AppContext);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = React.useState<boolean>(false);
@@ -75,21 +79,45 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
       }
     }
 
-    const renderItem = (item: any) => {
+    const onUnBlock = async (friendId: number) => {
+      await unblockUser(friendId);
+      setBlockedUsers(blockedUsers.filter(item => item.friendId !== friendId));
+    };
+
+    const renderItem = ({item}) => {
       return (
-        <UserCard
-          userId={item.id}
+        <UserCardPress
+          userId={item.friendId}
           avatar={item.avatar}
           name={item.name}
-          onPress={() => onUserPress(item.id)}
+          handlerOnPress={() => onUnBlock(item.id)}
           style={[space(IconSizes.x1).mt]}
+          ChildrenButton={() => (
+            <>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: ThemeStatic.accent,
+                    marginLeft: 5,
+                  },
+                ]}>
+                Unblock
+              </Text>
+            </>
+          )}
+          buttonStyle={{
+            backgroundColor: ThemeStatic.white,
+            paddingHorizontal: IconSizes.x1,
+          }}
+          indicatorColor={ThemeStatic.accent}
         />
       );
     };
 
     return (
       <Modalize
-        //@ts-ignore
         ref={ref}
         modalStyle={styles(theme).modalizeContainer}
         onOpen={handleOpen}

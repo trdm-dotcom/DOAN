@@ -1,32 +1,17 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import {
-  CameraDevices,
-  Camera as CameraVision,
-  PhotoFile,
-  useCameraDevices,
-} from 'react-native-vision-camera';
+import React, {useContext, useRef, useState} from 'react';
 import {AppContext} from '../context';
 import {
-  Linking,
   TouchableOpacity,
   View,
-  StyleSheet,
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  AppStateStatus,
-  AppState,
+  StyleSheet,
+  Text,
 } from 'react-native';
 import {space, styles} from '../components/style';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
-import {useIsFocused} from '@react-navigation/core';
 import IconButton from '../components/control/IconButton';
 import {NativeImage} from '../components/shared/NativeImage';
 import Header from '../components/header/Header';
@@ -34,91 +19,51 @@ import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import HeaderBar from '../components/header/HeaderBar';
 import Typography from '../theme/Typography';
-import ImagePicker from 'react-native-image-crop-picker';
-import storage from '@react-native-firebase/storage';
+import ImagePicker, {Image} from 'react-native-image-crop-picker';
 import {getHash} from '../utils/Crypto';
 import {upPost} from '../reducers/action/post';
 import {IParam} from '../models/IParam';
-import {BallIndicator} from 'react-native-indicators';
 import {ThemeStatic} from '../theme/Colors';
+import {showError} from '../utils/Toast';
+import {Modalize} from 'react-native-modalize';
+import Option from '../components/shared/Option';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {MaterialIndicator} from 'react-native-indicators';
 
 const {FontWeights, FontSizes} = Typography;
 
-const useIsForeground = (): boolean => {
-  const [isForeground, setIsForeground] = useState(true);
-
-  useEffect(() => {
-    const onChange = (state: AppStateStatus): void => {
-      setIsForeground(state === 'active');
-    };
-    const listener = AppState.addEventListener('change', onChange);
-    return () => listener.remove();
-  }, [setIsForeground]);
-
-  return isForeground;
-};
-
 type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 const Camera = ({navigation}: props) => {
-  const {theme, cameraView, toggleCameraView} = useContext(AppContext);
-  const devices: CameraDevices = useCameraDevices();
-  const cameraRef = useRef<CameraVision>(null);
-  const [torch, setTorch] = useState<'on' | 'off' | 'auto'>('off');
-  const [showCamera, setShowCamera] = useState(true);
+  const {theme} = useContext(AppContext);
   const [imageSource, setImageSource] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'photo' | 'video'>('photo');
+  const [loading, setLoading] = useState<boolean>(false);
   const [caption, setCaption] = useState<any>(null);
-  const device = cameraView === 'back' ? devices.back : devices.front;
 
-  // check if camera page is active
-  const isFocussed = useIsFocused();
-  const isForeground = useIsForeground();
-  const isActive = isFocussed && isForeground;
+  const cameraOptionsBottomSheetRef = useRef();
 
-  useEffect(() => {
-    cameraPermission();
-  }, [devices]);
+  const openOptions = () => {
+    // @ts-ignore
+    return cameraOptionsBottomSheetRef.current.open();
+  };
 
-  const cameraPermission = useCallback(async () => {
-    const permission = await CameraVision.requestCameraPermission();
-    if (permission === 'denied') {
-      await Linking.openSettings();
-    }
-  }, [devices]);
-
-  const takePhoto = async () => {
-    try {
-      setLoading(true);
-      if (cameraRef.current != null) {
-        const photo: PhotoFile = await cameraRef.current.takePhoto({
-          qualityPrioritization: 'balanced',
-          flash: `${torch}`,
-          enableAutoRedEyeReduction: true,
-          enableAutoStabilization: true,
-          skipMetadata: true,
-        });
-        setImageSource(`file://${photo.path}`);
-        setShowCamera(false);
-      }
-    } finally {
-      setLoading(false);
-    }
+  const closeOptions = () => {
+    // @ts-ignore
+    return cameraOptionsBottomSheetRef.current.close();
   };
 
   const doUpPost = async () => {
     try {
       setLoading(true);
-      const source = await uploadImage(imageSource);
       const body: IParam = {
-        source: source,
+        source: imageSource,
         caption: caption,
         hash: getHash('UP_POST'),
       };
       await upPost(body);
-      setShowCamera(true);
       setCaption(null);
       setImageSource(null);
+    } catch (err: any) {
+      showError(err.message);
     } finally {
       setLoading(false);
     }
@@ -126,18 +71,16 @@ const Camera = ({navigation}: props) => {
 
   const download = () => {};
 
-  const openGallery = () => {
+  const onOpenGallery = () => {
+    closeOptions();
     ImagePicker.openPicker({
-      width: 300,
-      height: 400,
-      cropping: true,
       compressImageQuality: 0.8,
+      includeBase64: true,
+      writeTempFile: false,
     })
-      .then(image => {
-        if (image && !Array.isArray(image)) {
-          setMode('photo');
-          setImageSource(image.path);
-          setShowCamera(false);
+      .then((image: Image) => {
+        if (image.data != null) {
+          setImageSource(`data:${image.mime};base64,${image.data}`);
         }
       })
       .catch(err => {
@@ -145,31 +88,34 @@ const Camera = ({navigation}: props) => {
       });
   };
 
-  const uploadImage = async (uri: string) => {
-    const filename = uri.substring(uri.lastIndexOf('/') + 1);
-    const uploadUri = uri.replace('file://', '');
-    const imageRef = storage().ref(filename);
-    await imageRef.putFile(uploadUri, {
-      cacheControl: 'no-store', // disable caching
-    });
-    return imageRef.getDownloadURL();
+  const onOpenCamera = () => {
+    closeOptions();
+    ImagePicker.openCamera({
+      compressImageQuality: 0.8,
+      includeBase64: true,
+      writeTempFile: false,
+    })
+      .then((image: Image) => {
+        if (image.data != null) {
+          setImageSource(`data:${image.mime};base64,${image.data}`);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
   };
-
-  const onCameraInitialized = useCallback(
-    () => console.log('camera initialized'),
-    [],
-  );
 
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
-    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+    <GestureHandlerRootView
+      style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
         contentLeft={
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
@@ -187,187 +133,149 @@ const Camera = ({navigation}: props) => {
             justifyContent: 'space-between',
           },
         ]}>
-        {!showCamera && (
-          <>
-            <Header title="Send to..." />
-          </>
-        )}
+        <Header title="Create New Post" />
       </View>
-      <View style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
-        {device && showCamera && (
-          <>
-            <CameraVision
-              ref={cameraRef}
-              style={StyleSheet.absoluteFill}
-              device={device}
-              isActive={showCamera}
-              photo
-              enableZoomGesture
-              orientation="portrait"
-              onInitialized={onCameraInitialized}
+      <KeyboardAvoidingView
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={20}>
+        <TouchableOpacity
+          onPress={openOptions}
+          style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
+          {imageSource == null ? (
+            <>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.SubHeading,
+                    color: ThemeStatic.accent,
+                  },
+                  space(IconSizes.x5).mt,
+                ]}>
+                Upload your photo
+              </Text>
+            </>
+          ) : (
+            <NativeImage
+              uri={imageSource}
+              style={StyleSheet.absoluteFillObject}
             />
-            <View
-              style={[
-                {
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  padding: IconSizes.x4,
-                },
-              ]}>
-              <IconButton
-                Icon={() => (
-                  <Ionicons
-                    name={torch === 'on' ? 'flash' : 'flash-outline'}
-                    size={IconSizes.x6}
-                    color={torch === 'on' ? theme.accent : theme.text01}
-                  />
-                )}
-                onPress={() => {
-                  torch === 'off' ? setTorch('on') : setTorch('off');
-                }}
-                style={{
-                  padding: IconSizes.x1,
-                  borderRadius: 50,
-                }}
-              />
-            </View>
-          </>
-        )}
-        {!showCamera && (
-          <KeyboardAvoidingView
-            behavior={keyboardBehavior}
-            keyboardVerticalOffset={20}
-            style={StyleSheet.absoluteFill}>
-            {mode === 'photo' && (
-              <>
-                <NativeImage
-                  uri={imageSource}
-                  style={StyleSheet.absoluteFill}
-                />
-              </>
+          )}
+        </TouchableOpacity>
+        <View
+          style={[
+            styles(theme).inputContainer,
+            {borderRadius: 40},
+            space(IconSizes.x8).mt,
+          ]}>
+          <TextInput
+            onChangeText={(text: string) => {
+              setCaption(text.trim());
+            }}
+            style={[
+              styles(theme).inputField,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+            ]}
+            placeholder="Add a caption..."
+            placeholderTextColor={theme.text02}
+          />
+        </View>
+        <View
+          style={[
+            styles(theme).row,
+            {
+              justifyContent: 'space-around',
+              alignItems: 'center',
+            },
+            space(IconSizes.x8).mv,
+          ]}>
+          <IconButton
+            Icon={() => (
+              <Ionicons name="close" size={IconSizes.x9} color={theme.text01} />
             )}
-            <TextInput
-              onChangeText={(text: string) => {
-                if (text && text.trim().length > 0) {
-                  setCaption(text.trim());
-                }
-              }}
-              style={[
-                styles(theme).inputField,
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Body,
-                  color: theme.text01,
-                  flex: 1,
-                },
-              ]}
-              autoFocus
-              placeholder="Add a caption..."
-              placeholderTextColor={theme.text02}
-            />
-          </KeyboardAvoidingView>
-        )}
-      </View>
-      <View
-        style={[
-          styles(theme).row,
-          {
-            justifyContent: 'space-around',
-            alignItems: 'center',
-          },
-          space(IconSizes.x8).mv,
-        ]}>
-        {showCamera ? (
-          <>
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="image-outline"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
-              onPress={() => openGallery()}
-            />
-            <TouchableOpacity
-              style={[styles(theme).captureButton]}
-              onPress={() => {
-                if (mode === 'photo') {
-                  takePhoto();
-                }
-              }}
-              disabled={!isActive || loading}>
-              {loading && (
-                <BallIndicator size={IconSizes.x9} color={ThemeStatic.white} />
-              )}
-            </TouchableOpacity>
-
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="camera-reverse-outline"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
-              onPress={() => {
-                cameraView === 'back'
-                  ? toggleCameraView('front')
-                  : toggleCameraView('back');
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="close"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
-              onPress={() => {
-                setShowCamera(true);
-                setImageSource(null);
-              }}
-            />
-            <TouchableOpacity
-              onPress={doUpPost}
-              activeOpacity={0.9}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
-                padding: IconSizes.x7,
-                borderRadius: 50,
-              }}
-              disabled={!isActive || loading}>
-              {loading ? (
-                <BallIndicator size={IconSizes.x9} color={ThemeStatic.white} />
-              ) : (
-                <Ionicons
-                  name="paper-plane"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
-            </TouchableOpacity>
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="download-outline"
-                  size={IconSizes.x9}
-                  color={theme.text01}
-                />
-              )}
-              onPress={download}
-            />
-          </>
-        )}
-      </View>
-    </View>
+            onPress={() => {
+              setImageSource(null);
+              closeOptions();
+            }}
+          />
+          <TouchableOpacity
+            onPress={doUpPost}
+            activeOpacity={0.9}
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              borderRadius: 60,
+              height: 90,
+              width: 90,
+            }}
+            disabled={loading}>
+            {loading ? (
+              <MaterialIndicator
+                size={IconSizes.x9}
+                color={ThemeStatic.accent}
+              />
+            ) : (
+              <Ionicons
+                name="paper-plane"
+                size={IconSizes.x9}
+                color={theme.text01}
+              />
+            )}
+          </TouchableOpacity>
+          <IconButton
+            Icon={() => (
+              <Ionicons
+                name="download-outline"
+                size={IconSizes.x9}
+                color={theme.text01}
+              />
+            )}
+            onPress={download}
+          />
+        </View>
+      </KeyboardAvoidingView>
+      <Modalize
+        ref={cameraOptionsBottomSheetRef}
+        scrollViewProps={{showsVerticalScrollIndicator: false}}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
+        <View
+          style={[
+            {
+              flex: 1,
+              paddingTop: 20,
+              paddingBottom: 16,
+            },
+          ]}>
+          <Option
+            label="Take a photo"
+            iconName="camera-outline"
+            color={theme.text01}
+            onPress={onOpenCamera}
+          />
+          <Option
+            label="Choose from gallery"
+            iconName="images-outline"
+            color={theme.text01}
+            onPress={onOpenGallery}
+          />
+          <Option
+            label="Delete"
+            iconName="close-circle-outline"
+            color="red"
+            onPress={() => {
+              setImageSource(null);
+              closeOptions();
+            }}
+          />
+        </View>
+      </Modalize>
+    </GestureHandlerRootView>
   );
 };
 

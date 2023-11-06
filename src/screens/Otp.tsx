@@ -39,7 +39,6 @@ const Otp = ({navigation, route}: props) => {
   const [otp, setOtp] = useState<string>(otpId);
   const [minutes, setMinutes] = useState<number>(1);
   const [seconds, setSeconds] = useState<number>(30);
-  const [isContinue, setIsContinue] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const getOtp = async () => {
@@ -76,7 +75,6 @@ const Otp = ({navigation, route}: props) => {
       }
       if (seconds === 0) {
         if (minutes === 0) {
-          setIsContinue(false);
           clearInterval(interval);
         } else {
           setSeconds(59);
@@ -100,19 +98,16 @@ const Otp = ({navigation, route}: props) => {
   };
 
   const handleOnChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    setIsContinue(verify);
-    if (verify) {
-      setOtpValue(text.trim());
-    }
+    setOtpValue(text.trim());
   };
 
-  const resendOtp = async () => {
+  const resendOtp = () => {
     setOtpValue('');
     setOtp('');
-    setMinutes(1);
-    setSeconds(30);
-    await getOtp();
+    getOtp().then(() => {
+      setMinutes(1);
+      setSeconds(30);
+    });
   };
 
   const handleContinue = async () => {
@@ -127,7 +122,6 @@ const Otp = ({navigation, route}: props) => {
           },
         );
         navigation.replace(nextStep, {
-          username: mail,
           mail: mail,
           name: name,
           phoneNumber: phoneNumber,
@@ -148,7 +142,7 @@ const Otp = ({navigation, route}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
@@ -235,7 +229,7 @@ const Otp = ({navigation, route}: props) => {
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
-            disabled={!isContinue || loading}>
+            disabled={loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (

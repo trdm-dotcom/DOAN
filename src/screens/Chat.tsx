@@ -5,14 +5,17 @@ import {space, styles} from '../components/style';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {FETCHING_HEIGHT, IconSizes, Pagination} from '../constants/Constants';
+import {
+  FETCHING_HEIGHT,
+  IconSizes,
+  Pagination,
+  SCREEN_WIDTH,
+} from '../constants/Constants';
 import Header from '../components/header/Header';
 import MessageScreenPlaceholder from '../components/placeholder/MessageScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {filterChatParticipants} from '../utils/shared';
 import MessageCard from '../components/message/MessageCard';
-import {useAppSelector} from '../reducers/redux/store';
 import {getConversations} from '../reducers/action/chat';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
@@ -27,7 +30,7 @@ const Chat = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
   const {chats, isLoading, error} = useSelector((state: any) => state.chat);
 
-  const user = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
   const [search, setSearch] = useState<any>(null);
   const [pageNumber, setPageNumber] = useState<number>(0);
   const [offsetY, setOffsetY] = useState(0);
@@ -119,8 +122,8 @@ const Chat = ({navigation}: props) => {
     ) : (
       <FlatGrid
         refreshControl={refreshControl()}
-        itemDimension={responsiveWidth(85)}
         showsVerticalScrollIndicator={false}
+        itemDimension={SCREEN_WIDTH}
         data={chats}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="messages" spacing={30} />
@@ -157,7 +160,7 @@ const Chat = ({navigation}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />

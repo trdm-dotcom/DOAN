@@ -17,37 +17,44 @@ import {ThemeStatic} from '../theme/Colors';
 import ProfileOptionsBottomSheet from '../components/profile/ProfileOptionsBottomSheet';
 import ProfileScreenPlaceholder from '../components/placeholder/ProfileScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import ProfileCard from '../components/profile/ProfileCard';
 import PostThumbnail from '../components/post/PostThumbnail';
 import {getUserInfo} from '../reducers/action/user';
 import {getPostOfUser} from '../reducers/action/post';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {checkFriend, getFriendOfUser} from '../reducers/action/friend';
-import ConnectionsBottomSheet from '../components/shared/ConnectionsBottomSheet';
 import {
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+  acceptFriendRequest,
+  blockUser,
+  checkFriend,
+  getFriendOfUser,
+  rejectFriend,
+  requestAddFriend,
+  unblockUser,
+} from '../reducers/action/friend';
+import ConnectionsBottomSheet from '../components/bottomsheet/ConnectionsBottomSheet';
+import {RefreshControl, Text, TouchableOpacity, View} from 'react-native';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {getConversationBetween} from '../reducers/action/chat';
 import Typography from '../theme/Typography';
+import {showError} from '../utils/Toast';
+import {useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 const Profile = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
+  const {user} = useSelector((state: any) => state.user);
   const {userId} = route.params;
 
-  const [isFriend, setIsFriend] = useState<boolean>(false);
+  const [friendStatus, setFriendStatus] = useState<any>({});
   const [blockConfirmationModal, setBlockConfirmationModal] =
     useState<boolean>(false);
+  const [unfriendConfirmationModal, setUnfriendConfirmationModal] =
+    useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [progessLoading, setProgressLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [userProfile, setUserProfile] = useState<any>({});
   const [sortedPosts, setSortedPosts] = useState<any[]>([]);
@@ -58,7 +65,6 @@ const Profile = ({navigation, route}: props) => {
   useEffect(() => {
     const fetchData = () => {
       setLoading(true);
-      setError(false);
       Promise.all([
         getUserInfo({userId: userId}),
         getFriendOfUser({
@@ -77,7 +83,7 @@ const Profile = ({navigation, route}: props) => {
         .then(res => {
           setUserProfile(res[0]);
           setFriends(res[1]);
-          setIsFriend(res[2].isFriend);
+          setFriendStatus(res[2]);
         })
         .finally(() => setLoading(false));
     };
@@ -123,6 +129,11 @@ const Profile = ({navigation, route}: props) => {
     setBlockConfirmationModal(!blockConfirmationModal);
   };
 
+  const toggleUnfriendConfirmationModal = () => {
+    // @ts-ignore
+    setUnfriendConfirmationModal(!unfriendConfirmationModal);
+  };
+
   const onBlockUser = () => {
     onProfileOptionsClose();
     toggleBlockConfirmationModal();
@@ -130,6 +141,65 @@ const Profile = ({navigation, route}: props) => {
 
   const processBlockUser = () => {
     toggleBlockConfirmationModal();
+    setProgressLoading(true);
+    blockUser(userId)
+      .then(res => {
+        setFriendStatus({
+          isFriend: false,
+          status: 'BLOCKED',
+          friendId: res.id,
+          targetId: userId,
+        });
+      })
+      .catch(err => {
+        showError(err.message);
+      })
+      .finally(() => {
+        setProgressLoading(false);
+      });
+  };
+
+  const processRejectFriend = () => {
+    setProgressLoading(true);
+    rejectFriend(friendStatus.friendId)
+      .then(() => {
+        setFriendStatus({});
+      })
+      .catch(err => {
+        showError(err.message);
+      })
+      .finally(() => setProgressLoading(false));
+  };
+
+  const processAddFriend = () => {
+    setProgressLoading(true);
+    requestAddFriend(userId)
+      .then(res => {
+        setFriendStatus({
+          isFriend: false,
+          status: 'PENDING',
+          friendId: res.id,
+          targetId: userId,
+        });
+      })
+      .catch(err => {
+        showError(err.message);
+      })
+      .finally(() => setProgressLoading(false));
+  };
+
+  const processUnblockUser = () => {
+    setProgressLoading(true);
+    unblockUser(friendStatus.friendId)
+      .then(() => {
+        setFriendStatus(null);
+      })
+      .catch(err => {
+        showError(err.message);
+      })
+      .finally(() => {
+        setProgressLoading(false);
+      });
   };
 
   const messageInteraction = async () => {
@@ -142,13 +212,54 @@ const Profile = ({navigation, route}: props) => {
     });
   };
 
-  const followInteraction = () => {};
+  const friendInteraction = () => {
+    if (friendStatus.status === 'FRIENDED') {
+      toggleUnfriendConfirmationModal();
+    } else if (friendStatus.status === 'PENDING') {
+      processRejectFriend();
+    } else if (
+      friendStatus.status === 'BLOCKED' &&
+      friendStatus.targetId !== user.id
+    ) {
+      processUnblockUser();
+    } else if (friendStatus.status == null) {
+      processAddFriend();
+    }
+  };
+
+  const acceptRequest = () => {
+    setProgressLoading(true);
+    acceptFriendRequest(friendStatus.friendId)
+      .then(res => {
+        setFriendStatus({
+          ...friendStatus,
+          status: 'FRIENDED',
+          isFriend: false,
+        });
+        setFriends([
+          ...friends,
+          {
+            ...user,
+            friendId: res.id,
+            isAccept: true,
+            friendStatus: 'FRIENDED',
+          },
+        ]);
+      })
+      .catch(err => {
+        showError(err.message);
+      })
+      .finally(() => {
+        setProgressLoading(false);
+      });
+  };
 
   const ListHeaderComponent = () => {
     return (
       <ProfileCard
         avatar={userProfile.avatar}
         name={userProfile.name}
+        onOptionPress={onProfileOptionsOpen}
         renderInteractions={() => (
           <View
             style={[
@@ -156,65 +267,89 @@ const Profile = ({navigation, route}: props) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginTop: 20,
               },
             ]}>
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={followInteraction}
+              onPress={friendInteraction}
+              disabled={progessLoading}
               style={[
-                {
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 5,
-                  paddingVertical: 7,
-                  borderRadius: 40,
-                  backgroundColor: theme.accent,
-                },
+                styles(theme).button,
+                styles(theme).buttonPrimary,
+                {flex: 1, height: 55, marginRight: 10},
               ]}>
-              {loading || error ? (
-                <LoadingIndicator size={IconSizes.x0} color={theme.white} />
+              {progessLoading ? (
+                <LoadingIndicator
+                  size={IconSizes.x0}
+                  color={ThemeStatic.white}
+                />
               ) : (
                 <Text
                   style={[
                     {
-                      ...FontWeights.Light,
-                      ...FontSizes.Caption,
-                      color: theme.white,
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                      color: ThemeStatic.white,
                     },
                   ]}>
-                  {`${isFriend ? 'UNFRIEND' : 'ADD FRIEND'}`}
+                  {friendStatus.status === 'FRIENDED'
+                    ? 'UNFRIEND'
+                    : friendStatus.status === 'PENDING'
+                    ? 'CANCEL'
+                    : friendStatus.status === 'BLOCKED'
+                    ? 'UNBLOCK'
+                    : 'ADD FRIEND'}
                 </Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={messageInteraction}
-              disabled={loading || error || !isFriend}
-              style={[
-                {
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginLeft: 5,
-                  paddingVertical: 7,
-                  borderRadius: 40,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: theme.accent,
-                },
-              ]}>
-              <Text
+            {friendStatus.status === 'PENDING' &&
+              friendStatus.targetId === user.id && (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  disabled={progessLoading}
+                  onPress={acceptRequest}
+                  style={[
+                    styles(theme).button,
+                    styles(theme).buttonPrimary,
+                    {flex: 1, height: 55, marginLeft: 10},
+                  ]}>
+                  {progessLoading ? (
+                    <LoadingIndicator
+                      size={IconSizes.x0}
+                      color={ThemeStatic.white}
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        {
+                          ...FontWeights.Bold,
+                          ...FontSizes.Body,
+                          color: ThemeStatic.white,
+                        },
+                      ]}>
+                      ACCEPT
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            {friendStatus.status === 'FRIENDED' && (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={messageInteraction}
+                disabled={progessLoading}
                 style={[
-                  {
-                    ...FontWeights.Light,
-                    ...FontSizes.Caption,
-                    color: theme.accent,
-                  },
+                  styles(theme).button,
+                  styles(theme).buttonPrimary,
+                  space(IconSizes.x1).ml,
+                  {height: 55},
                 ]}>
-                MESSAGE
-              </Text>
-            </TouchableOpacity>
+                <Ionicons
+                  name="chatbox-ellipses"
+                  size={IconSizes.x6}
+                  color={ThemeStatic.white}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         )}
         posts={sortedPosts.length}
@@ -282,12 +417,11 @@ const Profile = ({navigation, route}: props) => {
       <>
         <FlatGrid
           refreshControl={refreshControl()}
-          staticDimension={responsiveWidth(85)}
           ListHeaderComponent={ListHeaderComponent}
           itemDimension={150}
           data={sortedPosts}
           ListEmptyComponent={() => (
-            <ListEmptyComponent listType="posts" spacing={30} />
+            <ListEmptyComponent listType="posts" spacing={20} />
           )}
           ListFooterComponent={() => (
             <View
@@ -310,7 +444,6 @@ const Profile = ({navigation, route}: props) => {
           style={[
             {
               flex: 1,
-              marginHorizontal: 10,
             },
           ]}
           showsVerticalScrollIndicator={false}
@@ -339,7 +472,7 @@ const Profile = ({navigation, route}: props) => {
             <IconButton
               Icon={() => (
                 <Ionicons
-                  name="chevron-back-outline"
+                  name="arrow-back-outline"
                   size={IconSizes.x8}
                   color={theme.text01}
                 />
@@ -349,24 +482,6 @@ const Profile = ({navigation, route}: props) => {
               }}
             />
           </>
-        }
-        title="Profile"
-        titleStyle={{
-          ...FontWeights.Bold,
-          ...FontSizes.Label,
-          color: theme.text01,
-        }}
-        contentRight={
-          <IconButton
-            onPress={onProfileOptionsOpen}
-            Icon={() => (
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={IconSizes.x5}
-                color={theme.text01}
-              />
-            )}
-          />
         }
       />
       {content}
@@ -381,6 +496,17 @@ const Profile = ({navigation, route}: props) => {
         isVisible={blockConfirmationModal}
         toggle={toggleBlockConfirmationModal}
         onConfirm={processBlockUser}
+      />
+      <ConfirmationModal
+        label="Confirm"
+        title="Are you sure you want to unfriend this user?"
+        color={ThemeStatic.delete}
+        isVisible={unfriendConfirmationModal}
+        toggle={toggleUnfriendConfirmationModal}
+        onConfirm={() => {
+          toggleUnfriendConfirmationModal();
+          processRejectFriend();
+        }}
       />
     </GestureHandlerRootView>
   );

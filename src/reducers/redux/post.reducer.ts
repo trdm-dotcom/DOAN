@@ -2,36 +2,11 @@ import {createReducer} from '@reduxjs/toolkit';
 
 const initialState: any = {
   posts: [],
-  post: {author: {}, reactions: [], comments: [], tags: []},
   error: null,
   isLoading: true,
 };
 
 export const postReducer = createReducer(initialState, {
-  postCreateRequest: state => {
-    state.isLoading = true;
-  },
-  postCreateSuccess: (state, action) => {
-    state.isLoading = false;
-    state.posts = [...state.posts, action.payload];
-    state.isSuccess = true;
-  },
-  postCreateFailed: (state, action) => {
-    state.isLoading = false;
-    state.error = action.payload;
-  },
-  getPostRequest: state => {
-    state.post = {author: {}, reactions: [], comments: [], tags: []};
-    state.isLoading = true;
-  },
-  getPostSuccess: (state, action) => {
-    state.isLoading = false;
-    state.post = action.payload;
-  },
-  getPostFailed: (state, action) => {
-    state.isLoading = false;
-    state.error = action.payload;
-  },
   getAllPostsRequest: state => {
     state.isLoading = true;
   },
@@ -43,25 +18,21 @@ export const postReducer = createReducer(initialState, {
     state.isLoading = false;
     state.error = action.payload;
   },
-  updateReactionPost: (state, action) => {
-    state.posts = state.posts.map((post: any) =>
-      post.id === action.payload.to
-        ? {
-            ...post,
-            reactions: [...post.reactions, ...action.payload.data.reactions],
-          }
-        : post,
+  updatePostsReactions: (state, action) => {
+    const existingIndex = state.posts.findIndex(
+      post => post.id === action.payload.to,
     );
+    if (existingIndex !== -1) {
+      state.posts[existingIndex].reactions.push(action.payload.data.reactions);
+    }
   },
-  updateCommentPost: (state, action) => {
-    state.posts = state.posts.map((post: any) =>
-      post.id === action.payload.to
-        ? {
-            ...post,
-            reactions: [...post.reactions, ...action.payload.data.comments],
-          }
-        : post,
+  updatePostsComments: (state, action) => {
+    const existingIndex = state.posts.findIndex(
+      post => post.id === action.payload.to,
     );
+    if (existingIndex !== -1) {
+      state.posts[existingIndex].comments.push(action.payload.data.comments);
+    }
   },
   clearErrors: state => {
     state.error = null;

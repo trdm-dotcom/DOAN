@@ -1,4 +1,4 @@
-import {Dispatch} from '@reduxjs/toolkit';
+import {Dispatch} from 'react';
 import {IParam} from '../../models/IParam';
 import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 
@@ -6,16 +6,16 @@ export const getConversations =
   (params: IParam) => async (dispatch: Dispatch<any>) => {
     try {
       dispatch({
-        type: 'getChatRequest',
+        type: 'getChatsRequest',
       });
       const res = await apiGet<any[]>('/chat/conversation', {params: params});
       dispatch({
-        type: 'getChatSuccess',
+        type: 'getChatsSuccess',
         payload: res,
       });
     } catch (error: any) {
       dispatch({
-        type: 'getChatFailed',
+        type: 'getChatsFailed',
         payload: error.message,
       });
     }

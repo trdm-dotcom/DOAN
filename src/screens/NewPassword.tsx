@@ -32,10 +32,9 @@ const {FontWeights, FontSizes} = Typography;
 type props = NativeStackScreenProps<RootStackParamList, 'NewPassword'>;
 const NewPassword = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
-  const {username, otpKey} = route.params;
+  const {mail, otpKey} = route.params;
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [isContinue, setIsContinue] = useState<boolean>(false);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -53,24 +52,32 @@ const NewPassword = ({navigation, route}: props) => {
     return true;
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (isValidData()) {
-      try {
-        setLoading(true);
-        const body: IChangePasswordRequest = {
-          username: username,
-          otpKey: otpKey,
-          newPassword: password,
-          hash: getHash('PASSWORD'),
-        };
-        await apiPost<any>('/user/resetPassword', body, {
+      setLoading(true);
+      const body: IChangePasswordRequest = {
+        username: mail,
+        otpKey: otpKey,
+        newPassword: password,
+        hash: getHash('PASSWORD'),
+      };
+      console.log(body);
+      apiPost<any>(
+        '/user/resetPassword',
+        {data: body},
+        {
           'Content-Type': 'application/json',
+        },
+      )
+        .then(() => {
+          navigation.navigate('SignIn');
+        })
+        .catch(error => {
+          showError(error.message);
+        })
+        .finally(() => {
+          setLoading(false);
         });
-      } catch (error: any) {
-        showError(error.message);
-      } finally {
-        setLoading(false);
-      }
     }
   };
 
@@ -83,7 +90,7 @@ const NewPassword = ({navigation, route}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
@@ -112,11 +119,7 @@ const NewPassword = ({navigation, route}: props) => {
         <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
             onChangeText={(text: string) => {
-              const verify: boolean = text.trim().length > 0;
-              setIsContinue(verify);
-              if (verify) {
-                setPassword(text.trim());
-              }
+              setPassword(text.trim());
             }}
             style={[
               styles(theme).inputField,
@@ -136,11 +139,7 @@ const NewPassword = ({navigation, route}: props) => {
         <View style={[styles(theme).inputContainer, styles(theme).row]}>
           <TextInput
             onChangeText={(text: string) => {
-              const verify: boolean = text.trim().length > 0;
-              setIsContinue(verify);
-              if (verify) {
-                setConfirmPassword(text.trim());
-              }
+              setConfirmPassword(text.trim());
             }}
             style={[
               styles(theme).inputField,
@@ -164,14 +163,12 @@ const NewPassword = ({navigation, route}: props) => {
             }}
             isChecked={isPasswordVisible}
             leftText="Show"
-            leftTextStyle={[
-              {
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              },
-              space(IconSizes.x1).mr,
-            ]}
+            leftTextStyle={{
+              ...FontWeights.Regular,
+              ...FontSizes.Body,
+              color: theme.text01,
+              marginRight: 10,
+            }}
           />
         </View>
         <Text
@@ -190,7 +187,7 @@ const NewPassword = ({navigation, route}: props) => {
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
-            disabled={!isContinue || loading}>
+            disabled={loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (

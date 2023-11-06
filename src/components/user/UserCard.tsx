@@ -1,12 +1,11 @@
 import React, {ReactNode, useContext} from 'react';
 import {StyleProp, Text, TouchableOpacity, View, ViewStyle} from 'react-native';
 import {AppContext} from '../../context';
-import {useAppSelector} from '../../reducers/redux/store';
 import {space, styles} from '../style';
 import {useNavigation} from '@react-navigation/native';
-import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {IconSizes} from '../../constants/Constants';
 import {NativeImage} from '../shared/NativeImage';
+import {useSelector} from 'react-redux';
 
 type UserCardProps = {
   userId: number;
@@ -26,7 +25,7 @@ const UserCard = ({
   childen,
 }: UserCardProps) => {
   const {theme} = useContext(AppContext);
-  const user: IUserInfoResponse = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
   const navigation = useNavigation();
 
   const navigateToProfile = () => {

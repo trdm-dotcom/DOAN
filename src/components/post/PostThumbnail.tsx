@@ -32,7 +32,7 @@ const styles = (theme = {} as ThemeColors) =>
     container: {
       backgroundColor: theme.placeholder,
       overflow: 'hidden',
-      borderRadius: 5,
+      borderRadius: 10,
     },
     thumbnailImage: {
       flex: 1,

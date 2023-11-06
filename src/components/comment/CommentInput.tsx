@@ -11,8 +11,7 @@ import {NativeImage} from '../shared/NativeImage';
 import {addComment} from '../../reducers/action/post';
 import IconButton from '../control/IconButton';
 import {createAsyncDelay} from '../../utils/shared';
-import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {useAppSelector} from '../../reducers/redux/store';
+import {useSelector} from 'react-redux';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentInputProps = {
@@ -25,7 +24,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
   scrollViewRef,
 }: CommentInputProps) => {
   const {theme} = useContext(AppContext);
-  const user: IUserInfoResponse = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
   const [comment, setComment] = useState<string>('');
   const [loading, setLoading] = useState(false);
 

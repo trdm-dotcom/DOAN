@@ -1,7 +1,5 @@
 import React, {useContext} from 'react';
 import {TouchableOpacity, View, Text} from 'react-native';
-import {useAppSelector} from '../../reducers/redux/store';
-import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
 import {styles} from '../style';
 import {parseTimeElapsed} from '../../utils/shared';
 import {IconSizes} from '../../constants/Constants';
@@ -11,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import IconButton from '../control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {NativeImage} from '../shared/NativeImage';
+import {useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -32,7 +31,7 @@ const CommentCard = ({
   onPressOption,
 }: CommentCardProps) => {
   const {theme} = useContext(AppContext);
-  const user: IUserInfoResponse = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
   const {parsedTime} = parseTimeElapsed(time);
   const navigation = useNavigation();
 

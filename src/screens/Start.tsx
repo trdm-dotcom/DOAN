@@ -51,7 +51,7 @@ const Pagination = ({data, x, screenWidth}) => {
             height: 10,
             backgroundColor: ThemeStatic.accent,
             marginHorizontal: 10,
-            borderRadius: 5,
+            borderRadius: 10,
           },
           animatedDotStyle,
         ]}
@@ -87,20 +87,20 @@ const Start = ({navigation}: props) => {
     {
       id: 1,
       image: require('../../assets/image1.png'),
-      title: 'Lorem Ipsum',
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      title: 'Connect with Friend and Family',
+      text: 'Connecting with Family and Friends provides a sense of belonging and security ',
     },
     {
       id: 2,
       image: require('../../assets/image2.png'),
-      title: 'Lorem Ipsum',
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      title: 'Make new friends with ease',
+      text: 'Allowing you to make new Friends is our Number one priority.....',
     },
     {
       id: 3,
       image: require('../../assets/image3.png'),
-      title: 'Lorem Ipsum',
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      title: 'Express yourself to the world',
+      text: 'Express yourself freely on the internet using the Fotei app without any limitations.',
     },
   ];
 

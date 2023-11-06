@@ -36,14 +36,9 @@ const Reset = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
   const [id, setId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [isContinue, setIsContinue] = useState<boolean>(false);
 
   const handleOnChangeText = (text: string) => {
-    const verify: boolean = text.trim().length > 0;
-    setIsContinue(verify);
-    if (verify) {
-      setId(text.trim());
-    }
+    setId(text.trim());
   };
 
   const isValidData = () => {
@@ -58,7 +53,6 @@ const Reset = ({navigation}: props) => {
   const handleContinue = async () => {
     if (isValidData()) {
       try {
-        setLoading(true);
         setLoading(true);
         const body: ICheckExistRequest = {
           value: id,
@@ -100,7 +94,7 @@ const Reset = ({navigation}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
@@ -146,7 +140,7 @@ const Reset = ({navigation}: props) => {
             activeOpacity={0.9}
             onPress={handleContinue}
             style={[styles(theme).button, styles(theme).buttonPrimary]}
-            disabled={!isContinue || loading}>
+            disabled={loading}>
             {loading ? (
               <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
             ) : (

@@ -43,14 +43,14 @@ export const getFriendList = async (queryParams: IParam) =>
 export const blockUser = async (id: number) =>
   await apiPost<any>(
     '/user/friend/block',
-    {data: {block: id}},
+    {data: {friend: id}},
     {
       'Content-Type': 'application/json',
     },
   );
 
 export const unblockUser = async (id: number) =>
-  await apiDelete<any>('/user/friend/block', {params: {block: id}});
+  await apiDelete<any>('/user/friend/block', {params: {friend: id}});
 
 export const getBlockList = async (queryParams: IParam) =>
   await apiGet<any[]>('/user/friend/block', {params: queryParams});

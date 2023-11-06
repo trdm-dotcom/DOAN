@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import RootStack from './src/navigators/RootStack';
 import {Provider} from 'react-redux';
 import getStore from './src/reducers/redux/store';
@@ -11,25 +11,37 @@ import {
 import {AppContext, AppContextProvider} from './src/context';
 import {SafeAreaView} from 'react-native';
 import FlashMessage from 'react-native-flash-message';
-import {CredentialType, loadThemeType, loadToken} from './src/utils/Storage';
+import {
+  CredentialType,
+  loadThemeType,
+  loadToken,
+  removeToken,
+} from './src/utils/Storage';
 import Loading from './src/screens/Loading';
 import {styles} from './src/components/style';
-import {bindActionCreators} from '@reduxjs/toolkit';
-import {
-  authenticated,
-  clearAuthentication,
-  userInfo,
-} from './src/reducers/redux/authentication.reducer';
-import {useNavigation} from '@react-navigation/native';
 import {getUserInfo} from './src/reducers/action/user';
 import {IUserInfoResponse} from './src/models/response/IUserInfoResponse';
-import {connectSocket} from './src/utils/Socket';
+import {connectSocket, getSocket} from './src/utils/Socket';
 import {useDispatch} from 'react-redux';
+import {useSelector} from 'react-redux';
 
 const SafeAreaApp = () => {
   const dispatch = useDispatch();
+  // const navigation = useNavigation();
+
   const {theme, toggleTheme, setFcmToken} = useContext(AppContext);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const {isLoading} = useSelector((state: any) => state.user);
+  const {user} = useSelector((state: any) => state.user);
+  const socket = getSocket();
+
+  setupAxiosInterceptors(() => {
+    removeToken().then(() => {
+      dispatch({
+        type: 'userLogoutSuccess',
+      });
+    });
+  });
 
   const initializeTheme = async () => {
     const themeType = await loadThemeType();
@@ -43,12 +55,25 @@ const SafeAreaApp = () => {
     if (credentials) {
       const token = credentials.token;
       if (token.refExpiredTime > Date.now()) {
-        fetchToken().then(() => {
-          getUserInfo().then((userInfoRes: IUserInfoResponse) => {
-            dispatch(authenticated());
-            dispatch(userInfo(userInfoRes));
+        await fetchToken();
+        try {
+          dispatch({
+            type: 'getUsersRequest',
           });
-        });
+          const userInfoRes: IUserInfoResponse = await getUserInfo();
+          dispatch({
+            type: 'getUsersSuccess',
+            payload: userInfoRes,
+          });
+          dispatch({
+            type: 'authenticated',
+          });
+        } catch (err: any) {
+          dispatch({
+            type: 'getUsersFailed',
+            payload: err.message,
+          });
+        }
       }
     }
   };
@@ -58,27 +83,44 @@ const SafeAreaApp = () => {
     setFcmToken(fcmToken);
   };
 
-  const initializeApp = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([
-        initializeTheme(),
-        getFcmtoken(),
-        checkLoginCredentials(),
-      ]);
-    } finally {
+  const initializeApp = () => {
+    setLoading(true);
+    Promise.all([
+      initializeTheme(),
+      getFcmtoken(),
+      checkLoginCredentials(),
+    ]).finally(() => {
       setLoading(false);
-    }
+    });
   };
 
   useEffect(() => {
     initializeApp();
-    connectSocket();
+    socket.on('show.room', (data: any) => {
+      if (data.to === user.id) {
+        dispatch({
+          type: 'updateChats',
+          payload: data.data,
+        });
+      }
+    });
+    socket.on('post.reaction', (data: any) => {
+      dispatch({
+        type: 'updatePostsReactions',
+        payload: data,
+      });
+    });
+    socket.on('post.comment', (data: any) => {
+      dispatch({
+        type: 'updatePostsComments',
+        payload: data,
+      });
+    });
   }, []);
 
   return (
     <SafeAreaView style={[styles(theme).safeArea]}>
-      {loading ? <Loading /> : <RootStack />}
+      {loading || isLoading ? <Loading /> : <RootStack />}
       <FlashMessage
         titleStyle={styles(theme).flashMessageTitle}
         floating
@@ -91,14 +133,7 @@ const SafeAreaApp = () => {
 const Main = () => {
   const store = getStore();
 
-  const actions = bindActionCreators({clearAuthentication}, store.dispatch);
-  setupAxiosInterceptors(() => {
-    actions.clearAuthentication();
-    useNavigation().reset({
-      index: 0,
-      routes: [{name: 'Login'}],
-    });
-  });
+  connectSocket();
 
   useEffect(() => {
     requestUserPermission();

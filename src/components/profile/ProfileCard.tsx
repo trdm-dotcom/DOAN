@@ -6,6 +6,9 @@ import {AppContext} from '../../context';
 import {ThemeStatic} from '../../theme/Colors';
 import Typography from '../../theme/Typography';
 import {NativeImage} from '../shared/NativeImage';
+import {CONTENT_SPACING, IconSizes} from '../../constants/Constants';
+import {space, styles as globalStyles} from '../style';
+import IconButton from '../control/IconButton';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -15,9 +18,11 @@ type ProfileCardProps = {
   posts: number;
   friends: number;
   onFriendsOpen: any;
+  onOptionPress: any;
   renderInteractions?: any;
   editable?: boolean;
   onEdit?: any;
+  about?: string;
 };
 
 const ProfileCard = ({
@@ -26,18 +31,23 @@ const ProfileCard = ({
   posts,
   friends,
   onFriendsOpen,
+  onOptionPress,
   renderInteractions,
   editable,
   onEdit,
+  about,
 }: ProfileCardProps) => {
   const {theme} = useContext(AppContext);
+
   return (
-    <View style={styles(theme).container}>
-      <View style={styles(theme).info}>
-        <View style={styles(theme).connections}>
-          <Text style={styles(theme).connectionsText}>{posts}</Text>
-          <Text style={styles(theme).connectionsType}>POSTS</Text>
-        </View>
+    <View style={[space(IconSizes.x8).mb, space(IconSizes.x1).mt]}>
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          },
+        ]}>
         <View style={styles(theme).avatar}>
           <NativeImage uri={avatar} style={styles(theme).avatarImage} />
           {editable && (
@@ -45,9 +55,70 @@ const ProfileCard = ({
               activeOpacity={0.9}
               onPress={onEdit}
               style={styles(theme).editProfile}>
-              <Ionicons name="add" size={16} color={ThemeStatic.white} />
+              <Ionicons
+                name="add"
+                size={IconSizes.x4}
+                color={ThemeStatic.white}
+              />
             </TouchableOpacity>
           )}
+        </View>
+        <View style={{flex: 1}}>
+          <View style={space(IconSizes.x5).ml}>
+            <Text style={styles(theme).usernameText}>{name}</Text>
+            <Text style={styles(theme).aboutText}>{about}</Text>
+          </View>
+        </View>
+        <View style={{justifyContent: 'center'}}>
+          {editable ? (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={onOptionPress}
+              style={[
+                globalStyles(theme).button,
+                globalStyles(theme).buttonPrimary,
+                space(IconSizes.x0).pv,
+              ]}>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: ThemeStatic.white,
+                  },
+                ]}>
+                Edit
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <IconButton
+              onPress={onOptionPress}
+              Icon={() => (
+                <Ionicons
+                  name={'ellipsis-vertical'}
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+              )}
+            />
+          )}
+        </View>
+      </View>
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            backgroundColor: theme.placeholder,
+            borderRadius: 10,
+            padding: CONTENT_SPACING,
+          },
+          space(IconSizes.x5).mv,
+        ]}>
+        <View style={styles(theme).connections}>
+          <Text style={styles(theme).connectionsText}>{posts}</Text>
+          <Text style={styles(theme).connectionsType}>POSTS</Text>
         </View>
         <TouchableOpacity
           activeOpacity={0.9}
@@ -57,9 +128,6 @@ const ProfileCard = ({
           <Text style={styles(theme).connectionsType}>FRIENDS</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles(theme).name}>
-        <Text style={styles(theme).usernameText}>{name}</Text>
-      </View>
       {renderInteractions && renderInteractions()}
     </View>
   );
@@ -67,24 +135,14 @@ const ProfileCard = ({
 
 const styles = (theme = {} as ThemeColors) =>
   StyleSheet.create({
-    container: {
-      paddingTop: 10,
-      paddingBottom: 4,
-      paddingHorizontal: 10,
-    },
-    info: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
     avatar: {
-      height: 120,
-      width: 120,
+      height: 80,
+      width: 80,
     },
     avatarImage: {
       flex: 1,
       backgroundColor: theme.placeholder,
-      borderRadius: 120,
+      borderRadius: 80,
     },
     editProfile: {
       position: 'absolute',
@@ -94,7 +152,7 @@ const styles = (theme = {} as ThemeColors) =>
       justifyContent: 'center',
       borderRadius: 40,
       width: 60,
-      height: 32,
+      height: 30,
       borderWidth: 2,
       borderColor: theme.base,
       backgroundColor: theme.accent,
@@ -114,38 +172,15 @@ const styles = (theme = {} as ThemeColors) =>
       color: theme.text02,
       marginTop: 5,
     },
-    name: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 16,
-    },
     usernameText: {
       ...FontWeights.Bold,
-      ...FontSizes.SubHeading,
+      ...FontSizes.Body,
       color: theme.text01,
     },
-    handleText: {
-      ...FontWeights.Bold,
-      ...FontSizes.Body,
-      color: theme.text02,
-      marginTop: 5,
-    },
-    about: {
-      padding: 16,
-      marginTop: 16,
-      backgroundColor: theme.accent,
-      borderRadius: 10,
-      marginBottom: 10,
-    },
-    aboutTitle: {
-      ...FontWeights.Regular,
-      ...FontSizes.Body,
-      color: theme.white,
-    },
     aboutText: {
-      ...FontWeights.Light,
-      ...FontSizes.Body,
-      color: theme.white,
+      ...FontWeights.Regular,
+      ...FontSizes.Caption,
+      color: theme.text02,
       marginTop: 5,
     },
   });

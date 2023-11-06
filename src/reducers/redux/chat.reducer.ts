@@ -7,16 +7,24 @@ const initialState: any = {
 };
 
 export const chatReducer = createReducer(initialState, {
-  getChatRequest: state => {
+  getChatsRequest: state => {
     state.isLoading = true;
   },
-  getChatSuccess: (state, action) => {
+  getChatsSuccess: (state, action) => {
     state.isLoading = false;
     state.chats = action.payload;
   },
-  getChatFailed: (state, action) => {
+  getChatsFailed: (state, action) => {
     state.isLoading = false;
     state.error = action.payload;
+  },
+  updateChats: (state, action) => {
+    const existingIndex = state.chats.findIndex(
+      chat => chat.id === action.payload.data.id,
+    );
+    existingIndex !== -1
+      ? (state.chats[existingIndex] = action.payload.data)
+      : state.chats.push(action.payload.data);
   },
   clearErrors: state => {
     state.error = null;

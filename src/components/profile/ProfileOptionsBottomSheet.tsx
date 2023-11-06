@@ -1,11 +1,10 @@
 import React, {useContext} from 'react';
-import {StyleSheet, View} from 'react-native';
 import {Modalize} from 'react-native-modalize';
 import {AppContext} from '../../context';
 import BottomSheetHeader from '../header/BottomSheetHeader';
 import {ThemeStatic} from '../../theme/Colors';
-import {ThemeColors} from '../../constants/Types';
 import Option from '../shared/Option';
+import {styles} from '../style';
 
 interface ProfileOptionsBottomSheetProps {
   ref: React.Ref<any>;
@@ -18,38 +17,22 @@ const ProfileOptionsBottomSheet: React.FC<ProfileOptionsBottomSheetProps> =
 
     return (
       <Modalize
-        //@ts-ignore
         ref={ref}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={styles(theme).container}
+        modalStyle={styles(theme).modalizeContainer}
         adjustToContentHeight>
         <BottomSheetHeader
           heading="Options"
           subHeading="Tell us what you think"
         />
-        <View style={styles().content}>
-          <Option
-            label="Block"
-            iconName="ban-outline"
-            color={ThemeStatic.delete}
-            onPress={onBlockUser}
-          />
-        </View>
+        <Option
+          label="Block"
+          iconName="ban-outline"
+          color={ThemeStatic.delete}
+          onPress={onBlockUser}
+        />
       </Modalize>
     );
-  });
-
-const styles = (theme = {} as ThemeColors) =>
-  StyleSheet.create({
-    container: {
-      padding: 20,
-      backgroundColor: theme.base,
-    },
-    content: {
-      flex: 1,
-      paddingTop: 20,
-      paddingBottom: 16,
-    },
   });
 
 export default ProfileOptionsBottomSheet;

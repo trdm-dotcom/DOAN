@@ -85,9 +85,10 @@ export type ThemeStaticType = {
 };
 
 export type NotificationTextType = {
-  FOLLOW: string;
+  REQUEST: string;
   COMMENT: string;
   LIKE: string;
+  ACCEPT: string;
 };
 
 export type OnlineDotColorType = {

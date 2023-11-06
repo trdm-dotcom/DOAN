@@ -11,7 +11,7 @@ import BottomSheetHeader from '../header/BottomSheetHeader';
 import ListEmptyComponent from '../shared/ListEmptyComponent';
 import {IconSizes} from '../../constants/Constants';
 import {useNavigation} from '@react-navigation/native';
-import {useAppSelector} from '../../reducers/redux/store';
+import {useSelector} from 'react-redux';
 
 interface LikesBottomSheetProps {
   ref: Ref<any>;
@@ -25,7 +25,7 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
     const [users, setUsers] = useState<IUserInfoResponse[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<boolean>(false);
-    const user = useAppSelector(state => state.auth.userInfo);
+    const {user} = useSelector((state: any) => state.user);
 
     const renderItem = ({item}) => {
       return (
@@ -78,6 +78,7 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
               <ListEmptyComponent listType="likes" spacing={30} />
             ),
         }}
+        adjustToContentHeight
       />
     );
   },

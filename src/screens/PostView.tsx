@@ -17,7 +17,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import CommentInput from '../components/comment/CommentInput';
 import PostViewScreenPlaceholder from '../components/placeholder/PostViewScreen.Placeholder';
-import {useAppSelector} from '../reducers/redux/store';
 import {parseLikes, parseTimeElapsed} from '../utils/shared';
 import {NativeImage} from '../components/shared/NativeImage';
 import LikeBounceAnimation from '../components/post/LikeBounceAnimation';
@@ -25,7 +24,12 @@ import Comments from '../components/comment/Comments';
 import Typography from '../theme/Typography';
 import {ThemeStatic} from '../theme/Colors';
 import BounceView from '../components/shared/BounceView';
-import {deletePost, getPostDetail, postLike} from '../reducers/action/post';
+import {
+  deletePost,
+  disablePost,
+  getPostDetail,
+  postLike,
+} from '../reducers/action/post';
 import {
   GestureHandlerRootView,
   TapGestureHandler,
@@ -36,20 +40,27 @@ import {getHash} from '../utils/Crypto';
 import {IParam} from '../models/IParam';
 import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomSheet';
 import EditPostBottomSheet from '../components/bottomsheet/EditPostBottomSheet';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
+import {getSocket} from '../utils/Socket';
+import {showError} from '../utils/Toast';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'PostView'>;
 const PostView = ({navigation, route}: props) => {
-  const dispatch = useDispatch();
-  const user = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
 
   const {theme} = useContext(AppContext);
   const {postId} = route.params;
 
-  const {post, isLoading, error} = useSelector((state: any) => state.post);
-
+  const [post, setPost] = useState<any>({
+    author: {},
+    reactions: [],
+    comments: [],
+    tags: [],
+  });
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState(post.reactions.includes(user.id));
   const [likes, setLikes] = useState(post.reactions);
   const [isConfirmModalDeleteVisible, setIsConfirmModalDeleteVisible] =
@@ -63,12 +74,30 @@ const PostView = ({navigation, route}: props) => {
   const likesBottomSheetRef = useRef();
   const doubleTapRef = useRef();
   const likeBounceAnimationRef = createRef();
+  const socket = getSocket();
 
   const {readableTime} = parseTimeElapsed(post.createdAt);
 
   useEffect(() => {
-    getPostDetail({post: postId})(dispatch);
+    fetchPost();
+    socket.on('post.reaction', (data: any) => {
+      if (data.to === postId) {
+        setLikes([...likes, ...data.data.reactions]);
+      }
+    });
   }, []);
+
+  const fetchPost = async () => {
+    try {
+      setLoading(true);
+      const res = await getPostDetail({post: postId});
+      setPost(res);
+    } catch (err: any) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const confirmationDeleteToggle = () => {
     setIsConfirmModalDeleteVisible(previousState => !previousState);
@@ -128,7 +157,11 @@ const PostView = ({navigation, route}: props) => {
       post: post.id,
       hash: getHash('DELETE_POST'),
     };
-    return await Promise.all([deletePost(body), deleteImage(post.uri)]);
+    try {
+      await deletePost(body);
+    } catch (err: any) {
+      showError(err.message);
+    }
   };
 
   const doDisablePost = async () => {
@@ -136,17 +169,13 @@ const PostView = ({navigation, route}: props) => {
       post: post.id,
       hash: getHash('DISABLE_POST'),
     };
-    await deletePost(body);
-  };
-
-  const deleteImage = (uri: string) => {
-    const encodedPath = uri.split('o/')[1].split('?alt=media')[0];
-    const originalPath = decodeURIComponent(encodedPath);
-    return originalPath;
+    try {
+      await disablePost(body);
+    } catch (err: any) {}
   };
 
   let content =
-    isLoading || error ? (
+    loading || error ? (
       <PostViewScreenPlaceholder />
     ) : (
       <>
@@ -290,7 +319,7 @@ const PostView = ({navigation, route}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />

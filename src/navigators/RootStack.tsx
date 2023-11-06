@@ -1,7 +1,6 @@
 import React, {useContext} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useAppSelector} from '../reducers/redux/store';
 import Feed from '../screens/Feed';
 import Camera from '../screens/Camera';
 import Otp from '../screens/Otp';
@@ -21,6 +20,9 @@ import Conversation from '../screens/Conversation';
 import SignUp from '../screens/SignUp';
 import {ThemeStatic} from '../theme/Colors';
 import Profile from '../screens/Profile';
+import MyProfile from '../screens/MyProfile';
+import {useSelector} from 'react-redux';
+import NewPassword from '../screens/NewPassword';
 
 export type RootStackParamList = {
   Start: undefined;
@@ -30,6 +32,7 @@ export type RootStackParamList = {
   Main: undefined;
   Chat: undefined;
   SignUp: undefined;
+  Setting: undefined;
   Conversation: {
     chatId: string;
     targetId: number;
@@ -41,7 +44,7 @@ export type RootStackParamList = {
   };
   Profile: {userId: number};
   NewPassword: {
-    username: string;
+    mail: string;
     otpKey: string;
   };
   Password: {
@@ -63,7 +66,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
 const RootStack = () => {
-  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+  const {isAuthenticated} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
 
   return (
@@ -93,7 +96,7 @@ const RootStack = () => {
                         iconName = 'bell';
                       } else if (route.name === 'Friend') {
                         iconName = 'users';
-                      } else if (route.name === 'Setting') {
+                      } else if (route.name === 'MyProfile') {
                         iconName = 'user';
                       }
                       color = focused ? ThemeStatic.accent : theme.text01;
@@ -106,7 +109,7 @@ const RootStack = () => {
                   <Tab.Screen name="Feed" component={Feed} />
                   <Tab.Screen name="Notifi" component={Notifi} />
                   <Tab.Screen name="Friend" component={Friend} />
-                  <Tab.Screen name="Setting" component={Setting} />
+                  <Tab.Screen name="MyProfile" component={MyProfile} />
                 </Tab.Navigator>
               )}
             </Stack.Screen>
@@ -115,6 +118,7 @@ const RootStack = () => {
             <Stack.Screen name="Chat" component={Chat} />
             <Stack.Screen name="Conversation" component={Conversation} />
             <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="Setting" component={Setting} />
           </>
         ) : (
           <>
@@ -124,6 +128,7 @@ const RootStack = () => {
             <Stack.Screen name="Password" component={Password} />
             <Stack.Screen name="SignIn" component={SignIn} />
             <Stack.Screen name="Reset" component={Reset} />
+            <Stack.Screen name="NewPassword" component={NewPassword} />
           </>
         )}
       </Stack.Navigator>

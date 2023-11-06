@@ -85,9 +85,17 @@ export const PostDimensions: PostDimensionsType = {
 };
 
 export const NotificationType: NotificationTextType = {
-  FOLLOW: 'FOLLOW',
+  REQUEST: 'REQUEST',
   COMMENT: 'COMMENT',
   LIKE: 'LIKE',
+  ACCEPT: 'ACCEPT',
+};
+
+export const NotificationText: NotificationTextType = {
+  REQUEST: 'has sent you a friend request',
+  COMMENT: 'commented on your post',
+  LIKE: 'liked your post',
+  ACCEPT: 'accepted your friend request',
 };
 
 export const OnlineDotColor: OnlineDotColorType = {

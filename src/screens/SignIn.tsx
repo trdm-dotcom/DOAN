@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   KeyboardAvoidingView,
   Text,
@@ -21,53 +21,55 @@ import Typography from '../theme/Typography';
 import {password as loginPassword} from '../reducers/action/authentications';
 import {ILoginRequest} from '../models/request/ILoginRequest.model';
 import {getHash} from '../utils/Crypto';
-import {useAppDispatch} from '../reducers/redux/store';
 import IconButton from '../components/control/IconButton';
-import {
-  authenticated,
-  userInfo,
-} from '../reducers/redux/authentication.reducer';
 import Header from '../components/header/Header';
 import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import {getUserInfo} from '../reducers/action/user';
 import {ThemeStatic} from '../theme/Colors';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {useDispatch} from 'react-redux';
+import {useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'SignIn'>;
 
 const SignIn = ({navigation}: props) => {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const {loading, isLoading, error} = useSelector((state: any) => state.user);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (error != null) {
+      showError(error);
+    }
+  }, [error]);
+
   const isValidData = () => {
-    const error =
+    const validError =
       checkEmpty(username, 'Please enter your email address') ||
       checkEmpty(password, 'Please enter your password');
-    if (error) {
-      showError(error);
+    if (validError) {
+      showError(validError);
       return false;
     }
     return true;
   };
 
   const handleOnUsernameChangeText = (text: string) => {
-    setUsername(text);
+    setUsername(text.trim());
   };
 
   const handleOnPassChangeText = (text: string) => {
-    setPassword(text);
+    setPassword(text.trim());
   };
 
   const handleContinue = async () => {
     if (isValidData()) {
       try {
-        setLoading(true);
         const body: ILoginRequest = {
           username: username,
           password: password,
@@ -75,14 +77,32 @@ const SignIn = ({navigation}: props) => {
           client_secret: 'iW4rurIrZJ',
           hash: getHash('LOGIN'),
         };
+        dispatch({
+          type: 'userLoginRequest',
+        });
         await loginPassword(body);
-        const userInfoRes: IUserInfoResponse = await getUserInfo();
-        dispatch(userInfo(userInfoRes));
-        dispatch(authenticated());
+        dispatch({
+          type: 'userLoginSuccess',
+        });
+        try {
+          dispatch({
+            type: 'getUsersRequest',
+          });
+          const userInfoRes: IUserInfoResponse = await getUserInfo();
+          dispatch({
+            type: 'getUsersSuccess',
+            payload: userInfoRes,
+          });
+        } catch (err: any) {
+          dispatch({
+            type: 'getUsersFailed',
+          });
+        }
       } catch (err: any) {
-        showError(err.message);
-      } finally {
-        setLoading(false);
+        dispatch({
+          type: 'userLoginFailed',
+          payload: err.message,
+        });
       }
     }
   };
@@ -96,7 +116,7 @@ const SignIn = ({navigation}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
@@ -125,7 +145,12 @@ const SignIn = ({navigation}: props) => {
         <Animated.View
           style={[{flex: 1}, space(IconSizes.x5).mt]}
           entering={FadeInDown.delay(200).duration(1000).springify()}>
-          <View style={[styles(theme).inputContainer]}>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="person-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               onChangeText={handleOnUsernameChangeText}
               style={[
@@ -142,6 +167,11 @@ const SignIn = ({navigation}: props) => {
             />
           </View>
           <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="lock-closed-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               onChangeText={handleOnPassChangeText}
               style={[
@@ -201,8 +231,8 @@ const SignIn = ({navigation}: props) => {
                 styles(theme).buttonPrimary,
                 {flex: 1},
               ]}
-              disabled={loading}>
-              {loading ? (
+              disabled={loading || isLoading}>
+              {loading || isLoading ? (
                 <LoadingIndicator
                   size={IconSizes.x1}
                   color={ThemeStatic.white}
@@ -225,7 +255,7 @@ const SignIn = ({navigation}: props) => {
               activeOpacity={0.9}
               onPress={() => {}}
               style={[styles(theme).button, space(IconSizes.x5).ml]}
-              disabled={loading}>
+              disabled={loading || isLoading}>
               <Ionicons
                 name="finger-print"
                 size={IconSizes.x9}

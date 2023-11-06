@@ -4,7 +4,6 @@ import {RootStackParamList} from '../navigators/RootStack';
 import React, {useContext, useEffect, useState} from 'react';
 import {View} from 'react-native';
 import {styles} from '../components/style';
-import {useAppSelector} from '../reducers/redux/store';
 import ConversationScreenPlaceholder from '../components/placeholder/ConversationScreen.Placeholder';
 import {GiftedChat} from 'react-native-gifted-chat';
 import CustomScrollToBottom from '../components/message/CustomScrollToBottom';
@@ -21,11 +20,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import ChatHeaderAvatar from '../components/message/ChatHeaderAvatar';
 import {showError} from '../utils/Toast';
+import {useSelector} from 'react-redux';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 const Conversation = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
-  const user = useAppSelector(state => state.auth.userInfo);
+  const {user} = useSelector((state: any) => state.user);
   const {chatId, targetId, name, avatar} = route.params;
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -111,7 +111,7 @@ const Conversation = ({navigation, route}: props) => {
             <IconButton
               Icon={() => (
                 <Ionicons
-                  name="chevron-back-outline"
+                  name="arrow-back-outline"
                   size={IconSizes.x8}
                   color={theme.text01}
                 />

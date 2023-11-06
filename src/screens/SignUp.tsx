@@ -39,7 +39,6 @@ const SignUp = ({navigation}: props) => {
   const [name, setName] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [isContinue, setIsContinue] = useState<boolean>(false);
 
   const isValidData = () => {
     const error =
@@ -53,21 +52,15 @@ const SignUp = ({navigation}: props) => {
   };
 
   const handleOnNameChangeText = (text: string) => {
-    const verify: boolean = text.length > 0;
-    setIsContinue(previousState => previousState && verify);
-    setName(text);
+    setName(text.trim());
   };
 
   const handleOnMailChangeText = (text: string) => {
-    const verify: boolean = text.length > 0;
-    setIsContinue(previousState => previousState && verify);
-    setMail(text);
+    setMail(text.trim());
   };
 
   const handleOnChangePhoneNumber = (text: string) => {
-    const verify: boolean = text.length > 0;
-    setIsContinue(previousState => previousState && verify);
-    setPhoneNumber(text);
+    setPhoneNumber(text.trim());
   };
 
   const handleContinue = async () => {
@@ -79,7 +72,7 @@ const SignUp = ({navigation}: props) => {
               value: mail,
             }),
             checkExist({
-              value: mail,
+              value: phoneNumber,
             }),
           ]);
         if (
@@ -125,7 +118,7 @@ const SignUp = ({navigation}: props) => {
           <IconButton
             Icon={() => (
               <Ionicons
-                name="chevron-back-outline"
+                name="arrow-back-outline"
                 size={IconSizes.x8}
                 color={theme.text01}
               />
@@ -154,7 +147,12 @@ const SignUp = ({navigation}: props) => {
         <Animated.View
           style={[{flex: 1}, space(IconSizes.x5).mt]}
           entering={FadeInDown.delay(200).duration(1000).springify()}>
-          <View style={[styles(theme).inputContainer]}>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="person-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               onChangeText={handleOnNameChangeText}
               style={[
@@ -170,7 +168,12 @@ const SignUp = ({navigation}: props) => {
               placeholderTextColor={theme.text02}
             />
           </View>
-          <View style={[styles(theme).inputContainer]}>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="mail-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               onChangeText={handleOnMailChangeText}
               style={[
@@ -186,7 +189,12 @@ const SignUp = ({navigation}: props) => {
               placeholderTextColor={theme.text02}
             />
           </View>
-          <View style={[styles(theme).inputContainer]}>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="call-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               onChangeText={handleOnChangePhoneNumber}
               style={[
@@ -207,7 +215,7 @@ const SignUp = ({navigation}: props) => {
               activeOpacity={0.9}
               onPress={handleContinue}
               style={[styles(theme).button, styles(theme).buttonPrimary]}
-              disabled={!isContinue || loading}>
+              disabled={loading}>
               {loading ? (
                 <LoadingIndicator
                   size={IconSizes.x1}
