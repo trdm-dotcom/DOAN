@@ -39,6 +39,7 @@ import {getConversationBetween} from '../reducers/action/chat';
 import Typography from '../theme/Typography';
 import {showError} from '../utils/Toast';
 import {useSelector} from 'react-redux';
+import {responsiveHeight} from 'react-native-responsive-dimensions';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -484,30 +485,60 @@ const Profile = ({navigation, route}: props) => {
           </>
         }
       />
-      {content}
-      <ProfileOptionsBottomSheet
-        ref={profileOptionsBottomSheetRef}
-        onBlockUser={onBlockUser}
-      />
-      <ConfirmationModal
-        label="Confirm"
-        title="Are you sure you want to block this user?"
-        color={ThemeStatic.delete}
-        isVisible={blockConfirmationModal}
-        toggle={toggleBlockConfirmationModal}
-        onConfirm={processBlockUser}
-      />
-      <ConfirmationModal
-        label="Confirm"
-        title="Are you sure you want to unfriend this user?"
-        color={ThemeStatic.delete}
-        isVisible={unfriendConfirmationModal}
-        toggle={toggleUnfriendConfirmationModal}
-        onConfirm={() => {
-          toggleUnfriendConfirmationModal();
-          processRejectFriend();
-        }}
-      />
+      {(friendStatus.status === 'BLOCKED' &&
+        friendStatus.targetId === user.id) ||
+      userProfile.status === 'INACTIVE' ? (
+        <>
+          <View
+            style={[
+              {
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginHorizontal: 10,
+                height: responsiveHeight(20),
+              },
+            ]}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Light,
+                  ...FontSizes.Label,
+                  color: theme.text02,
+                },
+              ]}>
+              Sorry, this page isn't available
+            </Text>
+          </View>
+        </>
+      ) : (
+        <>
+          {content}
+          <ProfileOptionsBottomSheet
+            ref={profileOptionsBottomSheetRef}
+            onBlockUser={onBlockUser}
+          />
+          <ConfirmationModal
+            label="Ok"
+            title="Are you sure you want to block this user?"
+            color={ThemeStatic.delete}
+            isVisible={blockConfirmationModal}
+            toggle={toggleBlockConfirmationModal}
+            onConfirm={processBlockUser}
+          />
+          <ConfirmationModal
+            label="Ok"
+            title="Are you sure you want to unfriend this user?"
+            color={ThemeStatic.delete}
+            isVisible={unfriendConfirmationModal}
+            toggle={toggleUnfriendConfirmationModal}
+            onConfirm={() => {
+              toggleUnfriendConfirmationModal();
+              processRejectFriend();
+            }}
+          />
+        </>
+      )}
     </GestureHandlerRootView>
   );
 };

@@ -22,24 +22,36 @@ import {styles} from './src/components/style';
 import {getUserInfo} from './src/reducers/action/user';
 import {IUserInfoResponse} from './src/models/response/IUserInfoResponse';
 import {connectSocket, getSocket} from './src/utils/Socket';
-import {useDispatch} from 'react-redux';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {getDeviceId} from 'react-native-device-info';
+import {NavigationContainer, useNavigation} from '@react-navigation/native';
+import {getNotificationSetting} from './src/reducers/action/notification';
 
 const SafeAreaApp = () => {
   const dispatch = useDispatch();
-  // const navigation = useNavigation();
+  const navigation = useNavigation();
 
-  const {theme, toggleTheme, setFcmToken} = useContext(AppContext);
+  const {
+    theme,
+    toggleTheme,
+    setFcmToken,
+    setDeviceId,
+    deviceId,
+    setOnNotification,
+  } = useContext(AppContext);
   const [loading, setLoading] = useState<boolean>(true);
   const {isLoading} = useSelector((state: any) => state.user);
   const {user} = useSelector((state: any) => state.user);
   const socket = getSocket();
+
+  setDeviceId(getDeviceId());
 
   setupAxiosInterceptors(() => {
     removeToken().then(() => {
       dispatch({
         type: 'userLogoutSuccess',
       });
+      navigation.navigate('SignIn');
     });
   });
 
@@ -56,25 +68,39 @@ const SafeAreaApp = () => {
       const token = credentials.token;
       if (token.refExpiredTime > Date.now()) {
         await fetchToken();
-        try {
-          dispatch({
-            type: 'getUsersRequest',
-          });
-          const userInfoRes: IUserInfoResponse = await getUserInfo();
-          dispatch({
-            type: 'getUsersSuccess',
-            payload: userInfoRes,
-          });
-          dispatch({
-            type: 'authenticated',
-          });
-        } catch (err: any) {
-          dispatch({
-            type: 'getUsersFailed',
-            payload: err.message,
-          });
-        }
+        await Promise.all([userInfo(), notificationSetting()]);
       }
+    }
+  };
+
+  const notificationSetting = async () => {
+    try {
+      const res = await getNotificationSetting({deviceId: deviceId});
+      setOnNotification(res.receive);
+    } catch (err: any) {
+      setOnNotification(false);
+    }
+  };
+
+  const userInfo = async () => {
+    await fetchToken();
+    try {
+      dispatch({
+        type: 'getUsersRequest',
+      });
+      const userInfoRes: IUserInfoResponse = await getUserInfo();
+      dispatch({
+        type: 'getUsersSuccess',
+        payload: userInfoRes,
+      });
+      dispatch({
+        type: 'authenticated',
+      });
+    } catch (err: any) {
+      dispatch({
+        type: 'getUsersFailed',
+        payload: err.message,
+      });
     }
   };
 
@@ -143,7 +169,9 @@ const Main = () => {
   return (
     <Provider store={store}>
       <AppContextProvider>
-        <SafeAreaApp />
+        <NavigationContainer>
+          <SafeAreaApp />
+        </NavigationContainer>
       </AppContextProvider>
     </Provider>
   );

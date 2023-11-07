@@ -36,6 +36,8 @@ import {IRegisterRequest} from '../models/request/IRegisterRequest';
 import {useDispatch, useSelector} from 'react-redux';
 import {Modalize} from 'react-native-modalize';
 import Option from '../components/shared/Option';
+import {Image as ImageCompressor} from 'react-native-compressor';
+import {settingReceiveNotification} from '../reducers/action/notification';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -43,7 +45,7 @@ type props = NativeStackScreenProps<RootStackParamList, 'Password'>;
 
 const Password = ({navigation, route}: props) => {
   const dispatch = useDispatch();
-  const {theme} = useContext(AppContext);
+  const {theme, fcmToken, deviceId} = useContext(AppContext);
   const {name, phoneNumber, mail, otpKey} = route.params;
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
@@ -111,6 +113,12 @@ const Password = ({navigation, route}: props) => {
             payload: err.message,
           });
         }
+        const bodySettingNotification = {
+          isReceive: true,
+          deviceId: deviceId,
+          registrationToken: fcmToken,
+        };
+        settingReceiveNotification(bodySettingNotification);
       } catch (err: any) {
         dispatch({
           type: 'userRegisterFailed',
@@ -146,11 +154,13 @@ const Password = ({navigation, route}: props) => {
       dispatch({
         type: 'getUsersRequest',
       });
+
       const userInfoRes: IUserInfoResponse = await getUserInfo();
       dispatch({
         type: 'getUsersSuccess',
         payload: userInfoRes,
       });
+      navigation.navigate('Friend');
     } catch (err: any) {
       dispatch({
         type: 'getUsersFailed',
@@ -173,7 +183,16 @@ const Password = ({navigation, route}: props) => {
     })
       .then((image: Image) => {
         if (image.data != null) {
-          setAvatarData(`data:${image.mime};base64,${image.data}`);
+          ImageCompressor.compress(image.data, {
+            maxWidth: 960,
+            maxHeight: 960,
+            input: 'base64',
+            compressionMethod: 'auto',
+            quality: 0.6,
+            returnableOutputType: 'base64',
+          }).then((compressedImage: string) => {
+            setAvatarData(`data:${image.mime};base64,${compressedImage}`);
+          });
         }
       })
       .catch(err => {
@@ -193,7 +212,16 @@ const Password = ({navigation, route}: props) => {
     })
       .then((image: Image) => {
         if (image.data != null) {
-          setAvatarData(`data:${image.mime};base64,${image.data}`);
+          ImageCompressor.compress(image.data, {
+            maxWidth: 960,
+            maxHeight: 960,
+            input: 'base64',
+            compressionMethod: 'auto',
+            quality: 0.6,
+            returnableOutputType: 'base64',
+          }).then((compressedImage: string) => {
+            setAvatarData(`data:${image.mime};base64,${compressedImage}`);
+          });
         }
       })
       .catch(err => {
@@ -327,9 +355,9 @@ const Password = ({navigation, route}: props) => {
             }
           />
           <KeyboardAvoidingView
+            style={{flex: 1}}
             behavior={keyboardBehavior}
-            keyboardVerticalOffset={20}
-            style={[{flex: 1}, space(IconSizes.x10).mt]}>
+            keyboardVerticalOffset={20}>
             <Header title="Password" />
             <Text
               style={[
@@ -392,6 +420,7 @@ const Password = ({navigation, route}: props) => {
             </View>
             <View style={[{alignItems: 'flex-end'}, space(IconSizes.x5).mv]}>
               <CheckBox
+                style={{flex: 1}}
                 onClick={() => {
                   setPasswordVisible(!isPasswordVisible);
                 }}

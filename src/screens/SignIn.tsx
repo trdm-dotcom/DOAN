@@ -128,9 +128,9 @@ const SignIn = ({navigation}: props) => {
         }
       />
       <KeyboardAvoidingView
+        style={{flex: 1}}
         behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}
-        style={[{flex: 1}, space(IconSizes.x10).mt]}>
+        keyboardVerticalOffset={20}>
         <Header title="Sign In" />
         <Text
           style={[

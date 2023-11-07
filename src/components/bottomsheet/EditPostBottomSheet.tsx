@@ -57,6 +57,7 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
         adjustToContentHeight>
         <BottomSheetHeader heading="Edit Post" subHeading="Edit your post" />
         <KeyboardAvoidingView
+          style={{flex: 1}}
           behavior={keyboardBehavior}
           keyboardVerticalOffset={20}>
           <NativeImage

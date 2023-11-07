@@ -41,6 +41,7 @@ import {ThemeStatic} from '../theme/Colors';
 import {checkEmpty} from '../utils/Validate';
 import {NativeImage} from '../components/shared/NativeImage';
 import Option from '../components/shared/Option';
+import {Image as ImageCompressor} from 'react-native-compressor';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -122,9 +123,6 @@ const MyProfile = () => {
   const onOpenCamera = (autoUpdate: boolean) => {
     closeOptions();
     ImagePicker.openCamera({
-      width: 300,
-      height: 300,
-      cropping: true,
       compressImageQuality: 0.8,
       includeBase64: true,
       writeTempFile: false,
@@ -132,13 +130,26 @@ const MyProfile = () => {
     })
       .then((image: Image) => {
         if (image.data != null) {
-          if (autoUpdate) {
-            setAvatar(`data:${image.mime};base64,${image.data}`);
-            editInfo(name, `data:${image.mime};base64,${image.data}`, about);
-          } else {
-            setAvatar(`data:${image.mime};base64,${image.data}`);
-            modalizeOpen();
-          }
+          ImageCompressor.compress(image.path, {
+            maxWidth: 480,
+            maxHeight: 480,
+            input: 'uri',
+            compressionMethod: 'auto',
+            quality: 0.6,
+            returnableOutputType: 'base64',
+          }).then((compressedImage: string) => {
+            if (autoUpdate) {
+              setAvatar(`data:${image.mime};base64,${compressedImage}`);
+              editInfo(
+                name,
+                `data:${image.mime};base64,${compressedImage}`,
+                about,
+              );
+            } else {
+              setAvatar(`data:${image.mime};base64,${compressedImage}`);
+              modalizeOpen();
+            }
+          });
         }
       })
       .catch((err: any) => {
@@ -149,22 +160,32 @@ const MyProfile = () => {
   const onOpenGallery = (autoUpdate: boolean) => {
     closeOptions();
     ImagePicker.openPicker({
-      width: 300,
-      height: 300,
-      cropping: true,
       compressImageQuality: 0.8,
       includeBase64: true,
       writeTempFile: false,
     })
       .then((image: Image) => {
         if (image.data != null) {
-          if (autoUpdate) {
-            setAvatar(`data:${image.mime};base64,${image.data}`);
-            editInfo(name, `data:${image.mime};base64,${image.data}`, about);
-          } else {
-            setAvatar(`data:${image.mime};base64,${image.data}`);
-            modalizeOpen();
-          }
+          ImageCompressor.compress(image.path, {
+            maxWidth: 480,
+            maxHeight: 480,
+            input: 'uri',
+            compressionMethod: 'auto',
+            quality: 0.6,
+            returnableOutputType: 'base64',
+          }).then((compressedImage: string) => {
+            if (autoUpdate) {
+              setAvatar(`data:${image.mime};base64,${compressedImage}`);
+              editInfo(
+                name,
+                `data:${image.mime};base64,${compressedImage}`,
+                about,
+              );
+            } else {
+              setAvatar(`data:${image.mime};base64,${compressedImage}`);
+              modalizeOpen();
+            }
+          });
         }
       })
       .catch((err: any) => {
@@ -342,22 +363,6 @@ const MyProfile = () => {
     <GestureHandlerRootView
       style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
-        contentLeft={
-          <>
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="arrow-back-outline"
-                  size={IconSizes.x8}
-                  color={theme.text01}
-                />
-              )}
-              onPress={() => {
-                navigation.goBack();
-              }}
-            />
-          </>
-        }
         title="Profile"
         titleStyle={{
           ...FontWeights.Bold,
@@ -384,6 +389,7 @@ const MyProfile = () => {
         modalStyle={[styles(theme).modalizeContainer]}
         adjustToContentHeight>
         <KeyboardAvoidingView
+          style={{flex: 1}}
           behavior={keyboardBehavior}
           keyboardVerticalOffset={20}>
           <BottomSheetHeader
@@ -433,7 +439,12 @@ const MyProfile = () => {
               </TouchableOpacity>
             </View>
           </View>
-          <View style={[styles(theme).inputContainer]}>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="person-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               value={name}
               onChangeText={(text: string) => {
@@ -451,7 +462,12 @@ const MyProfile = () => {
               placeholderTextColor={theme.text02}
             />
           </View>
-          <View style={[styles(theme).inputContainer]}>
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <Ionicons
+              name="person-outline"
+              size={IconSizes.x6}
+              color={theme.text02}
+            />
             <TextInput
               value={about}
               onChangeText={(text: string) => {

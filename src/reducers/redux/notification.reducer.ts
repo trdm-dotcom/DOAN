@@ -28,16 +28,6 @@ export const notifiReducer = createReducer(initialState, {
     state.isLoading = false;
     state.error = action.payload;
   },
-  settingReceiveNotificationRequest: state => {
-    state.isLoading = true;
-  },
-  settingReceiveNotificationSuccess: state => {
-    state.isLoading = false;
-  },
-  settingReceiveNotificationFailed: (state, action) => {
-    state.isLoading = false;
-    state.error = action.payload;
-  },
   clearErrors: state => {
     state.error = null;
   },

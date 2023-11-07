@@ -1,5 +1,5 @@
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {apiGet, apiPut} from '../../utils/Api';
+import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 import {IUpdateUserInfoRequest} from '../../models/request/IUpdateUserInfoRequest';
 import IDisableUserRequest from '../../models/request/IDisableUserRequest';
 import IUserConfirmRequest from '../../models/request/IUserConfirmRequest';
@@ -32,8 +32,8 @@ export const putUserInfo = async (body: IUpdateUserInfoRequest) =>
   );
 
 export const disableUser = async (body: IDisableUserRequest) =>
-  await apiPut<any>(
-    '/user/disable',
+  await apiDelete<any>(
+    '/user',
     {
       data: body,
     },
@@ -43,7 +43,7 @@ export const disableUser = async (body: IDisableUserRequest) =>
   );
 
 export const confirmUser = async (body: IUserConfirmRequest) =>
-  await apiPut<any>(
+  await apiPost<any>(
     '/user/confirm',
     {
       data: body,
@@ -51,4 +51,11 @@ export const confirmUser = async (body: IUserConfirmRequest) =>
     {
       'Content-Type': 'application/json',
     },
+  );
+
+export const updateMode = async (body: IUpdateUserInfoRequest) =>
+  await apiPut<any>(
+    'user/mode',
+    {data: body},
+    {'Content-Type': 'application/json'},
   );

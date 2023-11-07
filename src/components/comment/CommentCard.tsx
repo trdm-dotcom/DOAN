@@ -39,7 +39,7 @@ const CommentCard = ({
 
   const navigateToProfile = () => {
     if (isOwnComment) {
-      return;
+      navigation.navigate('MyProfile');
     }
     navigation.navigate('Profile', {userId: userId});
   };

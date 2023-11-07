@@ -11,11 +11,9 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import {ThemeStatic, ThemeVariant} from '../theme/Colors';
+import {Theme, ThemeStatic} from '../theme/Colors';
 import {signOut} from '../reducers/action/authentications';
-import {logout} from '../reducers/redux/authentication.reducer';
-import {useAppDispatch, useAppSelector} from '../reducers/redux/store';
-import {IconSizes} from '../constants/Constants';
+import {CONTENT_SPACING, IconSizes} from '../constants/Constants';
 import AppOption from '../components/shared/AppOption';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../theme/Typography';
@@ -26,8 +24,12 @@ import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {showError} from '../utils/Toast';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import Header from '../components/header/Header';
-import {putUserInfo} from '../reducers/action/user';
-import {userInfo as updateUserInfo} from '../reducers/redux/authentication.reducer';
+import {
+  confirmUser,
+  disableUser,
+  putUserInfo,
+  updateMode,
+} from '../reducers/action/user';
 import CheckBox from 'react-native-check-box';
 import {getHash} from '../utils/Crypto';
 import IChangePasswordRequest from '../models/request/IChangePasswordRequest';
@@ -35,43 +37,68 @@ import {apiPost} from '../utils/Api';
 import {OtpTxtType} from '../models/enum/OtpTxtType';
 import {OtpIdType} from '../models/enum/OtpIdType';
 import IOtpResponse from '../models/response/IOtpResponse';
-import {IUserInfoResponse} from '../models/response/IUserInfoResponse';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
-import ImagePicker from 'react-native-image-crop-picker';
-import storage from '@react-native-firebase/storage';
-import {BallIndicator} from 'react-native-indicators';
-import AvatarOptionsBottomSheet from '../components/bottomsheet/AvatarOptionBottomSheet';
+import ImagePicker, {Image} from 'react-native-image-crop-picker';
 import {NativeImage} from '../components/shared/NativeImage';
+import {RootStackParamList} from '../navigators/RootStack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import HeaderBar from '../components/header/HeaderBar';
+import IconButton from '../components/control/IconButton';
+import {checkEmpty} from '../utils/Validate';
+import {useDispatch, useSelector} from 'react-redux';
+import BlockListBottomSheet from '../components/bottomsheet/BlockListBottomSheet';
+import Option from '../components/shared/Option';
+import {Image as ImageCompressor} from 'react-native-compressor';
+import {settingReceiveNotification} from '../reducers/action/notification';
 
 const {FontWeights, FontSizes} = Typography;
 
-const Setting = () => {
-  const dispatch = useAppDispatch();
-  const userInfo: IUserInfoResponse = useAppSelector(
-    state => state.auth.userInfo,
-  );
-  const {theme, themeType, toggleTheme, fcmToken} = useContext(AppContext);
-  const [isDarkMode, setIsDarkMode] = useState(themeType === ThemeVariant.dark);
-  const [signoutConfirmationModal, setSignoutConfirmationModal] =
-    useState(false);
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState<string>(userInfo.name);
-  const [avatar, setAvatar] = useState<string>(userInfo.avatar);
+type props = NativeStackScreenProps<RootStackParamList, 'Setting'>;
+const Setting = ({navigation}: props) => {
+  const dispatch = useDispatch();
+  const {user, isLoading, error} = useSelector((state: any) => state.user);
+  const {
+    theme,
+    themeType,
+    toggleTheme,
+    fcmToken,
+    deviceId,
+    onNotification,
+    setOnNotification,
+  } = useContext(AppContext);
+  const [name, setName] = useState<string>(user.name);
+  const [about, setAbout] = useState<string>(user.about);
+  const [avatar, setAvatar] = useState<any>(user.avatar);
   const [progess, setProgess] = useState<
-    null | 'changePass' | 'editInfo' | 'verifyOtp'
+    null | 'changePass' | 'editInfo' | 'verifyOtp' | 'confirm' | 'deleteAccount'
   >(null);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
-  const [isContinue, setIsContinue] = useState<boolean>(false);
   const [oldPassword, setOldPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
-  const [otpId, setOtpId] = useState<string>('');
-  const [otpValue, setOtpValue] = useState<string>('');
-  const [minutes, setMinutes] = useState<number>(1);
-  const [seconds, setSeconds] = useState<number>(30);
+  const [password, setPassword] = useState<string>('');
+  const [otpId, setOtpId] = useState<any>(null);
+  const [otpValue, setOtpValue] = useState<any>(null);
+  const [signoutConfirmationModal, setSignoutConfirmationModal] =
+    useState<boolean>(false);
+  const [privateModeConfirmationModal, setPrivateModeConfirmationModal] =
+    useState<boolean>(false);
+  const [deleteAccountConfirmationModal, setDeleteAccountConfirmationModal] =
+    useState<boolean>(false);
+  const [turnOffNotificationModal, setTurnOffNotificationModal] =
+    useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (error != null) {
+      showError(error);
+    }
+  }, [error]);
 
   const modalizeRef = useRef();
+  const deleteAccountBottomSheetRef = useRef();
   const avatarOptionsBottomSheetRef = useRef();
+  const blockListBottomSheetRef = useRef();
 
   const modalizeOpen = () => {
     // @ts-ignore
@@ -81,6 +108,16 @@ const Setting = () => {
   const modalizeClose = () => {
     // @ts-ignore
     return modalizeRef.current.close();
+  };
+
+  const deleteAccountOpen = () => {
+    // @ts-ignore
+    return deleteAccountBottomSheetRef.current.open();
+  };
+
+  const deleteAccountClose = () => {
+    // @ts-ignore
+    return deleteAccountBottomSheetRef.current.close();
   };
 
   const openOptions = () => {
@@ -93,111 +130,127 @@ const Setting = () => {
     return avatarOptionsBottomSheetRef.current.close();
   };
 
-  const onOpenCamera = () => {
-    closeOptions();
-    ImagePicker.openCamera({
-      width: 300,
-      height: 300,
-      cropping: true,
-      compressImageQuality: 0.8,
-    })
-      .then(image => {
-        if (image && !Array.isArray(image)) {
-          uploadImage(image.path)
-            .then(url => {
-              setAvatar(url);
-              editInfo(name, url);
-            })
-            .catch(err => {
-              showError(err.message);
-            })
-            .finally(() => {
-              setLoading(false);
-            });
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  };
-
-  const onOpenGallery = () => {
-    closeOptions();
-    ImagePicker.openPicker({
-      width: 300,
-      height: 300,
-      cropping: true,
-      compressImageQuality: 0.8,
-    })
-      .then(image => {
-        if (image && !Array.isArray(image)) {
-          setLoading(true);
-          uploadImage(image.path)
-            .then(url => {
-              setAvatar(url);
-              editInfo(name, url);
-            })
-            .catch(err => {
-              showError(err.message);
-            })
-            .finally(() => {
-              setLoading(false);
-            });
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (seconds > 0) {
-        setSeconds(seconds - 1);
-      }
-      if (seconds === 0) {
-        if (minutes === 0) {
-          setIsContinue(false);
-          clearInterval(interval);
-        } else {
-          setSeconds(59);
-          setMinutes(minutes - 1);
-        }
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [minutes, seconds]);
-
-  const handleSwitch = () => {
-    if (isDarkMode) {
-      toggleTheme(ThemeVariant.dark);
-    } else {
-      toggleTheme(ThemeVariant.light);
-    }
-    setIsDarkMode(previousState => !previousState);
-  };
-
-  const logOut = async () => {
-    try {
-      await signOut();
-    } finally {
-      dispatch(logout());
-    }
+  const onBlockListOpen = () => {
+    // @ts-ignore
+    return blockListBottomSheetRef.current.open();
   };
 
   const signoutConfirmationToggle = () => {
     setSignoutConfirmationModal(previousState => !previousState);
   };
 
+  const privateModeConfirmationToggle = () => {
+    setPrivateModeConfirmationModal(previousState => !previousState);
+  };
+
+  const deleteAccountConfirmationToggle = () => {
+    setDeleteAccountConfirmationModal(previousState => !previousState);
+  };
+
+  const turnOffNotificationModalToggle = () => {
+    setTurnOffNotificationModal(previousState => !previousState);
+  };
+
+  const onOpenCamera = async () => {
+    try {
+      closeOptions();
+      const image: Image = await ImagePicker.openCamera({
+        compressImageQuality: 0.8,
+        includeBase64: true,
+        writeTempFile: false,
+        useFrontCamera: true,
+      });
+      if (image.data != null) {
+        ImageCompressor.compress(image.path, {
+          maxWidth: 480,
+          maxHeight: 480,
+          input: 'uri',
+          compressionMethod: 'auto',
+          quality: 0.6,
+          returnableOutputType: 'base64',
+        }).then((compressedImage: string) => {
+          setAvatar(`data:${image.mime};base64,${compressedImage}`);
+          editInfo(name, `data:${image.mime};base64,${compressedImage}`, about);
+        });
+      }
+    } catch (err: any) {
+      console.log(err);
+    }
+  };
+
+  const onOpenGallery = async () => {
+    try {
+      closeOptions();
+      const image: Image = await ImagePicker.openPicker({
+        compressImageQuality: 0.8,
+        includeBase64: true,
+        writeTempFile: false,
+      });
+      if (image.data != null) {
+        ImageCompressor.compress(image.path, {
+          maxWidth: 480,
+          maxHeight: 480,
+          input: 'uri',
+          compressionMethod: 'auto',
+          quality: 0.6,
+          returnableOutputType: 'base64',
+        }).then((compressedImage: string) => {
+          setAvatar(`data:${image.mime};base64,${compressedImage}`);
+          editInfo(name, `data:${image.mime};base64,${compressedImage}`, about);
+        });
+      }
+    } catch (err: any) {
+      console.log(err);
+    }
+  };
+
+  const updateAccountMode = async () => {
+    try {
+      dispatch({
+        type: 'updateUserRequest',
+      });
+      await updateMode({mode: !user.privateMode});
+      dispatch({
+        type: 'updateUserSuccess',
+        payload: {
+          ...user,
+          privateMode: !user.privateMode,
+        },
+      });
+    } catch (err: any) {
+      dispatch({
+        type: 'updateUserFailed',
+        payload: err.message,
+      });
+    }
+  };
+
+  const logOut = async () => {
+    try {
+      dispatch({
+        type: 'userLogoutRequest',
+      });
+      await signOut();
+      dispatch({
+        type: 'userLogoutSuccess',
+      });
+      navigation.navigate('Start');
+    } catch (err: any) {
+      dispatch({
+        type: 'userLogoutFailed',
+        payload: err.message,
+      });
+    }
+  };
+
   const getOtp = async () => {
     try {
+      setOtpValue(null);
+      setOtpId(null);
       setLoading(true);
       const body = {
-        id: userInfo.phoneNumber ? userInfo.phoneNumber : fcmToken,
-        idType: userInfo.phoneNumber ? OtpIdType.SMS : OtpIdType.FIREBASE,
+        id: user.email,
+        idType: OtpIdType.EMAIL,
         txtType: OtpTxtType.VERIFY,
       };
       const response: IOtpResponse = await apiPost<IOtpResponse>(
@@ -208,34 +261,55 @@ const Setting = () => {
         },
       );
       setOtpId(response.otpId);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (err: any) {
+      showError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const editInfo = (nameEdit: string, avatarEdit: string) => {
-    setLoading(true);
-    putUserInfo({
-      name: nameEdit,
-      avatar: avatarEdit,
-    })
-      .then(() => {
-        userInfo.name = name;
-        userInfo.avatar = avatar;
-        dispatch(updateUserInfo(userInfo));
-        modalizeClose();
-      })
-      .catch((err: any) => {
-        showError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
+  const editInfo = async (nameEdit: any, avatarEdit: any, aboutEdit: any) => {
+    const validError = checkEmpty(name, 'Please enter your name');
+    if (validError) {
+      showError(validError);
+      return;
+    }
+    try {
+      dispatch({
+        type: 'updateUserRequest',
       });
+      await putUserInfo({
+        name: nameEdit,
+        avatar: avatarEdit,
+        about: aboutEdit,
+      });
+      user.name = nameEdit;
+      user.avatar = avatarEdit;
+      user.about = aboutEdit;
+      dispatch({
+        type: 'updateUserSuccess',
+        payload: {
+          ...user,
+          name: nameEdit,
+          avatar: avatarEdit,
+          about: aboutEdit,
+        },
+      });
+      modalizeClose();
+    } catch (err: any) {
+      dispatch({
+        type: 'updateUserFailed',
+        payload: err.message,
+      });
+    }
   };
 
   const verifyOtp = async () => {
+    const validError = checkEmpty(name, 'Please enter code');
+    if (validError) {
+      showError(validError);
+      return;
+    }
     setLoading(true);
     try {
       const bodyVerifyOtp = {otpId: otpId, otpValue: otpValue};
@@ -263,31 +337,76 @@ const Setting = () => {
     }
   };
 
-  const changePass = async () => {
-    getOtp();
+  const changePass = () => {
+    const validError =
+      checkEmpty(oldPassword, 'Please enter your old password') ||
+      checkEmpty(newPassword, 'Please enter your new password');
+    if (validError) {
+      showError(validError);
+      return;
+    }
     setProgess('verifyOtp');
-  };
-
-  const resendOtp = async () => {
-    setOtpValue('');
-    setOtpId('');
-    setMinutes(1);
-    setSeconds(30);
-    await getOtp();
+    getOtp();
   };
 
   const handleOnPress = async () => {
     try {
-      setLoading(true);
       switch (progess) {
         case 'changePass':
-          return await changePass();
+          return changePass();
         case 'editInfo':
-          return await editInfo(name, avatar);
+          return editInfo(name, avatar, about);
         case 'verifyOtp':
           return verifyOtp();
+        case 'confirm':
+          return requestConfirm();
+        case 'deleteAccount':
+          return deleteAccount();
         default:
           break;
+      }
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      setLoading(true);
+      const bodyVerifyOtp = {otpId: otpId, otpValue: otpValue};
+      const response: IVerifyOtpResponse = await apiPost<IVerifyOtpResponse>(
+        '/otp/verify',
+        {data: bodyVerifyOtp},
+        {
+          'Content-Type': 'application/json',
+        },
+      );
+      const body = {
+        otpKey: response.otpKey,
+        hash: getHash('DELETE_USER'),
+      };
+      await disableUser(body);
+      await logOut();
+      deleteAccountClose();
+    } catch (err: any) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const requestConfirm = async () => {
+    try {
+      setLoading(true);
+      const body = {
+        password: password,
+      };
+      const res = await confirmUser(body);
+      if (res.value) {
+        setProgess('deleteAccount');
+        getOtp();
+      } else {
+        showError("Password doesn't match");
       }
     } catch (err: any) {
       showError(err.message);
@@ -296,90 +415,116 @@ const Setting = () => {
     }
   };
 
-  const uploadImage = async (uri: string) => {
-    const filename = uri.substring(uri.lastIndexOf('/') + 1);
-    const uploadUri = uri.replace('file://', '');
-    const imageRef = storage().ref(filename);
-    await imageRef.putFile(uploadUri, {
-      cacheControl: 'no-store', // disable caching
-    });
-    return imageRef.getDownloadURL();
+  const requestSettingReceiveNotification = async (isReceive: boolean) => {
+    try {
+      setLoading(true);
+      const body = {
+        isReceive: isReceive,
+        deviceId: deviceId,
+        registrationToken: fcmToken,
+      };
+      await settingReceiveNotification(body);
+      setOnNotification(isReceive);
+    } catch (err: any) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
-    <>
-      <GestureHandlerRootView
-        style={[styles(theme).container, styles(theme).defaultBackground]}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+    <GestureHandlerRootView
+      style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <HeaderBar
+        contentLeft={
+          <>
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="arrow-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+          </>
+        }
+        title="Setting"
+        titleStyle={{
+          ...FontWeights.Bold,
+          ...FontSizes.Label,
+          color: theme.text01,
+        }}
+      />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={[{alignItems: 'center'}, space(IconSizes.x5).mb]}>
+          <View
+            style={{
+              padding: IconSizes.x00,
+              borderColor: theme.placeholder,
+              borderWidth: IconSizes.x00,
+              borderRadius: 120,
+            }}>
+            <NativeImage uri={user.avatar} style={styles(theme).avatarImage} />
+            <TouchableOpacity
+              activeOpacity={0.9}
+              disabled={isLoading}
+              onPress={openOptions}
+              style={{
+                position: 'absolute',
+                bottom: -10,
+                alignSelf: 'center',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 40,
+                width: 60,
+                height: 30,
+                borderWidth: 2,
+                borderColor: theme.base,
+                backgroundColor: theme.accent,
+              }}>
+              <Ionicons
+                name="add"
+                size={IconSizes.x6}
+                color={ThemeStatic.white}
+              />
+            </TouchableOpacity>
+          </View>
           <View
             style={[
-              {alignItems: 'center'},
-              space(IconSizes.x10).mt,
-              space(IconSizes.x5).mb,
+              styles(theme).profileNameContainer,
+              space(IconSizes.x1).mv,
             ]}>
-            <View
-              style={{
-                padding: IconSizes.x00,
-                borderColor: theme.placeholder,
-                borderWidth: IconSizes.x00,
-                borderRadius: 120,
-              }}>
-              <NativeImage uri={avatar} style={styles(theme).avatarImage} />
-              <TouchableOpacity
-                activeOpacity={0.9}
-                disabled={loading}
-                onPress={openOptions}
-                style={{
-                  position: 'absolute',
-                  borderRadius: 100,
-                  right: 0,
-                  bottom: 0,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  alignSelf: 'center',
-                }}>
-                {loading ? (
-                  <BallIndicator size={IconSizes.x8} color={theme.text01} />
-                ) : (
-                  <Ionicons
-                    name="camera"
-                    size={IconSizes.x8}
-                    color={theme.text01}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-            <View
-              style={[
-                styles(theme).profileNameContainer,
-                space(IconSizes.x1).mv,
-              ]}>
-              <Text style={styles(theme).profileUsernameText}>{name}</Text>
-            </View>
-            <AppButton
-              label="Edit Info"
-              onPress={() => {
-                setProgess('editInfo');
-                modalizeOpen();
-              }}
-              labelStyle={{
-                ...FontWeights.Bold,
-                ...FontSizes.Body,
-                color: theme.text01,
-              }}
-              containerStyle={[
-                {
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: theme.placeholder,
-                  paddingHorizontal: IconSizes.x5,
-                  borderRadius: 50,
-                },
-              ]}
-            />
+            <Text style={styles(theme).profileUsernameText}>{name}</Text>
           </View>
+          <AppButton
+            label="Edit Info"
+            onPress={() => {
+              setProgess('editInfo');
+              modalizeOpen();
+            }}
+            labelStyle={{
+              ...FontWeights.Bold,
+              ...FontSizes.Body,
+              color: theme.text01,
+            }}
+            containerStyle={[
+              {
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.placeholder,
+                paddingHorizontal: IconSizes.x5,
+                borderRadius: 50,
+              },
+            ]}
+          />
+        </View>
+        <View>
           <View style={[styles(theme).row]}>
             <Ionicons
               name="settings-outline"
@@ -398,15 +543,26 @@ const Setting = () => {
               Setting
             </Text>
           </View>
-          <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
+          <View style={[styles().groupOptionContainer, space(IconSizes.x1).mv]}>
             <AppOption
               label="Dark Mode"
               iconName="moon-outline"
               children={
                 <Switch
-                  value={isDarkMode}
-                  onValueChange={handleSwitch}
-                  thumbColor={isDarkMode ? ThemeStatic.accent : theme.base}
+                  value={themeType === Theme.dark.type}
+                  onValueChange={value => {
+                    toggleTheme(value ? Theme.dark.type : Theme.light.type);
+                    if (value) {
+                      turnOffNotificationModalToggle();
+                    } else {
+                      requestSettingReceiveNotification(true);
+                    }
+                  }}
+                  thumbColor={
+                    themeType === Theme.dark.type
+                      ? ThemeStatic.accent
+                      : theme.base
+                  }
                   ios_backgroundColor={theme.base}
                   trackColor={{
                     false: theme.base,
@@ -421,15 +577,26 @@ const Setting = () => {
                 label="Notification"
                 iconName="notifications-outline"
                 children={
-                  <Ionicons
-                    name="chevron-forward"
-                    color={theme.base}
-                    size={IconSizes.x6}
+                  <Switch
+                    value={onNotification}
+                    onValueChange={value => {
+                      toggleTheme(value ? Theme.dark.type : Theme.light.type);
+                    }}
+                    thumbColor={
+                      onNotification ? ThemeStatic.accent : theme.base
+                    }
+                    ios_backgroundColor={theme.base}
+                    trackColor={{
+                      false: theme.base,
+                      true: ThemeStatic.accent,
+                    }}
                   />
                 }
               />
             </TouchableOpacity>
           </View>
+        </View>
+        <View>
           <View style={[styles(theme).row]}>
             <Ionicons
               name="person-outline"
@@ -448,7 +615,32 @@ const Setting = () => {
               General
             </Text>
           </View>
-          <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
+          <View style={[styles().groupOptionContainer, space(IconSizes.x1).mv]}>
+            <AppOption
+              label="Private Profile"
+              iconName="lock-closed-outline"
+              children={
+                <Switch
+                  value={user.privateMode}
+                  onValueChange={value => {
+                    if (value) {
+                      privateModeConfirmationToggle();
+                    } else {
+                      updateAccountMode();
+                    }
+                  }}
+                  thumbColor={
+                    user.privateMode ? ThemeStatic.accent : theme.base
+                  }
+                  ios_backgroundColor={theme.base}
+                  trackColor={{
+                    false: theme.base,
+                    true: ThemeStatic.accent,
+                  }}
+                />
+              }
+              style={space(IconSizes.x00).mb}
+            />
             <TouchableOpacity
               onPress={() => {
                 setProgess('changePass');
@@ -467,11 +659,7 @@ const Setting = () => {
                 style={space(IconSizes.x00).mb}
               />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setProgess('changePass');
-                modalizeOpen();
-              }}>
+            <TouchableOpacity onPress={() => {}}>
               <AppOption
                 label="Biometric"
                 iconName="finger-print-outline"
@@ -482,9 +670,25 @@ const Setting = () => {
                     size={IconSizes.x6}
                   />
                 }
+                style={space(IconSizes.x00).mb}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onBlockListOpen()}>
+              <AppOption
+                label="Blocked users"
+                iconName="ban-outline"
+                children={
+                  <Ionicons
+                    name="chevron-forward"
+                    color={theme.base}
+                    size={IconSizes.x6}
+                  />
+                }
               />
             </TouchableOpacity>
           </View>
+        </View>
+        <View>
           <View style={[styles(theme).row]}>
             <Ionicons
               name="hand-left-outline"
@@ -504,11 +708,10 @@ const Setting = () => {
             </Text>
           </View>
           <View style={[styles().groupOptionContainer, space(IconSizes.x5).mv]}>
-            <TouchableOpacity onPress={() => signoutConfirmationToggle()}>
+            <TouchableOpacity onPress={signoutConfirmationToggle}>
               <AppOption
                 label="Sign out"
                 iconName="log-out-outline"
-                color="red"
                 children={
                   <Ionicons
                     name="chevron-forward"
@@ -519,7 +722,7 @@ const Setting = () => {
                 style={space(IconSizes.x00).mb}
               />
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={deleteAccountConfirmationToggle}>
               <AppOption
                 label="Delete Account"
                 iconName="sad-outline"
@@ -534,260 +737,459 @@ const Setting = () => {
               />
             </TouchableOpacity>
           </View>
-        </ScrollView>
-        <ConfirmationModal
-          label="Sign Out"
-          title="Are you sure you want to sign out?"
-          color="red"
-          isVisible={signoutConfirmationModal}
-          toggle={signoutConfirmationToggle}
-          onConfirm={logOut}
-        />
-        <Modalize
-          ref={modalizeRef}
-          scrollViewProps={{showsVerticalScrollIndicator: false}}
-          modalStyle={[styles(theme).modalizeContainer]}
-          adjustToContentHeight>
-          <KeyboardAvoidingView
-            behavior={keyboardBehavior}
-            keyboardVerticalOffset={20}
-            style={[{flex: 1}, space(IconSizes.x10).mt]}>
-            {progess === 'editInfo' && (
-              <>
-                <BottomSheetHeader
-                  heading="Edit profile"
-                  subHeading="Edit your personal information"
+        </View>
+      </ScrollView>
+      <Modalize
+        ref={modalizeRef}
+        scrollViewProps={{showsVerticalScrollIndicator: false}}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
+        <KeyboardAvoidingView
+          behavior={keyboardBehavior}
+          keyboardVerticalOffset={20}>
+          {progess === 'editInfo' && (
+            <>
+              <BottomSheetHeader
+                heading="Edit profile"
+                subHeading="Edit your personal information"
+              />
+              <View style={[styles(theme).inputContainer, styles(theme).row]}>
+                <Ionicons
+                  name="person-outline"
+                  size={IconSizes.x6}
+                  color={theme.text02}
                 />
-                <View style={[styles(theme).inputContainer]}>
-                  <TextInput
-                    value={name}
-                    onChangeText={(text: string) => {
-                      const verify: boolean = text.trim().length > 0;
-                      setIsContinue(verify);
-                      setName(text);
-                    }}
-                    style={[
-                      styles(theme).inputField,
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                        color: theme.text01,
-                      },
-                    ]}
-                    placeholder="Your name"
-                    placeholderTextColor={theme.text02}
-                  />
-                </View>
-              </>
-            )}
-            {progess === 'verifyOtp' && (
-              <>
-                <Header title="OTP sent" />
+                <TextInput
+                  value={name}
+                  onChangeText={(text: string) => {
+                    setName(text);
+                  }}
+                  style={[
+                    styles(theme).inputField,
+                    {
+                      ...FontWeights.Regular,
+                      ...FontSizes.Body,
+                      color: theme.text01,
+                    },
+                  ]}
+                  placeholder="Your name"
+                  placeholderTextColor={theme.text02}
+                />
+              </View>
+              <View style={[styles(theme).inputContainer, styles(theme).row]}>
+                <Ionicons
+                  name="person-outline"
+                  size={IconSizes.x6}
+                  color={theme.text02}
+                />
+                <TextInput
+                  value={about}
+                  onChangeText={(text: string) => {
+                    setAbout(text);
+                  }}
+                  style={[
+                    styles(theme).inputField,
+                    {
+                      ...FontWeights.Regular,
+                      ...FontSizes.Body,
+                      color: theme.text01,
+                    },
+                  ]}
+                  placeholder="About"
+                  placeholderTextColor={theme.text02}
+                />
+              </View>
+            </>
+          )}
+          {progess === 'changePass' && (
+            <>
+              <Header title="Change password" />
+              <View style={[styles(theme).inputContainer, styles(theme).row]}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={IconSizes.x6}
+                  color={theme.text02}
+                />
+                <TextInput
+                  onChangeText={(text: string) => {
+                    setOldPassword(text.trim());
+                  }}
+                  style={[
+                    styles(theme).inputField,
+                    {
+                      ...FontWeights.Regular,
+                      ...FontSizes.Body,
+                      color: theme.text01,
+                    },
+                  ]}
+                  secureTextEntry={!isPasswordVisible}
+                  placeholder="Old Password"
+                  placeholderTextColor={theme.text02}
+                />
+              </View>
+              <View style={[styles(theme).inputContainer, styles(theme).row]}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={IconSizes.x6}
+                  color={theme.text02}
+                />
+                <TextInput
+                  onChangeText={(text: string) => {
+                    setNewPassword(text.trim());
+                  }}
+                  style={[
+                    styles(theme).inputField,
+                    {
+                      ...FontWeights.Regular,
+                      ...FontSizes.Body,
+                      color: theme.text01,
+                    },
+                  ]}
+                  secureTextEntry={!isPasswordVisible}
+                  placeholder="New Password"
+                  placeholderTextColor={theme.text02}
+                />
+              </View>
+              <View style={{alignItems: 'flex-end'}}>
+                <CheckBox
+                  style={{flex: 1}}
+                  onClick={() => {
+                    setPasswordVisible(!isPasswordVisible);
+                  }}
+                  isChecked={isPasswordVisible}
+                  leftText="Show"
+                  leftTextStyle={{
+                    ...FontWeights.Regular,
+                    ...FontSizes.Body,
+                    color: theme.text01,
+                    marginRight: 10,
+                  }}
+                />
+              </View>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Regular,
+                    ...FontSizes.Caption,
+                    color: theme.text02,
+                  },
+                ]}>
+                Your password must be at least 8 characters, at least one number
+                and both lower and uppercase letters and special characters
+              </Text>
+            </>
+          )}
+          {progess === 'verifyOtp' && (
+            <>
+              <Header title="OTP sent" />
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Caption,
+                    color: theme.text02,
+                  },
+                ]}>
+                Enter the code sent to your phone
+              </Text>
+              <View style={[styles(theme).inputContainer]}>
+                <TextInput
+                  onChangeText={(text: string) => setOtpValue(text.trim())}
+                  style={[
+                    styles(theme).inputField,
+                    {
+                      ...FontWeights.Regular,
+                      ...FontSizes.Body,
+                      color: theme.text01,
+                    },
+                  ]}
+                  autoFocus
+                  keyboardType="numeric"
+                  placeholder="OTP"
+                  placeholderTextColor={theme.text02}
+                />
+              </View>
+              <View style={styles(theme).row}>
                 <Text
                   style={[
                     {
-                      ...FontWeights.Bold,
+                      ...FontWeights.Regular,
                       ...FontSizes.Caption,
-                      color: theme.text02,
+                      color: theme.text01,
                     },
+                    space(IconSizes.x00).mr,
                   ]}>
-                  Enter the code sent to your phone
+                  Didn't receive the code?{' '}
                 </Text>
-                <View style={[styles(theme).inputContainer]}>
-                  <TextInput
-                    style={[
-                      styles(theme).inputField,
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                        color: theme.text01,
-                      },
-                    ]}
-                    autoFocus
-                    keyboardType="numeric"
-                    placeholder="OTP"
-                    placeholderTextColor={theme.text02}
-                  />
-                </View>
-                <View style={styles(theme).row}>
+                <TouchableOpacity onPress={getOtp} style={styles(theme).button}>
                   <Text
                     style={[
                       {
-                        ...FontWeights.Regular,
+                        ...FontWeights.Bold,
                         ...FontSizes.Caption,
                         color: theme.text01,
                       },
-                      space(IconSizes.x00).mr,
                     ]}>
-                    Didn't receive the code?{' '}
+                    Resend OTP
                   </Text>
-                  {seconds > 0 || minutes > 0 ? (
-                    <Text
-                      style={[
-                        {
-                          ...FontWeights.Regular,
-                          ...FontSizes.Caption,
-                          color: theme.text01,
-                        },
-                      ]}>
-                      Resend in: {minutes < 10 ? `0${minutes}` : minutes}:
-                      {seconds < 10 ? `0${seconds}` : seconds}
-                    </Text>
-                  ) : (
-                    <TouchableOpacity
-                      onPress={resendOtp}
-                      style={styles(theme).button}>
-                      <Text
-                        style={[
-                          {
-                            ...FontWeights.Bold,
-                            ...FontSizes.Caption,
-                            color: theme.text01,
-                          },
-                        ]}>
-                        Resend OTP
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </>
-            )}
-            {progess === 'changePass' && (
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={handleOnPress}
+            disabled={isLoading || loading}
+            style={[styles(theme).button, styles(theme).buttonPrimary]}>
+            {isLoading || loading ? (
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+            ) : progess === 'confirm' || progess === 'changePass' ? (
               <>
-                <Header title="Change password" />
-                <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                  <TextInput
-                    onChangeText={(text: string) => {
-                      const verify: boolean =
-                        text.trim().length > 0 && newPassword.length > 0;
-                      setIsContinue(verify);
-                      setOldPassword(text.trim());
-                    }}
-                    style={[
-                      styles(theme).inputField,
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                        color: theme.text01,
-                      },
-                    ]}
-                    autoFocus
-                    secureTextEntry={!isPasswordVisible}
-                    placeholder="Old Password"
-                    placeholderTextColor={theme.text02}
+                <Text
+                  style={[
+                    styles(theme).centerText,
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                      color: ThemeStatic.white,
+                    },
+                  ]}>
+                  Next step
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={IconSizes.x6}
+                  color={ThemeStatic.white}
+                />
+              </>
+            ) : (
+              <Text
+                style={[
+                  styles(theme).centerText,
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: ThemeStatic.white,
+                  },
+                ]}>
+                Done
+              </Text>
+            )}
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modalize>
+      <Modalize
+        ref={deleteAccountBottomSheetRef}
+        scrollViewProps={{showsVerticalScrollIndicator: false}}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
+        {progess === 'confirm' && (
+          <>
+            <Header title="Verify password" />
+            <View style={[styles(theme).inputContainer, styles(theme).row]}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={IconSizes.x6}
+                color={theme.text02}
+              />
+              <TextInput
+                onChangeText={(text: string) => setPassword(text.trim())}
+                style={[
+                  styles(theme).inputField,
+                  {
+                    ...FontWeights.Regular,
+                    ...FontSizes.Body,
+                    color: theme.text01,
+                  },
+                  {flex: 1},
+                ]}
+                secureTextEntry={!isPasswordVisible}
+                placeholder="Password"
+                placeholderTextColor={theme.text02}
+              />
+              <IconButton
+                onPress={() => {
+                  setPasswordVisible(!isPasswordVisible);
+                }}
+                style={{marginHorizontal: CONTENT_SPACING}}
+                Icon={() => (
+                  <Ionicons
+                    name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                    size={IconSizes.x6}
+                    color={theme.text01}
                   />
-                </View>
-                <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                  <TextInput
-                    onChangeText={(text: string) => {
-                      const verify: boolean =
-                        text.trim().length > 0 && oldPassword.length > 0;
-                      setIsContinue(verify);
-                      setNewPassword(text.trim());
-                    }}
-                    style={[
-                      styles(theme).inputField,
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                        color: theme.text01,
-                      },
-                    ]}
-                    secureTextEntry={!isPasswordVisible}
-                    placeholder="New Password"
-                    placeholderTextColor={theme.text02}
-                  />
-                </View>
-                <View style={{alignItems: 'flex-end'}}>
-                  <CheckBox
-                    style={{flex: 1, padding: 10}}
-                    onClick={() => {
-                      setPasswordVisible(!isPasswordVisible);
-                    }}
-                    isChecked={isPasswordVisible}
-                    leftText="Show"
-                    leftTextStyle={[
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                        color: theme.text01,
-                      },
-                      space(IconSizes.x1).mr,
-                    ]}
-                  />
-                </View>
+                )}
+              />
+            </View>
+          </>
+        )}
+        {progess === 'deleteAccount' && (
+          <>
+            <Header title="OTP sent" />
+            <Text
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Caption,
+                  color: theme.text02,
+                },
+              ]}>
+              Enter the code sent to your phone
+            </Text>
+            <View style={[styles(theme).inputContainer]}>
+              <TextInput
+                onChangeText={(text: string) => setOtpValue(text.trim())}
+                style={[
+                  styles(theme).inputField,
+                  {
+                    ...FontWeights.Regular,
+                    ...FontSizes.Body,
+                    color: theme.text01,
+                  },
+                ]}
+                autoFocus
+                keyboardType="numeric"
+                placeholder="OTP"
+                placeholderTextColor={theme.text02}
+              />
+            </View>
+            <View style={styles(theme).row}>
+              <Text
+                style={[
+                  {
+                    ...FontWeights.Regular,
+                    ...FontSizes.Caption,
+                    color: theme.text01,
+                  },
+                  space(IconSizes.x00).mr,
+                ]}>
+                Didn't receive the code?{' '}
+              </Text>
+              <TouchableOpacity onPress={getOtp} style={styles(theme).button}>
                 <Text
                   style={[
                     {
                       ...FontWeights.Bold,
                       ...FontSizes.Caption,
-                      color: theme.text02,
+                      color: theme.text01,
                     },
                   ]}>
-                  Your password must be at least 8 characters, at least one
-                  number and both lower and uppercase letters and special
-                  characters
+                  Resend OTP
                 </Text>
-              </>
-            )}
-            <View
-              style={[
-                {flex: 1, justifyContent: 'flex-end'},
-                space(IconSizes.x5).mt,
-              ]}>
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={handleOnPress}
-                disabled={!isContinue || loading}
-                style={[styles(theme).button, styles(theme).buttonPrimary]}>
-                {loading ? (
-                  <LoadingIndicator
-                    size={IconSizes.x1}
-                    color={ThemeStatic.white}
-                  />
-                ) : progess === 'changePass' ? (
-                  <>
-                    <Text
-                      style={[
-                        styles(theme).centerText,
-                        {
-                          ...FontWeights.Bold,
-                          ...FontSizes.Body,
-                          color: theme.text01,
-                        },
-                      ]}>
-                      Next step
-                    </Text>
-                    <Ionicons
-                      name="arrow-forward"
-                      size={IconSizes.x6}
-                      color={theme.text01}
-                    />
-                  </>
-                ) : (
-                  <Text
-                    style={[
-                      styles(theme).centerText,
-                      {
-                        ...FontWeights.Bold,
-                        ...FontSizes.Body,
-                        color: ThemeStatic.white,
-                      },
-                    ]}>
-                    Done
-                  </Text>
-                )}
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </Modalize>
-        <AvatarOptionsBottomSheet
-          ref={avatarOptionsBottomSheetRef}
-          onOpenCamera={onOpenCamera}
-          onOpenGallery={onOpenGallery}
-        />
-      </GestureHandlerRootView>
-    </>
+          </>
+        )}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={handleOnPress}
+          disabled={isLoading || loading}
+          style={[styles(theme).button, styles(theme).buttonPrimary]}>
+          {isLoading || loading ? (
+            <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+          ) : progess === 'confirm' || progess === 'changePass' ? (
+            <>
+              <Text
+                style={[
+                  styles(theme).centerText,
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: ThemeStatic.white,
+                  },
+                ]}>
+                Next step
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={IconSizes.x6}
+                color={ThemeStatic.white}
+              />
+            </>
+          ) : (
+            <Text
+              style={[
+                styles(theme).centerText,
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Body,
+                  color: ThemeStatic.white,
+                },
+              ]}>
+              Done
+            </Text>
+          )}
+        </TouchableOpacity>
+      </Modalize>
+      <Modalize
+        ref={avatarOptionsBottomSheetRef}
+        scrollViewProps={{showsVerticalScrollIndicator: false}}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
+        <View
+          style={[
+            {
+              flex: 1,
+              paddingTop: 20,
+              paddingBottom: 16,
+            },
+          ]}>
+          <Option
+            label="Take a photo"
+            iconName="camera-outline"
+            color={theme.text01}
+            onPress={onOpenCamera}
+          />
+          <Option
+            label="Choose from gallery"
+            iconName="images-outline"
+            color={theme.text01}
+            onPress={onOpenGallery}
+          />
+          <Option
+            label="Delete"
+            iconName="close-circle-outline"
+            color="red"
+            onPress={() => editInfo(name, null, about)}
+          />
+        </View>
+      </Modalize>
+      <ConfirmationModal
+        label="Sign Out"
+        title="Are you sure you want to sign out?"
+        color="red"
+        isVisible={signoutConfirmationModal}
+        toggle={signoutConfirmationToggle}
+        onConfirm={logOut}
+      />
+      <ConfirmationModal
+        label="Ok"
+        title="Switch to private account?"
+        isVisible={privateModeConfirmationModal}
+        toggle={privateModeConfirmationToggle}
+        onConfirm={updateAccountMode}
+      />
+      <ConfirmationModal
+        label="Ok"
+        title="Turn off notification?"
+        isVisible={turnOffNotificationModal}
+        toggle={turnOffNotificationModalToggle}
+        onConfirm={() => requestSettingReceiveNotification(false)}
+      />
+      <ConfirmationModal
+        label="Continue deleting account"
+        title="Delete your Fotei account?"
+        color="red"
+        isVisible={deleteAccountConfirmationModal}
+        toggle={deleteAccountConfirmationToggle}
+        onConfirm={() => {
+          setProgess('confirm');
+          deleteAccountConfirmationToggle();
+          deleteAccountOpen();
+        }}
+      />
+      <BlockListBottomSheet ref={blockListBottomSheetRef} />
+    </GestureHandlerRootView>
   );
 };
 

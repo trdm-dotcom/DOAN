@@ -47,14 +47,14 @@ export const userReducer = createReducer(intialState, {
     state.error = action.payload;
   },
   updateUserRequest: state => {
-    state.loading = true;
+    state.isLoading = true;
   },
   updateUserSuccess: (state, action) => {
-    state.loading = false;
+    state.isLoading = false;
     state.user = action.payload;
   },
   updateUserFailed: (state, action) => {
-    state.loading = false;
+    state.isLoading = false;
     state.error = action.payload;
   },
   getUsersRequest: state => {

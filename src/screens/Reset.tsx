@@ -3,6 +3,7 @@ import {RootStackParamList} from '../navigators/RootStack';
 import React, {useContext, useState} from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -87,6 +88,8 @@ const Reset = ({navigation}: props) => {
     }
   };
 
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
+
   return (
     <View style={[styles(theme).container, styles(theme).defaultBackground]}>
       <HeaderBar
@@ -105,7 +108,9 @@ const Reset = ({navigation}: props) => {
           />
         }
       />
-      <KeyboardAvoidingView style={[{flex: 1}, space(IconSizes.x10).mt]}>
+      <KeyboardAvoidingView
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={20}>
         <Header title="Forgot Password" />
         <Text
           style={[

@@ -30,7 +30,7 @@ const UserCard = ({
 
   const navigateToProfile = () => {
     if (userId === user.id) {
-      return;
+      navigation.navigate('MyProfile');
     }
     navigation.navigate('Profile', {userId: userId});
   };

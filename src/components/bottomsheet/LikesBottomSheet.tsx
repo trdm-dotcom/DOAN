@@ -37,6 +37,8 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
             event.persist(); // Duỵ trì sự kiện gốc
             if (item.id !== user.id) {
               navigation.navigate('Profile', {userId: item.id});
+            } else {
+              navigation.navigate('MyProfile');
             }
           }}
           style={[space(IconSizes.x1).mt]}

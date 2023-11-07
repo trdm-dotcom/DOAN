@@ -102,9 +102,9 @@ const NewPassword = ({navigation, route}: props) => {
         }
       />
       <KeyboardAvoidingView
+        style={{flex: 1}}
         behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}
-        style={[{flex: 1}, space(IconSizes.x10).mt]}>
+        keyboardVerticalOffset={20}>
         <Header title="Pick a new Password" />
         <Text
           style={[
@@ -157,7 +157,7 @@ const NewPassword = ({navigation, route}: props) => {
         </View>
         <View style={{alignItems: 'flex-end'}}>
           <CheckBox
-            style={{flex: 1, padding: 10}}
+            style={{flex: 1}}
             onClick={() => {
               setPasswordVisible(!isPasswordVisible);
             }}

@@ -184,7 +184,9 @@ const PostView = ({navigation, route}: props) => {
             activeOpacity={0.9}
             onPress={() => {
               if (user.id !== post.author.id) {
-                navigation.replace('Profile', {userId: post.author.id});
+                navigation.navigate('Profile', {userId: post.author.id});
+              } else {
+                navigation.navigate('MyProfile');
               }
             }}
             style={styles(theme).postViewHeader}>
@@ -268,6 +270,8 @@ const PostView = ({navigation, route}: props) => {
             onPress={() => {
               if (post.author.id !== user.id) {
                 navigation.navigate('Profile', {userId: post.author.id});
+              } else {
+                navigation.navigate('MyProfile');
               }
             }}
             style={styles(theme).handleText}>
@@ -297,7 +301,7 @@ const PostView = ({navigation, route}: props) => {
         onConfirm={doDeletePost}
       />
       <ConfirmationModal
-        label="Yes"
+        label="Ok"
         title="Are you sure you want to hide this post?"
         color={ThemeStatic.delete}
         isVisible={isConfirmModalHideVisible}
@@ -331,9 +335,9 @@ const PostView = ({navigation, route}: props) => {
         }
       />
       <KeyboardAvoidingView
+        style={{flex: 1}}
         behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}
-        style={[{flex: 1}, space(IconSizes.x1).mt]}>
+        keyboardVerticalOffset={20}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={[{flex: 1}, space(IconSizes.x1).pt]}>

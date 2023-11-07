@@ -42,26 +42,14 @@ export const remarkNotification = () => async (dispatch: Dispatch<any>) => {
   }
 };
 
-export const settingReceiveNotification =
-  (params: IParam) => async (dispatch: Dispatch<any>) => {
-    try {
-      dispatch({
-        type: 'settingReceiveNotificationRequest',
-      });
-      await apiPut<any>(
-        '/notification/receive',
-        {data: params},
-        {
-          'Content-Type': 'application/json',
-        },
-      );
-      dispatch({
-        type: 'settingReceiveNotificationSuccess',
-      });
-    } catch (error: any) {
-      dispatch({
-        type: 'settingReceiveNotificationFailed',
-        payload: error.message,
-      });
-    }
-  };
+export const settingReceiveNotification = async (body: IParam) =>
+  await apiPut<any>(
+    '/notification/receive',
+    {data: body},
+    {
+      'Content-Type': 'application/json',
+    },
+  );
+
+export const getNotificationSetting = async (params: IParam) =>
+  await apiGet<any>('/notification/setting', {params: params});

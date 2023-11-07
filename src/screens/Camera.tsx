@@ -14,7 +14,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {IconSizes} from '../constants/Constants';
 import IconButton from '../components/control/IconButton';
 import {NativeImage} from '../components/shared/NativeImage';
-import Header from '../components/header/Header';
 import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import HeaderBar from '../components/header/HeaderBar';
@@ -29,6 +28,7 @@ import {Modalize} from 'react-native-modalize';
 import Option from '../components/shared/Option';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {MaterialIndicator} from 'react-native-indicators';
+import {Image as ImageCompressor} from 'react-native-compressor';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -54,8 +54,16 @@ const Camera = ({navigation}: props) => {
   const doUpPost = async () => {
     try {
       setLoading(true);
+      const imageData = await ImageCompressor.compress(imageSource, {
+        maxHeight: 720,
+        maxWidth: 720,
+        input: 'uri',
+        compressionMethod: 'auto',
+        quality: 0.6,
+        returnableOutputType: 'base64',
+      });
       const body: IParam = {
-        source: imageSource,
+        source: `data:image/jpeg;base64,${imageData}`,
         caption: caption,
         hash: getHash('UP_POST'),
       };
@@ -79,9 +87,7 @@ const Camera = ({navigation}: props) => {
       writeTempFile: false,
     })
       .then((image: Image) => {
-        if (image.data != null) {
-          setImageSource(`data:${image.mime};base64,${image.data}`);
-        }
+        setImageSource(image.path);
       })
       .catch(err => {
         console.log(err);
@@ -96,9 +102,7 @@ const Camera = ({navigation}: props) => {
       writeTempFile: false,
     })
       .then((image: Image) => {
-        if (image.data != null) {
-          setImageSource(`data:${image.mime};base64,${image.data}`);
-        }
+        setImageSource(image.path);
       })
       .catch(err => {
         console.log(err);
@@ -126,16 +130,8 @@ const Camera = ({navigation}: props) => {
           />
         }
       />
-      <View
-        style={[
-          styles(theme).row,
-          {
-            justifyContent: 'space-between',
-          },
-        ]}>
-        <Header title="Create New Post" />
-      </View>
       <KeyboardAvoidingView
+        style={{flex: 1}}
         behavior={keyboardBehavior}
         keyboardVerticalOffset={20}>
         <TouchableOpacity
