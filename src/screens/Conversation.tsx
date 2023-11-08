@@ -21,6 +21,7 @@ import {IconSizes} from '../constants/Constants';
 import ChatHeaderAvatar from '../components/message/ChatHeaderAvatar';
 import {showError} from '../utils/Toast';
 import {useSelector} from 'react-redux';
+import {getSocket} from '../utils/Socket';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 const Conversation = ({navigation, route}: props) => {
@@ -31,8 +32,16 @@ const Conversation = ({navigation, route}: props) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [messages, setMessages] = useState<any[]>([]);
+  const socket = getSocket();
 
   useEffect(() => {
+    socket.on('receive-message', (data: any) => {
+      if (data.chatId === chatId && data.data.user._id !== user.id) {
+        setMessages(previousMessages =>
+          GiftedChat.append(previousMessages, data.data),
+        );
+      }
+    });
     loadMessages();
   }, []);
 

@@ -1,8 +1,9 @@
 import React, {useState} from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import {ThemeStatic} from '../../theme/Colors';
-import {IconSizes, PostDimensions} from '../../constants/Constants';
+import {IconSizes} from '../../constants/Constants';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {responsiveWidth} from 'react-native-responsive-dimensions';
 
 const AnimationValues = {
   opacity: {initial: 0, final: 1},
@@ -84,7 +85,7 @@ const LikeBounceAnimation: React.FC<LikeBounceAnimationProps> =
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: PostDimensions.Large.height / 2.25,
+    top: responsiveWidth(75) / 2.25,
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',

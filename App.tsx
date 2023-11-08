@@ -24,12 +24,11 @@ import {IUserInfoResponse} from './src/models/response/IUserInfoResponse';
 import {connectSocket, getSocket} from './src/utils/Socket';
 import {useDispatch, useSelector} from 'react-redux';
 import {getDeviceId} from 'react-native-device-info';
-import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import {getNotificationSetting} from './src/reducers/action/notification';
+import {NavigationContainer} from '@react-navigation/native';
 
 const SafeAreaApp = () => {
   const dispatch = useDispatch();
-  const navigation = useNavigation();
 
   const {
     theme,
@@ -51,7 +50,6 @@ const SafeAreaApp = () => {
       dispatch({
         type: 'userLogoutSuccess',
       });
-      navigation.navigate('SignIn');
     });
   });
 
@@ -146,7 +144,13 @@ const SafeAreaApp = () => {
 
   return (
     <SafeAreaView style={[styles(theme).safeArea]}>
-      {loading || isLoading ? <Loading /> : <RootStack />}
+      {loading || isLoading ? (
+        <Loading />
+      ) : (
+        <NavigationContainer>
+          <RootStack />
+        </NavigationContainer>
+      )}
       <FlashMessage
         titleStyle={styles(theme).flashMessageTitle}
         floating
@@ -169,9 +173,7 @@ const Main = () => {
   return (
     <Provider store={store}>
       <AppContextProvider>
-        <NavigationContainer>
-          <SafeAreaApp />
-        </NavigationContainer>
+        <SafeAreaApp />
       </AppContextProvider>
     </Provider>
   );

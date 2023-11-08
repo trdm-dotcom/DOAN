@@ -14,7 +14,10 @@ import {
 import Header from '../components/header/Header';
 import MessageScreenPlaceholder from '../components/placeholder/MessageScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import {filterChatParticipants} from '../utils/shared';
+import {
+  filterChatParticipants,
+  sortMessageDescendingTime,
+} from '../utils/shared';
 import MessageCard from '../components/message/MessageCard';
 import {getConversations} from '../reducers/action/chat';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -124,7 +127,7 @@ const Chat = ({navigation}: props) => {
         refreshControl={refreshControl()}
         showsVerticalScrollIndicator={false}
         itemDimension={SCREEN_WIDTH}
-        data={chats}
+        data={sortMessageDescendingTime(chats)}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="messages" spacing={30} />
         )}
@@ -144,7 +147,6 @@ const Chat = ({navigation}: props) => {
           </View>
         )}
         style={styles(theme).flatGridList}
-        spacing={20}
         renderItem={renderItem}
         onScroll={onScroll}
         onScrollEndDrag={onScrollEndDrag}

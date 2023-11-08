@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Feed from '../screens/Feed';
 import Camera from '../screens/Camera';
@@ -22,6 +22,7 @@ import Profile from '../screens/Profile';
 import MyProfile from '../screens/MyProfile';
 import {useSelector} from 'react-redux';
 import NewPassword from '../screens/NewPassword';
+import {useNavigation} from '@react-navigation/native';
 
 export type RootStackParamList = {
   Start: undefined;
@@ -69,6 +70,13 @@ const Tab = createBottomTabNavigator();
 const RootStack = () => {
   const {isAuthenticated} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigation.navigate('Start');
+    }
+  }, [isAuthenticated]);
 
   return (
     <Stack.Navigator

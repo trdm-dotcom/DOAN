@@ -10,6 +10,7 @@ import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {showError} from '../../utils/Toast';
 import ConfirmationModal from '../shared/ConfirmationModal';
 import {getSocket} from '../../utils/Socket';
+import {sortCommentDescendingTime} from '../../utils/shared';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentsProps = {
@@ -81,7 +82,7 @@ const Comments = ({postId}: CommentsProps) => {
     loading || error ? (
       <ConnectionsPlaceholder />
     ) : comments.length > 0 ? (
-      comments.map(comment => {
+      sortCommentDescendingTime(comments).map(comment => {
         return (
           <CommentCard
             key={comment.id}

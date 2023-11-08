@@ -1,20 +1,22 @@
-import React, {createRef, useRef, useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import {parseComments, parseLikes, parseTimeElapsed} from '../../utils/shared';
-import {NativeImage} from '../shared/NativeImage';
-import {IconSizes, PostDimensions} from '../../constants/Constants';
-import {ThemeStatic} from '../../theme/Colors';
-import Typography from '../../theme/Typography';
-import {useNavigation} from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   GestureHandlerRootView,
   TapGestureHandler,
 } from 'react-native-gesture-handler';
+import Typography from '../../theme/Typography';
+import React, {createRef, useContext, useRef, useState} from 'react';
 import {postLike} from '../../reducers/action/post';
-import LikeBounceAnimation from './LikeBounceAnimation';
-import {space} from '../style';
+import {parseComments, parseLikes, parseTimeElapsed} from '../../utils/shared';
 import {useSelector} from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {View, Text} from 'react-native';
+import {AppContext} from '../../context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {ThemeStatic} from '../../theme/Colors';
+import {IconSizes} from '../../constants/Constants';
+import {NativeImage} from '../shared/NativeImage';
+import LikeBounceAnimation from './LikeBounceAnimation';
+import {responsiveWidth} from 'react-native-responsive-dimensions';
+import IconButton from '../control/IconButton';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -32,6 +34,7 @@ type PostCardProps = {
   likes: any[];
   comments: any[];
   caption: string;
+  tags: any[];
 };
 
 const PostCard = ({
@@ -42,12 +45,13 @@ const PostCard = ({
   likes,
   comments,
   caption,
+  tags,
 }: PostCardProps) => {
   const navigation = useNavigation();
   const {user} = useSelector((state: any) => state.user);
+  const {theme} = useContext(AppContext);
 
   const {readableTime} = parseTimeElapsed(time);
-  const readableComments = parseComments(comments.length);
   const [isLiked, setIsLiked] = useState(likes.includes(user.id));
 
   const likeBounceAnimationRef = createRef();
@@ -68,126 +72,195 @@ const PostCard = ({
   };
 
   return (
-    <GestureHandlerRootView>
-      <TapGestureHandler
-        onActivated={() =>
-          navigation.navigate('PostView', {
-            postId: id,
-          })
-        }
-        numberOfTaps={1}
-        waitFor={doubleTapRef}>
-        <TapGestureHandler
-          maxDelayMs={300}
-          ref={doubleTapRef}
-          onActivated={() => likeInteractionHandler(isLiked)}
-          numberOfTaps={2}>
-          <View style={styles.container}>
-            <NativeImage uri={uri} style={styles.postImage} />
-            <LikeBounceAnimation ref={likeBounceAnimationRef} />
-            <View style={styles.upperContent}>
-              <NativeImage uri={author.avatar} style={styles.avatarImage} />
-              <View style={[space(IconSizes.x1).ml]}>
-                <Text style={styles.handleText}>{author.name}</Text>
-                <Text style={styles.timeText}>{readableTime}</Text>
-              </View>
-            </View>
-
-            <View style={styles.lowerContent}>
+    <View style={{flexDirection: 'row'}}>
+      <View style={{justifyContent: 'space-between'}}>
+        <NativeImage
+          uri={author.avatar}
+          style={{
+            height: 40,
+            width: 40,
+            backgroundColor: ThemeStatic.placeholder,
+            borderRadius: 40,
+          }}
+        />
+        <View
+          style={{
+            borderWidth: 1,
+            alignSelf: 'center',
+            borderColor: theme.placeholder,
+            flexGrow: 1,
+          }}
+        />
+        <View
+          style={{
+            alignItems: 'center',
+            alignSelf: 'center',
+          }}>
+          {tags != null &&
+            tags.length > 0 &&
+            tags.map(tag => (
+              <NativeImage
+                uri={tag.avatar}
+                style={{
+                  height: 30,
+                  width: 30,
+                  backgroundColor: ThemeStatic.placeholder,
+                  borderRadius: 30,
+                }}
+              />
+            ))}
+        </View>
+      </View>
+      <View style={{flex: 1, marginLeft: 10}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexGrow: 1,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text
+              onPress={() => {
+                if (author.userId === user.id) {
+                  navigation.navigate('MyProfile');
+                } else {
+                  navigation.navigate('Profile', {userId: author.userId});
+                }
+              }}
+              style={{
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              }}>
+              {author.name}
+            </Text>
+          </View>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text
+              style={{
+                ...FontWeights.Regular,
+                ...FontSizes.Caption,
+                color: theme.text02,
+                marginTop: 2,
+              }}>
+              {readableTime}
+            </Text>
+          </View>
+        </View>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={{
+            ...FontWeights.Regular,
+            ...FontSizes.Body,
+            color: theme.text01,
+            marginVertical: 10,
+          }}>
+          {caption}
+        </Text>
+        <GestureHandlerRootView>
+          <TapGestureHandler
+            onActivated={() =>
+              navigation.navigate('PostView', {
+                postId: id,
+              })
+            }
+            numberOfTaps={1}
+            waitFor={doubleTapRef}>
+            <TapGestureHandler
+              maxDelayMs={300}
+              ref={doubleTapRef}
+              onActivated={() => likeInteractionHandler(isLiked)}
+              numberOfTaps={2}>
               <View
                 style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
+                  height: responsiveWidth(75),
+                  width: responsiveWidth(75),
+                  alignSelf: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: ThemeStatic.black,
+                  overflow: 'hidden',
+                  borderRadius: 10,
                 }}>
-                <View style={{flexDirection: 'row'}}>
-                  <Ionicons
-                    name={isLiked ? 'heart' : 'heart-outline'}
-                    color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
-                    size={IconSizes.x6}
-                  />
-                  <Text style={styles.likesText}>
-                    {parseLikes(likes.length)}
-                  </Text>
-                </View>
-                <View style={{flexDirection: 'row', marginLeft: IconSizes.x1}}>
-                  <Ionicons
-                    name="chatbubble-ellipses-outline"
-                    color={ThemeStatic.unlike}
-                    size={IconSizes.x6}
-                  />
-                  <Text style={styles.likesText}>{readableComments}</Text>
-                </View>
+                <NativeImage
+                  uri={uri}
+                  style={{
+                    position: 'absolute',
+                    height: responsiveWidth(80),
+                    width: responsiveWidth(80),
+                  }}
+                />
+                <LikeBounceAnimation ref={likeBounceAnimationRef} />
               </View>
-
+            </TapGestureHandler>
+          </TapGestureHandler>
+        </GestureHandlerRootView>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginVertical: 10,
+          }}>
+          <View style={{flexDirection: 'row'}}>
+            <View style={{flexDirection: 'row'}}>
+              <Ionicons
+                name={isLiked ? 'heart' : 'heart-outline'}
+                color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
+                size={IconSizes.x6}
+              />
               <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.captionText}>
-                {caption}
+                style={{
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 8,
+                  color: ThemeStatic.white,
+                }}>
+                {parseLikes(likes.length)}
+              </Text>
+            </View>
+            <View style={{flexDirection: 'row', marginLeft: IconSizes.x1}}>
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                color={ThemeStatic.unlike}
+                size={IconSizes.x6}
+              />
+              <Text
+                style={{
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 8,
+                  color: ThemeStatic.white,
+                }}>
+                {parseComments(comments.length)}
               </Text>
             </View>
           </View>
-        </TapGestureHandler>
-      </TapGestureHandler>
-    </GestureHandlerRootView>
+          {author.userId === user.id && (
+            <View
+              style={{
+                flexDirection: 'row',
+                marginLeft: IconSizes.x1,
+                alignSelf: 'flex-end',
+              }}>
+              <IconButton
+                onPress={() => {}}
+                Icon={() => (
+                  <Ionicons
+                    name="share-social-outline"
+                    color={theme.text01}
+                    size={IconSizes.x6}
+                  />
+                )}
+              />
+            </View>
+          )}
+        </View>
+      </View>
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    ...PostDimensions.Large,
-    alignSelf: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: ThemeStatic.black,
-    overflow: 'hidden',
-    borderRadius: 40,
-  },
-  postImage: {
-    position: 'absolute',
-    ...PostDimensions.Large,
-  },
-  avatarImage: {
-    height: 40,
-    width: 40,
-    backgroundColor: ThemeStatic.placeholder,
-    borderRadius: 40,
-    marginRight: 10,
-  },
-  upperContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: ThemeStatic.translucent,
-  },
-  lowerContent: {
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: ThemeStatic.translucent,
-  },
-  handleText: {
-    ...FontWeights.Bold,
-    ...FontSizes.Body,
-    color: ThemeStatic.white,
-  },
-  timeText: {
-    ...FontWeights.Regular,
-    ...FontSizes.Caption,
-    color: ThemeStatic.white,
-    marginTop: 2,
-  },
-  likesText: {
-    ...FontWeights.Regular,
-    ...FontSizes.Body,
-    marginLeft: 8,
-    color: ThemeStatic.white,
-  },
-  captionText: {
-    ...FontWeights.Bold,
-    ...FontSizes.Body,
-    color: ThemeStatic.white,
-    marginTop: 5,
-  },
-});
 
 export default PostCard;

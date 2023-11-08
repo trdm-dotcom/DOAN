@@ -234,7 +234,6 @@ const Setting = ({navigation}: props) => {
       dispatch({
         type: 'userLogoutSuccess',
       });
-      navigation.navigate('Start');
     } catch (err: any) {
       dispatch({
         type: 'userLogoutFailed',

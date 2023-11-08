@@ -61,8 +61,8 @@ const PostView = ({navigation, route}: props) => {
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [isLiked, setIsLiked] = useState(post.reactions.includes(user.id));
-  const [likes, setLikes] = useState(post.reactions);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [likes, setLikes] = useState<any[]>(post.reactions);
   const [isConfirmModalDeleteVisible, setIsConfirmModalDeleteVisible] =
     useState(false);
   const [isConfirmModalHideVisible, setIsConfirmModalHideVisible] =
@@ -92,6 +92,8 @@ const PostView = ({navigation, route}: props) => {
       setLoading(true);
       const res = await getPostDetail({post: postId});
       setPost(res);
+      setLikes(res.reactions);
+      setIsLiked(res.reactions.includes(user.id));
     } catch (err: any) {
       setError(true);
     } finally {
@@ -195,7 +197,7 @@ const PostView = ({navigation, route}: props) => {
               style={styles(theme).tinyImage}
             />
             <View style={[space(IconSizes.x1).ml]}>
-              <Text style={styles(theme).handleText}>{post.author.name}</Text>
+              <Text style={styles(theme).nameText}>{post.author.name}</Text>
               <Text style={styles(theme).timeText}>{readableTime}</Text>
             </View>
           </TouchableOpacity>
@@ -227,34 +229,47 @@ const PostView = ({navigation, route}: props) => {
         </TapGestureHandler>
         <View
           style={[
-            {
-              flexDirection: 'row',
-              marginTop: 20,
-            },
+            styles(theme).row,
+            space(IconSizes.x5).mt,
+            {justifyContent: 'space-between'},
           ]}>
-          <BounceView
-            scale={1.5}
-            moveSlop={15}
-            delay={40}
-            onPress={() => likeInteractionHandler(isLiked)}>
-            <Ionicons
-              name={isLiked ? 'heart' : 'heart-outline'}
-              color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
-              size={IconSizes.x6}
+          <View style={[styles(theme).row]}>
+            <BounceView
+              scale={1.5}
+              moveSlop={15}
+              delay={40}
+              onPress={() => likeInteractionHandler(isLiked)}>
+              <Ionicons
+                name={isLiked ? 'heart' : 'heart-outline'}
+                color={isLiked ? ThemeStatic.like : ThemeStatic.unlike}
+                size={IconSizes.x6}
+              />
+            </BounceView>
+            <Text
+              onPress={openLikes}
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              {parseLikes(likes.length)}
+            </Text>
+          </View>
+          {post.author.id === user.id && (
+            <IconButton
+              onPress={() => {}}
+              Icon={() => (
+                <Ionicons
+                  name="share-social-outline"
+                  color={theme.text01}
+                  size={IconSizes.x6}
+                />
+              )}
             />
-          </BounceView>
-          <Text
-            onPress={openLikes}
-            style={[
-              {
-                ...FontWeights.Regular,
-                ...FontSizes.Body,
-                marginLeft: 10,
-                color: theme.text01,
-              },
-            ]}>
-            {parseLikes(likes.length)}
-          </Text>
+          )}
         </View>
         <Text
           style={[
@@ -274,7 +289,7 @@ const PostView = ({navigation, route}: props) => {
                 navigation.navigate('MyProfile');
               }
             }}
-            style={styles(theme).handleText}>
+            style={styles(theme).nameText}>
             {post.author.name}{' '}
           </Text>
           {post.caption}

@@ -89,7 +89,7 @@ export const createAsyncDelay = (duration: number) => {
 export const filterChatParticipants = (userId: string, participants: any[]) =>
   participants.filter(participant => userId !== participant.id);
 
-export const sortMessageAscendingTime = array =>
+export const sortMessageDescendingTime = array =>
   array.sort(
     (a: any, b: any) =>
       new Date(b.lastMessage.createdAt).getTime() -
@@ -97,6 +97,12 @@ export const sortMessageAscendingTime = array =>
   );
 
 export const sortPostDescendingTime = array =>
+  array.sort(
+    (a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
+export const sortCommentDescendingTime = array =>
   array.sort(
     (a: any, b: any) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

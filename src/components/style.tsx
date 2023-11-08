@@ -133,7 +133,7 @@ export const styles = (theme = {} as ThemeColors) =>
     // camera screen
     cameraContainer: {
       height: SCREEN_WIDTH,
-      borderRadius: 40,
+      borderRadius: 10,
       backgroundColor: theme.placeholder,
       overflow: 'hidden',
     },
@@ -149,7 +149,7 @@ export const styles = (theme = {} as ThemeColors) =>
     captureButton: {
       height: 80,
       width: 80,
-      borderRadius: 40,
+      borderRadius: 80,
       backgroundColor: theme.placeholder,
       alignSelf: 'center',
       borderWidth: 4,
@@ -271,7 +271,7 @@ export const styles = (theme = {} as ThemeColors) =>
       ...PostDimensions.Large,
       alignSelf: 'center',
       marginTop: 25,
-      borderRadius: 40,
+      borderRadius: 10,
       backgroundColor: theme.placeholder,
     },
     postViewLikes: {

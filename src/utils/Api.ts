@@ -26,6 +26,9 @@ const getToken = async () => {
 };
 
 const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
+  let isRefreshing = false; // Thêm biến kiểm tra làm mới token
+  const refreshTokenQueue: (() => void)[] = [];
+
   const refreshToken = (): Promise<IRefreshTokenResponse> => {
     return new Promise((resolve, reject) => {
       if (!token) {
@@ -50,26 +53,41 @@ const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
     if (error.response && error.response.status === 401) {
       const originalRequest = error.config!;
       if (token.refExpiredTime > Date.now()) {
-        try {
-          const tokenResponse: IRefreshTokenResponse = await refreshToken();
-          token = {
-            ...token,
-            accessToken: tokenResponse.accessToken,
-            accExpiredTime: tokenResponse.accExpiredTime,
-          };
-          await AsyncStorage.mergeItem(
-            'proximity:credential',
-            JSON.stringify({
-              token: token,
-            }),
-          );
-          originalRequest.headers.Authorization = `jwt ${tokenResponse.accessToken}`;
-          return await instance(originalRequest);
-        } catch (err: any) {
-          onUnauthenticated();
+        if (!isRefreshing) {
+          isRefreshing = true;
+          try {
+            const tokenResponse: IRefreshTokenResponse = await refreshToken();
+            token = {
+              ...token,
+              accessToken: tokenResponse.accessToken,
+              accExpiredTime: tokenResponse.accExpiredTime,
+            };
+            await AsyncStorage.mergeItem(
+              'proximity:credential',
+              JSON.stringify({
+                token: token,
+              }),
+            );
+            originalRequest.headers.Authorization = `jwt ${tokenResponse.accessToken}`;
+            refreshTokenQueue.forEach(resolve => resolve());
+            refreshTokenQueue.length = 0; // Xóa các request đang chờ làm mới token
+            isRefreshing = false;
+          } catch (err: any) {
+            onUnauthenticated();
+            return Promise.reject(err);
+          }
+        } else {
+          const retryOriginalRequest = new Promise(resolve => {
+            refreshTokenQueue.push(() => {
+              originalRequest.headers.Authorization = `jwt ${token.accessToken}`;
+              resolve(instance(originalRequest));
+            });
+          });
+          return retryOriginalRequest;
         }
       } else {
         onUnauthenticated();
+        return Promise.reject(new Error('Token expired'));
       }
     }
     return Promise.reject(error);

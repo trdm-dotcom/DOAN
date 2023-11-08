@@ -3,13 +3,89 @@ import {Modalize} from 'react-native-modalize';
 import BottomSheetHeader from '../header/BottomSheetHeader';
 import {AppContext} from '../../context';
 import {rejectFriend, requestAddFriend} from '../../reducers/action/friend';
-import UserCardPress from '../user/UserCardPress';
 import {IconSizes} from '../../constants/Constants';
 import {ThemeStatic} from '../../theme/Colors';
 import {space, styles} from '../style';
 import ListEmptyComponent from '../shared/ListEmptyComponent';
 import {showError} from '../../utils/Toast';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {Text, TouchableOpacity, View} from 'react-native';
+import {NativeImage} from '../shared/NativeImage';
+import {MaterialIndicator} from 'react-native-indicators';
+import {useSelector} from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+
+type UserCardProps = {
+  userId: number;
+  avatar: string;
+  name: string;
+  handlerOnPress: () => Promise<void>;
+  friendStatus: string;
+};
+
+const ConnectionsUserCard = ({
+  userId,
+  avatar,
+  name,
+  handlerOnPress,
+  friendStatus,
+}: UserCardProps) => {
+  const {theme} = useContext(AppContext);
+  const {user} = useSelector((state: any) => state.user);
+  const navigation = useNavigation();
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  const navigateToProfile = () => {
+    if (userId === user.id) {
+      navigation.navigate('MyProfile');
+    }
+    navigation.navigate('Profile', {userId: userId});
+  };
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={navigateToProfile}
+      style={[styles(theme).userCardContainer, space(IconSizes.x1).mt]}>
+      <View style={[styles(theme).row]}>
+        <NativeImage uri={avatar} style={styles(theme).tinyImage} />
+        <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
+          {name}
+        </Text>
+      </View>
+      {friendStatus === null && (
+        <TouchableOpacity
+          onPress={() => {
+            setLoading(true);
+            handlerOnPress().finally(() => setLoading(false));
+          }}
+          disabled={loading}
+          activeOpacity={0.9}
+          style={[
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              padding: IconSizes.x1,
+              borderRadius: 50,
+              width: 50,
+            },
+          ]}>
+          {loading ? (
+            <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+          ) : (
+            <Ionicons
+              name="add"
+              size={IconSizes.x6}
+              color={ThemeStatic.accent}
+            />
+          )}
+        </TouchableOpacity>
+      )}
+    </TouchableOpacity>
+  );
+};
 
 interface ConnectionsBottomSheetProps {
   ref: React.Ref<any>;
@@ -65,28 +141,12 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
 
     const renderItem = ({item}) => {
       return (
-        <UserCardPress
+        <ConnectionsUserCard
           userId={item.id}
           avatar={item.avatar}
           name={item.name}
-          style={[space(IconSizes.x1).mt]}
+          friendStatus={item.friendStatus}
           handlerOnPress={() => onPress(item)}
-          buttonStyle={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: theme.placeholder,
-            padding: IconSizes.x1,
-            borderRadius: 50,
-            width: 50,
-          }}
-          ChildrenButton={() => (
-            <Ionicons
-              name="add"
-              size={IconSizes.x6}
-              color={ThemeStatic.accent}
-            />
-          )}
-          indicatorColor={ThemeStatic.accent}
         />
       );
     };

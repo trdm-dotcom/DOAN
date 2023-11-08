@@ -355,7 +355,11 @@ const Profile = ({navigation, route}: props) => {
         )}
         posts={sortedPosts.length}
         friends={friends.length}
-        onFriendsOpen={onFriendsOpen}
+        onFriendsOpen={() => {
+          if (!userProfile.privateMode || friendStatus.status === 'FRIENDED') {
+            onFriendsOpen();
+          }
+        }}
       />
     );
   };
@@ -422,7 +426,7 @@ const Profile = ({navigation, route}: props) => {
           itemDimension={150}
           data={sortedPosts}
           ListEmptyComponent={() => (
-            <ListEmptyComponent listType="posts" spacing={20} />
+            <ListEmptyComponent listType="posts" spacing={30} />
           )}
           ListFooterComponent={() => (
             <View

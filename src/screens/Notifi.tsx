@@ -124,7 +124,6 @@ const Notifi = () => {
           </View>
         )}
         style={styles(theme).flatGridList}
-        spacing={20}
         renderItem={renderItem}
         onScroll={onScroll}
         onScrollEndDrag={onScrollEndDrag}

@@ -19,6 +19,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
+import {sortPostDescendingTime} from '../utils/shared';
 
 const Feed = () => {
   const dispatch = useDispatch();
@@ -66,6 +67,7 @@ const Feed = () => {
   const renderItem = ({item}) => {
     return (
       <PostCard
+        tags={item.tags}
         id={item.id}
         author={item.author}
         time={item.createdAt}
@@ -100,7 +102,7 @@ const Feed = () => {
         refreshControl={refreshControl()}
         showsVerticalScrollIndicator={false}
         itemDimension={SCREEN_WIDTH}
-        data={posts}
+        data={sortPostDescendingTime(posts)}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="posts" spacing={30} />
         )}
@@ -124,7 +126,6 @@ const Feed = () => {
             flex: 1,
           },
         ]}
-        spacing={20}
         renderItem={renderItem}
         onScroll={onScroll}
         onScrollEndDrag={onScrollEndDrag}

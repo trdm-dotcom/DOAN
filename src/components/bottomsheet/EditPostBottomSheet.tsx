@@ -61,7 +61,7 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
           behavior={keyboardBehavior}
           keyboardVerticalOffset={20}>
           <NativeImage
-            uri={post.uri}
+            uri={post.source}
             style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}
           />
           <View
