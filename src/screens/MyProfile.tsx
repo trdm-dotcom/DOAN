@@ -103,7 +103,12 @@ const MyProfile = () => {
         fetchFriends(0),
         fetchPostTags(0),
         fetchPostHiden(0),
-      ]).finally(() => setLoading(false));
+      ])
+        .catch(err => {
+          console.log(err);
+          setError(true);
+        })
+        .finally(() => setLoading(false));
     };
 
     fetchData();
@@ -151,18 +156,13 @@ const MyProfile = () => {
     }
   }, [errorRedux]);
 
-  const fetchFriends = (page: number) => {
-    getFriendList({
+  const fetchFriends = async (page: number) => {
+    const res = await getFriendList({
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(res => {
-        setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
-        setCountFriends(res.total);
-      })
-      .catch(() => {
-        setError(true);
-      });
+    });
+    setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
+    setCountFriends(res.total);
   };
 
   const requestImageModeration = async (imageData: string, filename: string) =>
@@ -312,41 +312,38 @@ const MyProfile = () => {
 
   const handleOnPress = () => editInfo(name, avatar, about, avatarFilename);
 
-  const fetchPosts = (page: number) => {
-    getPostOfUser({
+  const fetchPosts = async (page: number) => {
+    const res = await getPostOfUser({
       targetId: user.id,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    }).then(res => {
-      setCountPosts(res.total);
-      setPosts(res.page === 0 ? res.datas : [...posts, ...res.datas]);
-      setNextPage(res.page + 1);
-      setTotalPages(res.totalPages);
     });
+    setCountPosts(res.total);
+    setPosts(res.page === 0 ? res.datas : [...posts, ...res.datas]);
+    setNextPage(res.page + 1);
+    setTotalPages(res.totalPages);
   };
 
-  const fetchPostTags = (page: number) => {
-    getPostTagged({
+  const fetchPostTags = async (page: number) => {
+    const res = await getPostTagged({
       targetId: user.id,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    }).then(res => {
-      setPostsTagged(res.page === 0 ? res : [...postsTagged, ...res.datas]);
-      setNextPageTagged(res.page + 1);
-      setTotalPagesTagged(res.totalPages);
     });
+    setPostsTagged(res.page === 0 ? res.datas : [...postsTagged, ...res.datas]);
+    setNextPageTagged(res.page + 1);
+    setTotalPagesTagged(res.totalPages);
   };
 
-  const fetchPostHiden = (page: number) => {
-    getPostHiden({
+  const fetchPostHiden = async (page: number) => {
+    const res = await getPostHiden({
       targetId: user.id,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    }).then(res => {
-      setPostsHiden(res.page === 0 ? res : [...postsHiden, ...res.datas]);
-      setNextPageHiden(res.page + 1);
-      setTotalPagesHiden(res.totalPages);
     });
+    setPostsHiden(res.page === 0 ? res.datas : [...postsHiden, ...res.datas]);
+    setNextPageHiden(res.page + 1);
+    setTotalPagesHiden(res.totalPages);
   };
 
   const renderItem = ({item}) => {
@@ -388,7 +385,7 @@ const MyProfile = () => {
         }
       }}
       renderItem={renderItem}
-      keyExtractor={item => item.id.toString()}
+      // keyExtractor={item => item.id.toString()}
     />
   );
 

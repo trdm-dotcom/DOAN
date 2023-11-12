@@ -21,6 +21,8 @@ type UserCardProps = {
   name: string;
   handlerOnPress: () => Promise<void>;
   friendStatus: string;
+  isAccept: boolean;
+  handlerOnAccept: () => Promise<void>;
 };
 
 const ConnectionsUserCard = ({
@@ -29,6 +31,8 @@ const ConnectionsUserCard = ({
   name,
   handlerOnPress,
   friendStatus,
+  isAccept,
+  handlerOnAccept,
 }: UserCardProps) => {
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
@@ -53,7 +57,7 @@ const ConnectionsUserCard = ({
           {name}
         </Text>
       </View>
-      {friendStatus === null && (
+      <View style={[styles(theme).row]}>
         <TouchableOpacity
           onPress={() => {
             setLoading(true);
@@ -74,6 +78,12 @@ const ConnectionsUserCard = ({
           ]}>
           {loading ? (
             <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+          ) : friendStatus !== null ? (
+            <Ionicons
+              name="close"
+              size={IconSizes.x6}
+              color={ThemeStatic.accent}
+            />
           ) : (
             <Ionicons
               name="add"
@@ -82,7 +92,34 @@ const ConnectionsUserCard = ({
             />
           )}
         </TouchableOpacity>
-      )}
+        {friendStatus !== null && friendStatus === 'PENDING' && isAccept && (
+          <TouchableOpacity
+            onPress={() => {
+              setLoading(true);
+              handlerOnAccept().finally(() => setLoading(false));
+            }}
+            disabled={loading}
+            activeOpacity={0.9}
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.placeholder,
+                padding: IconSizes.x1,
+                borderRadius: 50,
+                width: 50,
+                marginLeft: 10,
+              },
+            ]}>
+            <Ionicons
+              name="checkmark"
+              size={IconSizes.x6}
+              color={ThemeStatic.accent}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -143,6 +180,15 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
       );
     };
 
+    const acceptFriend = async (friend: any) => {
+      await requestAddFriend(friend.friendId);
+      onStateChange({
+        ...friend,
+        friendStatus: 'FRIENDED',
+      });
+      datas.filter(item => item.id !== friend.id);
+    };
+
     const fetchData = (page: number) => {
       setLoading(true);
       fetchMore(page)
@@ -161,11 +207,13 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
     const renderItem = ({item}) => {
       return (
         <ConnectionsUserCard
-          userId={item.id}
+          userId={item.friendId}
           avatar={item.avatar}
           name={item.name}
           friendStatus={item.friendStatus}
           handlerOnPress={() => onPress(item)}
+          isAccept={item.isAccept}
+          handlerOnAccept={() => acceptFriend(item)}
         />
       );
     };

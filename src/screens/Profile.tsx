@@ -85,6 +85,7 @@ const Profile = ({navigation, route}: props) => {
   useEffect(() => {
     const fetchData = () => {
       setLoading(true);
+      setIsLoading(true);
       Promise.all([
         getUserInfo({userId: userId}),
         checkFriend({
@@ -102,62 +103,46 @@ const Profile = ({navigation, route}: props) => {
           setUserProfile(res[0]);
           setFriendStatus(res[1]);
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          setLoading(false);
+          setIsLoading(false);
+        });
     };
 
     fetchData();
   }, []);
 
-  const fetchPosts = (page: number) => {
-    setIsLoading(true);
-    getPostOfUser({
+  const fetchPosts = async (page: number) => {
+    const res = await getPostOfUser({
       targetId: userId,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(res => {
-        setCountPosts(res.total);
-        setPosts(res.page === 0 ? res.dtas : [...posts, ...res.datas]);
-        setNextPage(res.page + 1);
-        setTotalPages(res.totalPages);
-      })
-      .then(() => {
-        setIsLoading(false);
-      });
+    });
+    setCountPosts(res.total);
+    setPosts(res.page === 0 ? res.datas : [...posts, ...res.datas]);
+    setNextPage(res.page + 1);
+    setTotalPages(res.totalPages);
   };
 
-  const fetchPostTags = (page: number) => {
-    setIsLoading(true);
-    getPostTagged({
+  const fetchPostTags = async (page: number) => {
+    const res = await getPostTagged({
       targetId: userId,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(res => {
-        setPostsTagged(res.page === 0 ? res : [...postsTagged, ...res.datas]);
-        setNextPageTagged(res.page + 1);
-        setTotalPagesTagged(res.totalPages);
-      })
-      .then(() => {
-        setIsLoading(false);
-      });
+    });
+    setPostsTagged(res.page === 0 ? res.datas : [...postsTagged, ...res.datas]);
+    setNextPageTagged(res.page + 1);
+    setTotalPagesTagged(res.totalPages);
   };
 
-  const fetchFriends = (page: number) => {
-    setLoading(true);
-    getFriendOfUser({
+  const fetchFriends = async (page: number) => {
+    const res = await getFriendOfUser({
       friend: userId,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    })
-      .then(res => {
-        setCountFriends(res.total);
-        setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
-      })
-      .catch(() => {
-        setError(true);
-      })
-      .finally(() => setLoading(false));
+    });
+    setCountFriends(res.total);
+    setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
   };
 
   const profileOptionsBottomSheetRef = useRef();
@@ -342,7 +327,8 @@ const Profile = ({navigation, route}: props) => {
       onEndReachedThreshold={0.8}
       onEndReached={() => {
         if (nextPage < totalPages && !isLoading) {
-          fetchPosts(nextPage);
+          setIsLoading(true);
+          fetchPosts(nextPage).then(() => setIsLoading(false));
         }
       }}
       renderItem={renderItem}
@@ -376,7 +362,8 @@ const Profile = ({navigation, route}: props) => {
       onEndReachedThreshold={0.8}
       onEndReached={() => {
         if (nextPageTagged < totalPagesTagged && !isLoading) {
-          fetchPostTags(nextPageTagged);
+          setIsLoading(true);
+          fetchPostTags(nextPageTagged).then(() => setIsLoading(false));
         }
       }}
       renderItem={renderItem}

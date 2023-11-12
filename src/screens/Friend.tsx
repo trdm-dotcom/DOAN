@@ -118,7 +118,6 @@ const Friend = () => {
 
   const getContacts = async () => {
     const contactsPermission = await requestPermission();
-    console.log(`Read contacts permission status: ${contactsPermission}`);
     if (contactsPermission) {
       const listPhone: string[] = [];
       const listContact: Contact[] = await Contacts.getAll();
@@ -485,7 +484,7 @@ const Friend = () => {
             }}
             onChangeText={handleOnChangeText}
           />
-          <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+          {/* <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
             <Ionicons
               name="share-social-outline"
               size={IconSizes.x6}
@@ -502,7 +501,7 @@ const Friend = () => {
               ]}>
               Invite from other apps
             </Text>
-          </View>
+          </View> */}
         </View>
         {content}
       </ScrollView>
