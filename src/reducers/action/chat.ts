@@ -8,7 +8,7 @@ export const getConversations =
       dispatch({
         type: 'getChatsRequest',
       });
-      const res = await apiGet<any[]>('/chat/conversation', {params: params});
+      const res = await apiGet<any>('/chat/conversation', {params: params});
       dispatch({
         type: 'getChatsSuccess',
         payload: res,
@@ -46,6 +46,3 @@ export const messageSeen = async (roomId: string) =>
       'Content-Type': 'application/json',
     },
   );
-
-export const getConversationBetween = async (params: IParam) =>
-  await apiGet<any>('/chat/conversation/between', {params: params});

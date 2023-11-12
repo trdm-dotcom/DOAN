@@ -3,11 +3,12 @@ import {Token} from '../models/Token';
 import {IRefreshTokenResponse} from '../models/response/IRefreshTokenResponse';
 import {CredentialType, loadToken} from './Storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BASE_URL, CLIENT_SECRET} from '@env';
 
 let token: Token = {} as Token;
 
 const instance: AxiosInstance = axios.create({
-  baseURL: 'http://192.168.101.7:3000/api/v1',
+  baseURL: BASE_URL,
   headers: {
     Accept: 'application/json',
     'Cache-Control': 'no-cache',
@@ -26,9 +27,6 @@ const getToken = async () => {
 };
 
 const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
-  let isRefreshing = false; // Thêm biến kiểm tra làm mới token
-  const refreshTokenQueue: (() => void)[] = [];
-
   const refreshToken = (): Promise<IRefreshTokenResponse> => {
     return new Promise((resolve, reject) => {
       if (!token) {
@@ -38,7 +36,7 @@ const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
           data: {
             grant_type: 'refresh_token',
             refresh_token: token.refreshToken,
-            client_secret: 'iW4rurIrZJ',
+            client_secret: CLIENT_SECRET,
           },
         })
           .then((response: IRefreshTokenResponse) => resolve(response))
@@ -53,41 +51,26 @@ const setupAxiosInterceptors = (onUnauthenticated: () => void) => {
     if (error.response && error.response.status === 401) {
       const originalRequest = error.config!;
       if (token.refExpiredTime > Date.now()) {
-        if (!isRefreshing) {
-          isRefreshing = true;
-          try {
-            const tokenResponse: IRefreshTokenResponse = await refreshToken();
-            token = {
-              ...token,
-              accessToken: tokenResponse.accessToken,
-              accExpiredTime: tokenResponse.accExpiredTime,
-            };
-            await AsyncStorage.mergeItem(
-              'proximity:credential',
-              JSON.stringify({
-                token: token,
-              }),
-            );
-            originalRequest.headers.Authorization = `jwt ${tokenResponse.accessToken}`;
-            refreshTokenQueue.forEach(resolve => resolve());
-            refreshTokenQueue.length = 0; // Xóa các request đang chờ làm mới token
-            isRefreshing = false;
-          } catch (err: any) {
-            onUnauthenticated();
-            return Promise.reject(err);
-          }
-        } else {
-          const retryOriginalRequest = new Promise(resolve => {
-            refreshTokenQueue.push(() => {
-              originalRequest.headers.Authorization = `jwt ${token.accessToken}`;
-              resolve(instance(originalRequest));
-            });
-          });
-          return retryOriginalRequest;
+        try {
+          const tokenResponse: IRefreshTokenResponse = await refreshToken();
+          token = {
+            ...token,
+            accessToken: tokenResponse.accessToken,
+            accExpiredTime: tokenResponse.accExpiredTime,
+          };
+          await AsyncStorage.mergeItem(
+            'proximity:credential',
+            JSON.stringify({
+              token: token,
+            }),
+          );
+          originalRequest.headers.Authorization = `jwt ${tokenResponse.accessToken}`;
+          return await instance(originalRequest);
+        } catch (err: any) {
+          onUnauthenticated();
         }
       } else {
         onUnauthenticated();
-        return Promise.reject(new Error('Token expired'));
       }
     }
     return Promise.reject(error);
@@ -123,7 +106,7 @@ function apiReq<T>(
     };
     instance(options)
       .then((result: AxiosResponse) => {
-        resolve(logResponseAndReturnJson(result, endPoint, rId));
+        resolve(logResponseAndReturnJson(result));
       })
       .catch(error => {
         reject(new Error(error.response.data.code || error.message));
@@ -133,22 +116,8 @@ function apiReq<T>(
 
 const logResponseAndReturnJson = async <T>(
   response: AxiosResponse,
-  url: string,
-  msgId: string,
 ): Promise<T> => {
   const resStr: T = response.data;
-  if (JSON.stringify(resStr).length > 16384) {
-    console.log(
-      msgId,
-      'response',
-      url,
-      JSON.stringify(resStr).substring(0, 16384),
-      '...',
-      JSON.stringify(resStr).length,
-    );
-  } else {
-    console.log(msgId, 'response', url, JSON.stringify(resStr));
-  }
   return resStr;
 };
 

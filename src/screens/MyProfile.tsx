@@ -3,26 +3,23 @@ import {AppContext} from '../context';
 import {space, styles} from '../components/style';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
-  FETCHING_HEIGHT,
-  IconSizes,
-  Pagination,
-  PostDimensions,
-} from '../constants/Constants';
+import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
 import HeaderBar from '../components/header/HeaderBar';
 import ProfileScreenPlaceholder from '../components/placeholder/ProfileScreen.Placeholder';
-import {FlatGrid} from 'react-native-super-grid';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import ProfileCard from '../components/profile/ProfileCard';
 import PostThumbnail from '../components/post/PostThumbnail';
-import {getPostOfUser} from '../reducers/action/post';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {
+  getPostHiden,
+  getPostOfUser,
+  getPostTagged,
+} from '../reducers/action/post';
+import {FlatList, GestureHandlerRootView} from 'react-native-gesture-handler';
 import {getFriendList} from '../reducers/action/friend';
 import ConnectionsBottomSheet from '../components/bottomsheet/ConnectionsBottomSheet';
 import {
   KeyboardAvoidingView,
   Platform,
-  RefreshControl,
   Text,
   TextInput,
   TouchableOpacity,
@@ -42,8 +39,24 @@ import {checkEmpty} from '../utils/Validate';
 import {NativeImage} from '../components/shared/NativeImage';
 import Option from '../components/shared/Option';
 import {Image as ImageCompressor} from 'react-native-compressor';
+import {
+  NavigationState,
+  SceneMap,
+  SceneRendererProps,
+  TabBar,
+  TabView,
+} from 'react-native-tab-view';
+import Feather from 'react-native-vector-icons/Feather';
+import {apiPost} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
+
+type Route = {
+  key: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+};
+
+type State = NavigationState<Route>;
 
 const MyProfile = () => {
   const dispatch = useDispatch();
@@ -53,17 +66,55 @@ const MyProfile = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [sortedPosts, setSortedPosts] = useState<any[]>([]);
-  const [pageNumber, setPageNumber] = useState<number>(0);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [postsTagged, setPostsTagged] = useState<any[]>([]);
+  const [postsHiden, setPostsHiden] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
-  const [offsetY, setOffsetY] = useState(0);
   const [name, setName] = useState<string>(user.name);
   const [about, setAbout] = useState<string>(user.about);
   const [avatar, setAvatar] = useState<any>(user.avatar);
+  const [avatarFilename, setAvatarFilename] = useState<any>(null);
   const [autoUploadImage, setAutoUploadImage] = useState<boolean>(false);
+  const [countFriends, setCountFriends] = useState<number>(0);
+  const [countPosts, setCountPosts] = useState<number>(0);
+  const [nextPage, setNextPage] = useState<number>(0);
+  const [nextPageTagged, setNextPageTagged] = useState<number>(0);
+  const [nextPageHiden, setNextPageHiden] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalPagesTagged, setTotalPagesTagged] = useState<number>(0);
+  const [totalPagesHiden, setTotalPagesHiden] = useState<number>(0);
+  const [index, setIndex] = useState(0);
+
+  const [routes] = useState<Route[]>([
+    {key: 'post', icon: 'grid'},
+    {key: 'tag', icon: 'tag'},
+    {key: 'hide', icon: 'eye-off'},
+  ]);
+
   const {isLoading, error: errorRedux} = useSelector(
     (state: any) => state.user,
   );
+
+  useEffect(() => {
+    const fetchData = () => {
+      setLoading(true);
+      Promise.all([
+        fetchPosts(0),
+        fetchFriends(0),
+        fetchPostTags(0),
+        fetchPostHiden(0),
+      ]).finally(() => setLoading(false));
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (errorRedux) {
+      showError(errorRedux.message);
+      dispatch({type: 'clearErrors'});
+    }
+  }, [errorRedux]);
 
   const modalizeRef = useRef();
   const avatarOptionsBottomSheetRef = useRef();
@@ -100,100 +151,127 @@ const MyProfile = () => {
     }
   }, [errorRedux]);
 
-  useEffect(() => {
-    setLoading(true);
+  const fetchFriends = (page: number) => {
     getFriendList({
-      pageNumber: 0,
+      pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     })
       .then(res => {
-        setFriends(res);
+        setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
+        setCountFriends(res.total);
       })
       .catch(() => {
         setError(true);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchPosts(pageNumber);
-    return () => {};
-  }, [pageNumber]);
-
-  const onOpenCamera = (autoUpdate: boolean) => {
-    closeOptions();
-    ImagePicker.openCamera({
-      compressImageQuality: 0.8,
-      includeBase64: true,
-      writeTempFile: false,
-      useFrontCamera: true,
-    })
-      .then((image: Image) => {
-        if (image.data != null) {
-          ImageCompressor.compress(image.path, {
-            maxWidth: 480,
-            maxHeight: 480,
-            input: 'uri',
-            compressionMethod: 'auto',
-            quality: 0.6,
-            returnableOutputType: 'base64',
-          }).then((compressedImage: string) => {
-            if (autoUpdate) {
-              setAvatar(`data:${image.mime};base64,${compressedImage}`);
-              editInfo(
-                name,
-                `data:${image.mime};base64,${compressedImage}`,
-                about,
-              );
-            } else {
-              setAvatar(`data:${image.mime};base64,${compressedImage}`);
-              modalizeOpen();
-            }
-          });
-        }
-      })
-      .catch((err: any) => {
-        console.log(err);
       });
   };
 
-  const onOpenGallery = (autoUpdate: boolean) => {
-    closeOptions();
-    ImagePicker.openPicker({
-      compressImageQuality: 0.8,
-      includeBase64: true,
-      writeTempFile: false,
-    })
-      .then((image: Image) => {
-        if (image.data != null) {
-          ImageCompressor.compress(image.path, {
-            maxWidth: 480,
-            maxHeight: 480,
-            input: 'uri',
-            compressionMethod: 'auto',
-            quality: 0.6,
-            returnableOutputType: 'base64',
-          }).then((compressedImage: string) => {
-            if (autoUpdate) {
-              setAvatar(`data:${image.mime};base64,${compressedImage}`);
-              editInfo(
-                name,
-                `data:${image.mime};base64,${compressedImage}`,
-                about,
-              );
-            } else {
-              setAvatar(`data:${image.mime};base64,${compressedImage}`);
-              modalizeOpen();
-            }
-          });
-        }
-      })
-      .catch((err: any) => {
-        console.log(err);
+  const requestImageModeration = async (imageData: string, filename: string) =>
+    await apiPost<any>('/moderation/image', {
+      data: {imageData: imageData, filename: filename},
+    });
+
+  const requestTextModeration = async (text: string) =>
+    await apiPost<any>('/moderation/text', {
+      data: {text: text},
+    });
+
+  const onOpenCamera = async (autoUpdate: boolean) => {
+    try {
+      closeOptions();
+      const image: Image = await ImagePicker.openCamera({
+        compressImageQuality: 0.6,
+        includeBase64: true,
+        writeTempFile: false,
+        useFrontCamera: true,
       });
+      if (image.data != null) {
+        const compressedImage = await ImageCompressor.compress(image.path, {
+          maxWidth: 480,
+          maxHeight: 480,
+          input: 'uri',
+          compressionMethod: 'auto',
+          quality: 0.6,
+          returnableOutputType: 'base64',
+        });
+        if (autoUpdate) {
+          const res = await requestImageModeration(
+            compressedImage,
+            image.filename!,
+          );
+          if (res.summary.action === 'reject') {
+            showError('Content is not allowed');
+            return;
+          }
+          setAvatar(`data:${image.mime};base64,${compressedImage}`);
+          setAvatarFilename(image.filename);
+          await editInfo(
+            name,
+            `data:${image.mime};base64,${compressedImage}`,
+            about,
+            image.filename,
+          );
+        } else {
+          setAvatar(`data:${image.mime};base64,${compressedImage}`);
+          setAvatarFilename(image.filename);
+          modalizeOpen();
+        }
+      }
+    } catch (err: any) {
+      console.log(err);
+    }
   };
 
-  const editInfo = async (nameEdit: any, avatarEdit: any, aboutEdit: any) => {
+  const onOpenGallery = async (autoUpdate: boolean) => {
+    try {
+      closeOptions();
+      const image: Image = await ImagePicker.openPicker({
+        compressImageQuality: 0.6,
+        includeBase64: true,
+        writeTempFile: false,
+      });
+      if (image.data != null) {
+        const compressedImage = await ImageCompressor.compress(image.path, {
+          maxWidth: 480,
+          maxHeight: 480,
+          input: 'uri',
+          compressionMethod: 'auto',
+          quality: 0.6,
+          returnableOutputType: 'base64',
+        });
+        if (autoUpdate) {
+          const res = await requestImageModeration(
+            compressedImage,
+            image.filename!,
+          );
+          if (res.summary.action === 'reject') {
+            showError('Content is not allowed');
+            return;
+          }
+          setAvatar(`data:${image.mime};base64,${compressedImage}`);
+          setAvatarFilename(image.filename);
+          await editInfo(
+            name,
+            `data:${image.mime};base64,${compressedImage}`,
+            about,
+            image.filename,
+          );
+        } else {
+          setAvatar(`data:${image.mime};base64,${compressedImage}`);
+          setAvatarFilename(image.filename);
+          modalizeOpen();
+        }
+      }
+    } catch (err: any) {
+      console.log(err);
+    }
+  };
+
+  const editInfo = async (
+    nameEdit: any,
+    avatarEdit: any,
+    aboutEdit: any,
+    avatarFilenameEdit: any,
+  ) => {
     const errorValid = checkEmpty(name, 'Please enter your name');
     if (errorValid) {
       showError(errorValid);
@@ -203,6 +281,12 @@ const MyProfile = () => {
       dispatch({
         type: 'updateUserRequest',
       });
+      if (avatarEdit != null && avatarFilenameEdit != null) {
+        await requestImageModeration(avatar, avatarFilename);
+      }
+      if (about !== user.about) {
+        await requestTextModeration(about);
+      }
       await putUserInfo({
         name: nameEdit,
         avatar: avatarEdit,
@@ -218,6 +302,7 @@ const MyProfile = () => {
         },
       });
       modalizeClose();
+      setAvatarFilename(null);
     } catch (err: any) {
       dispatch({
         type: 'updateUserFailed',
@@ -225,7 +310,7 @@ const MyProfile = () => {
     }
   };
 
-  const handleOnPress = () => editInfo(name, avatar, about);
+  const handleOnPress = () => editInfo(name, avatar, about, avatarFilename);
 
   const fetchPosts = (page: number) => {
     getPostOfUser({
@@ -233,126 +318,215 @@ const MyProfile = () => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     }).then(res => {
-      setSortedPosts(page === 0 ? res : [...sortedPosts, ...res]);
+      setCountPosts(res.total);
+      setPosts(res.page === 0 ? res.datas : [...posts, ...res.datas]);
+      setNextPage(res.page + 1);
+      setTotalPages(res.totalPages);
     });
   };
 
-  const ListHeaderComponent = () => {
-    return (
-      <ProfileCard
-        avatar={user.avatar}
-        name={user.name}
-        about={user.about}
-        posts={sortedPosts.length}
-        friends={friends.length}
-        onFriendsOpen={onFriendsOpen}
-        onOptionPress={modalizeOpen}
-        editable
-        onEdit={() => {
-          openOptions();
-          setAutoUploadImage(true);
-        }}
-      />
-    );
+  const fetchPostTags = (page: number) => {
+    getPostTagged({
+      targetId: user.id,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    }).then(res => {
+      setPostsTagged(res.page === 0 ? res : [...postsTagged, ...res.datas]);
+      setNextPageTagged(res.page + 1);
+      setTotalPagesTagged(res.totalPages);
+    });
   };
 
-  function onScroll(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-  }
-
-  function onScrollEndDrag(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-    if (y <= -FETCHING_HEIGHT && !loading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  function onRelease() {
-    if (offsetY <= -FETCHING_HEIGHT && !loading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  const refreshControl = () => {
-    const onRefresh = () => setPageNumber(0);
-
-    return (
-      <RefreshControl
-        tintColor={theme.text02}
-        refreshing={loading}
-        onRefresh={onRefresh}
-      />
-    );
+  const fetchPostHiden = (page: number) => {
+    getPostHiden({
+      targetId: user.id,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    }).then(res => {
+      setPostsHiden(res.page === 0 ? res : [...postsHiden, ...res.datas]);
+      setNextPageHiden(res.page + 1);
+      setTotalPagesHiden(res.totalPages);
+    });
   };
 
   const renderItem = ({item}) => {
-    return (
-      <PostThumbnail
-        id={item.id}
-        uri={item.source}
-        dimensions={PostDimensions.Medium}
-      />
-    );
+    return <PostThumbnail id={item.id} uri={item.source} />;
   };
 
   const handleStateChange = (friend: any) => {
     setFriends(friends.filter(item => item.id !== friend.id));
+    setCountFriends(countFriends - 1);
   };
+
+  const PostRoute = () => (
+    <FlatList
+      numColumns={3}
+      data={posts}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={() => (
+        <ListEmptyComponent listType="posts" spacing={30} />
+      )}
+      ListFooterComponent={() => (
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            space(IconSizes.x1).mt,
+          ]}>
+          {loading && (
+            <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+          )}
+        </View>
+      )}
+      onEndReachedThreshold={0.8}
+      onEndReached={() => {
+        if (nextPage < totalPages && !isLoading) {
+          fetchPosts(nextPage);
+        }
+      }}
+      renderItem={renderItem}
+      keyExtractor={item => item.id.toString()}
+    />
+  );
+
+  const TagRoute = () => (
+    <FlatList
+      numColumns={3}
+      data={postsTagged}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={() => (
+        <ListEmptyComponent listType="posts" spacing={30} />
+      )}
+      ListFooterComponent={() => (
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            space(IconSizes.x1).mt,
+          ]}>
+          {loading && (
+            <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+          )}
+        </View>
+      )}
+      onEndReachedThreshold={0.8}
+      onEndReached={() => {
+        if (nextPageTagged < totalPagesTagged && !isLoading) {
+          fetchPostTags(nextPageTagged);
+        }
+      }}
+      renderItem={renderItem}
+      keyExtractor={item => item.id.toString()}
+    />
+  );
+
+  const HideRoute = () => (
+    <FlatList
+      numColumns={3}
+      data={postsHiden}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={() => (
+        <ListEmptyComponent listType="posts" spacing={30} />
+      )}
+      ListFooterComponent={() => (
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            space(IconSizes.x1).mt,
+          ]}>
+          {loading && (
+            <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+          )}
+        </View>
+      )}
+      onEndReachedThreshold={0.8}
+      onEndReached={() => {
+        if (nextPageHiden < totalPagesHiden && !isLoading) {
+          fetchPostHiden(nextPageTagged);
+        }
+      }}
+      renderItem={renderItem}
+      keyExtractor={item => item.id.toString()}
+    />
+  );
+
+  const renderIcon = ({route, color}: {route: Route; color: string}) => (
+    <Feather name={route.icon} size={IconSizes.x6} color={color} />
+  );
+
+  const renderTabBar = (
+    props: SceneRendererProps & {navigationState: State},
+  ) => (
+    <TabBar
+      {...props}
+      style={[
+        styles(theme).defaultBackground,
+        {elevation: 0, shadowOpacity: 0, borderBottomWidth: 0},
+      ]}
+      labelStyle={{
+        ...FontWeights.Regular,
+        ...FontSizes.Body,
+        color: theme.text01,
+      }}
+      indicatorStyle={{backgroundColor: ThemeStatic.accent}}
+      renderIcon={renderIcon}
+    />
+  );
 
   let content =
     loading || error ? (
       <ProfileScreenPlaceholder viewMode />
     ) : (
       <>
-        <FlatGrid
-          refreshControl={refreshControl()}
-          ListHeaderComponent={ListHeaderComponent}
-          itemDimension={150}
-          data={sortedPosts}
-          ListEmptyComponent={() => (
-            <ListEmptyComponent listType="posts" spacing={30} />
-          )}
-          ListFooterComponent={() => (
-            <View
-              style={[
-                {
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-                space(IconSizes.x1).mt,
-              ]}>
-              {loading && (
-                <LoadingIndicator
-                  size={IconSizes.x1}
-                  color={theme.placeholder}
-                />
-              )}
-            </View>
-          )}
-          style={[
-            {
-              flex: 1,
-            },
-          ]}
-          showsVerticalScrollIndicator={false}
-          renderItem={renderItem}
-          onScroll={onScroll}
-          onScrollEndDrag={onScrollEndDrag}
-          onResponderRelease={onRelease}
-          keyExtractor={item => item.id.toString()}
+        <ProfileCard
+          avatar={user.avatar}
+          name={user.name}
+          about={user.about}
+          posts={countPosts}
+          friends={countFriends}
+          onFriendsOpen={onFriendsOpen}
+          onOptionPress={modalizeOpen}
+          editable
+          onEdit={() => {
+            openOptions();
+            setAutoUploadImage(true);
+          }}
+        />
+        <TabView
+          navigationState={{index, routes}}
+          renderScene={SceneMap({
+            post: PostRoute,
+            tag: TagRoute,
+            hide: HideRoute,
+          })}
+          renderTabBar={renderTabBar}
+          onIndexChange={setIndex}
+          initialLayout={{
+            height: 0,
+            width: SCREEN_WIDTH,
+          }}
         />
         <ConnectionsBottomSheet
           ref={friendsBottomSheetRef}
           datas={friends}
-          name={name}
+          name={user.name}
           onStateChange={handleStateChange}
+          fetchMore={(page: number) =>
+            getFriendList({
+              pageNumber: page,
+              pageSize: Pagination.PAGE_SIZE,
+            })
+          }
         />
       </>
     );
@@ -403,7 +577,7 @@ const MyProfile = () => {
                 width: 80,
               }}>
               <NativeImage
-                uri={avatar}
+                uri={user.avatar}
                 style={{
                   flex: 1,
                   backgroundColor: theme.placeholder,
@@ -446,7 +620,7 @@ const MyProfile = () => {
               color={theme.text02}
             />
             <TextInput
-              value={name}
+              value={user.name}
               onChangeText={(text: string) => {
                 setName(text);
               }}
@@ -469,7 +643,7 @@ const MyProfile = () => {
               color={theme.text02}
             />
             <TextInput
-              value={about}
+              value={user.about}
               onChangeText={(text: string) => {
                 setAbout(text);
               }}
@@ -537,7 +711,7 @@ const MyProfile = () => {
             label="Delete"
             iconName="close-circle-outline"
             color="red"
-            onPress={() => editInfo(name, null, about)}
+            onPress={() => editInfo(name, null, about, null)}
           />
         </View>
       </Modalize>

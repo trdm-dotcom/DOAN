@@ -74,7 +74,7 @@ export const Timeouts: TimeoutsType = {
 };
 
 export const Pagination: PaginationType = {
-  PAGE_SIZE: 15,
+  PAGE_SIZE: 20,
   CURSOR_SIZE: 9,
 };
 
@@ -89,6 +89,7 @@ export const NotificationType: NotificationTextType = {
   COMMENT: 'COMMENT',
   LIKE: 'LIKE',
   ACCEPT: 'ACCEPT',
+  TAG: 'TAG',
 };
 
 export const NotificationText: NotificationTextType = {
@@ -96,6 +97,7 @@ export const NotificationText: NotificationTextType = {
   COMMENT: 'commented on your post',
   LIKE: 'liked your post',
   ACCEPT: 'accepted your friend request',
+  TAG: 'tagged you in a post',
 };
 
 export const OnlineDotColor: OnlineDotColorType = {

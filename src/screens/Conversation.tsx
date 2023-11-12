@@ -27,7 +27,7 @@ type props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 const Conversation = ({navigation, route}: props) => {
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
-  const {chatId, targetId, name, avatar} = route.params;
+  const {targetId, name, avatar} = route.params;
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -36,10 +36,15 @@ const Conversation = ({navigation, route}: props) => {
 
   useEffect(() => {
     socket.on('receive-message', (data: any) => {
-      if (data.chatId === chatId && data.data.user._id !== user.id) {
-        setMessages(previousMessages =>
-          GiftedChat.append(previousMessages, data.data),
-        );
+      if (user.id === data.to && data.data.user._id === targetId) {
+        const newMessage = {
+          ...data.data,
+          user: {
+            ...data.data.user,
+            avatar: avatar,
+          },
+        };
+        setMessages(previousMessages => [...previousMessages, ...[newMessage]]);
       }
     });
     loadMessages();
@@ -48,10 +53,15 @@ const Conversation = ({navigation, route}: props) => {
   const loadMessages = () => {
     setLoading(true);
     getMessagesByRoomId({
-      chatId: chatId,
+      recipientId: targetId,
     })
       .then(res => {
-        setMessages(res);
+        setMessages(
+          res.map(message => ({
+            ...message,
+            user: {...message.user, avatar: avatar},
+          })),
+        );
       })
       .catch(err => {
         console.log(err);

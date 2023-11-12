@@ -70,6 +70,7 @@ const Setting = ({navigation}: props) => {
   const [name, setName] = useState<string>(user.name);
   const [about, setAbout] = useState<string>(user.about);
   const [avatar, setAvatar] = useState<any>(user.avatar);
+  const [avatarFilename, setAvatarFilename] = useState<any>(null);
   const [progess, setProgess] = useState<
     null | 'changePass' | 'editInfo' | 'verifyOtp' | 'confirm' | 'deleteAccount'
   >(null);
@@ -151,27 +152,42 @@ const Setting = ({navigation}: props) => {
     setTurnOffNotificationModal(previousState => !previousState);
   };
 
+  const requestImageModeration = async (imageData: string, filename: string) =>
+    await apiPost<any>('/moderation/image', {
+      data: {imageData: imageData, filename: filename},
+    });
+
+  const requestTextModeration = async (text: string) =>
+    await apiPost<any>('/moderation/text', {
+      data: {text: text},
+    });
+
   const onOpenCamera = async () => {
     try {
       closeOptions();
       const image: Image = await ImagePicker.openCamera({
-        compressImageQuality: 0.8,
+        compressImageQuality: 0.6,
         includeBase64: true,
         writeTempFile: false,
         useFrontCamera: true,
       });
       if (image.data != null) {
-        ImageCompressor.compress(image.path, {
+        const compressedImage = await ImageCompressor.compress(image.path, {
           maxWidth: 480,
           maxHeight: 480,
           input: 'uri',
           compressionMethod: 'auto',
           quality: 0.6,
           returnableOutputType: 'base64',
-        }).then((compressedImage: string) => {
-          setAvatar(`data:${image.mime};base64,${compressedImage}`);
-          editInfo(name, `data:${image.mime};base64,${compressedImage}`, about);
         });
+        setAvatar(`data:${image.mime};base64,${compressedImage}`);
+        setAvatarFilename(image.filename);
+        editInfo(
+          name,
+          `data:${image.mime};base64,${compressedImage}`,
+          about,
+          image.filename,
+        );
       }
     } catch (err: any) {
       console.log(err);
@@ -182,22 +198,27 @@ const Setting = ({navigation}: props) => {
     try {
       closeOptions();
       const image: Image = await ImagePicker.openPicker({
-        compressImageQuality: 0.8,
+        compressImageQuality: 0.6,
         includeBase64: true,
         writeTempFile: false,
       });
       if (image.data != null) {
-        ImageCompressor.compress(image.path, {
+        const compressedImage = ImageCompressor.compress(image.path, {
           maxWidth: 480,
           maxHeight: 480,
           input: 'uri',
           compressionMethod: 'auto',
           quality: 0.6,
           returnableOutputType: 'base64',
-        }).then((compressedImage: string) => {
-          setAvatar(`data:${image.mime};base64,${compressedImage}`);
-          editInfo(name, `data:${image.mime};base64,${compressedImage}`, about);
         });
+        setAvatar(`data:${image.mime};base64,${compressedImage}`);
+        setAvatarFilename(image.filename);
+        await editInfo(
+          name,
+          `data:${image.mime};base64,${compressedImage}`,
+          about,
+          image.filename,
+        );
       }
     } catch (err: any) {
       console.log(err);
@@ -267,7 +288,12 @@ const Setting = ({navigation}: props) => {
     }
   };
 
-  const editInfo = async (nameEdit: any, avatarEdit: any, aboutEdit: any) => {
+  const editInfo = async (
+    nameEdit: any,
+    avatarEdit: any,
+    aboutEdit: any,
+    avatarFilenameEdit: any,
+  ) => {
     const validError = checkEmpty(name, 'Please enter your name');
     if (validError) {
       showError(validError);
@@ -277,14 +303,17 @@ const Setting = ({navigation}: props) => {
       dispatch({
         type: 'updateUserRequest',
       });
+      if (avatarEdit != null && avatarFilenameEdit != null) {
+        await requestImageModeration(avatarEdit, avatarFilenameEdit);
+      }
+      if (about !== user.about) {
+        await requestTextModeration(about);
+      }
       await putUserInfo({
         name: nameEdit,
         avatar: avatarEdit,
         about: aboutEdit,
       });
-      user.name = nameEdit;
-      user.avatar = avatarEdit;
-      user.about = aboutEdit;
       dispatch({
         type: 'updateUserSuccess',
         payload: {
@@ -294,6 +323,7 @@ const Setting = ({navigation}: props) => {
           about: aboutEdit,
         },
       });
+      setAvatarFilename(null);
       modalizeClose();
     } catch (err: any) {
       dispatch({
@@ -354,7 +384,7 @@ const Setting = ({navigation}: props) => {
         case 'changePass':
           return changePass();
         case 'editInfo':
-          return editInfo(name, avatar, about);
+          return editInfo(name, avatar, about, avatarFilename);
         case 'verifyOtp':
           return verifyOtp();
         case 'confirm':
@@ -499,7 +529,7 @@ const Setting = ({navigation}: props) => {
               styles(theme).profileNameContainer,
               space(IconSizes.x1).mv,
             ]}>
-            <Text style={styles(theme).profileUsernameText}>{name}</Text>
+            <Text style={styles(theme).profileUsernameText}>{user.name}</Text>
           </View>
           <AppButton
             label="Edit Info"
@@ -579,7 +609,11 @@ const Setting = ({navigation}: props) => {
                   <Switch
                     value={onNotification}
                     onValueChange={value => {
-                      toggleTheme(value ? Theme.dark.type : Theme.light.type);
+                      if (value) {
+                        requestSettingReceiveNotification(true);
+                      } else {
+                        turnOffNotificationModalToggle();
+                      }
                     }}
                     thumbColor={
                       onNotification ? ThemeStatic.accent : theme.base
@@ -759,7 +793,7 @@ const Setting = ({navigation}: props) => {
                   color={theme.text02}
                 />
                 <TextInput
-                  value={name}
+                  value={user.name}
                   onChangeText={(text: string) => {
                     setName(text);
                   }}
@@ -782,7 +816,7 @@ const Setting = ({navigation}: props) => {
                   color={theme.text02}
                 />
                 <TextInput
-                  value={about}
+                  value={user.about}
                   onChangeText={(text: string) => {
                     setAbout(text);
                   }}
@@ -1149,7 +1183,7 @@ const Setting = ({navigation}: props) => {
             label="Delete"
             iconName="close-circle-outline"
             color="red"
-            onPress={() => editInfo(name, null, about)}
+            onPress={() => editInfo(name, null, about, null)}
           />
         </View>
       </Modalize>

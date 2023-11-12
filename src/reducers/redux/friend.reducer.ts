@@ -11,6 +11,7 @@ const initialState: any = {
 
 export const friendReducer = createReducer(initialState, {
   getBlockRequest: state => {
+    state.error = null;
     state.isLoading = true;
   },
   getBlockSuccess: (state, action) => {
@@ -22,6 +23,7 @@ export const friendReducer = createReducer(initialState, {
     state.error = action.payload;
   },
   getFriendRequest: state => {
+    state.error = null;
     state.isLoading = true;
   },
   getFriendSuccess: (state, action) => {
@@ -33,6 +35,7 @@ export const friendReducer = createReducer(initialState, {
     state.error = action.payload;
   },
   getRequestFriendRequest: state => {
+    state.error = null;
     state.isLoading = true;
   },
   getRequestFriendSuccess: (state, action) => {

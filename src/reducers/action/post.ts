@@ -61,7 +61,7 @@ export const getPosts = (params: IParam) => async (dispatch: Dispatch<any>) => {
     dispatch({
       type: 'getAllPostsRequest',
     });
-    const res = await apiGet<any[]>('/social/post', {params: params});
+    const res = await apiGet<any>('/social/post', {params: params});
     dispatch({
       type: 'getAllPostsSuccess',
       payload: res,
@@ -75,7 +75,13 @@ export const getPosts = (params: IParam) => async (dispatch: Dispatch<any>) => {
 };
 
 export const getPostOfUser = async (params: IParam) =>
-  await apiGet<any[]>('/social/post/user', {params: params});
+  await apiGet<any>('/social/post/user', {params: params});
+
+export const getPostHiden = async (params: IParam) =>
+  await apiGet<any>('/social/post/hide', {params: params});
+
+export const getPostTagged = async (params: IParam) =>
+  await apiGet<any>('/social/post/tag', {params: params});
 
 export const deleteComment = async (params: IParam) =>
   await apiDelete<any>('/social/post/comments', {params: params});

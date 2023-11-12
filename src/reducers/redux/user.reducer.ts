@@ -13,6 +13,7 @@ export const userReducer = createReducer(intialState, {
     state.isAuthenticated = true;
   },
   userRegisterRequest: state => {
+    state.error = null;
     state.loading = true;
   },
   userRegisterSuccess: state => {
@@ -23,6 +24,7 @@ export const userReducer = createReducer(intialState, {
     state.error = action.payload;
   },
   userLoginRequest: state => {
+    state.error = null;
     state.isAuthenticated = false;
     state.loading = true;
   },
@@ -47,6 +49,7 @@ export const userReducer = createReducer(intialState, {
     state.error = action.payload;
   },
   updateUserRequest: state => {
+    state.error = null;
     state.isLoading = true;
   },
   updateUserSuccess: (state, action) => {
@@ -58,6 +61,7 @@ export const userReducer = createReducer(intialState, {
     state.error = action.payload;
   },
   getUsersRequest: state => {
+    state.error = null;
     state.isLoading = true;
   },
   getUsersSuccess: (state, action) => {

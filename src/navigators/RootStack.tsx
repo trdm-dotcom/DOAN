@@ -36,7 +36,6 @@ export type RootStackParamList = {
   MyProfile: undefined;
   Friend: undefined;
   Conversation: {
-    chatId: string;
     targetId: number;
     name: string;
     avatar: string;

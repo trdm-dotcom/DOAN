@@ -3,15 +3,15 @@ import React, {useContext} from 'react';
 import {StyleSheet, TouchableOpacity} from 'react-native';
 import {AppContext} from '../../context';
 import {NativeImage} from '../shared/NativeImage';
-import {Dimensions, ThemeColors} from '../../constants/Types';
+import {ThemeColors} from '../../constants/Types';
+import {CONTENT_SPACING, SCREEN_WIDTH} from '../../constants/Constants';
 
 interface PostThumbnailProps {
   id: string;
   uri: string;
-  dimensions: Dimensions;
 }
 
-const PostThumbnail: React.FC<PostThumbnailProps> = ({id, uri, dimensions}) => {
+const PostThumbnail: React.FC<PostThumbnailProps> = ({id, uri}) => {
   const {theme} = useContext(AppContext);
   const {navigate} = useNavigation();
 
@@ -21,7 +21,7 @@ const PostThumbnail: React.FC<PostThumbnailProps> = ({id, uri, dimensions}) => {
     <TouchableOpacity
       onPress={navigateToPost}
       activeOpacity={0.95}
-      style={[styles(theme).container, {...dimensions}]}>
+      style={[styles(theme).container]}>
       <NativeImage uri={uri} style={styles().thumbnailImage} />
     </TouchableOpacity>
   );
@@ -30,9 +30,10 @@ const PostThumbnail: React.FC<PostThumbnailProps> = ({id, uri, dimensions}) => {
 const styles = (theme = {} as ThemeColors) =>
   StyleSheet.create({
     container: {
+      height: (SCREEN_WIDTH - CONTENT_SPACING) / 3,
+      width: (SCREEN_WIDTH - CONTENT_SPACING) / 3,
       backgroundColor: theme.placeholder,
       overflow: 'hidden',
-      borderRadius: 10,
     },
     thumbnailImage: {
       flex: 1,

@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState} from 'react';
 import {Modalize} from 'react-native-modalize';
 import BottomSheetHeader from '../header/BottomSheetHeader';
 import {AppContext} from '../../context';
@@ -9,7 +9,7 @@ import {space, styles} from '../style';
 import ListEmptyComponent from '../shared/ListEmptyComponent';
 import {showError} from '../../utils/Toast';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {Text, TouchableOpacity, View} from 'react-native';
+import {RefreshControl, Text, TouchableOpacity, View} from 'react-native';
 import {NativeImage} from '../shared/NativeImage';
 import {MaterialIndicator} from 'react-native-indicators';
 import {useSelector} from 'react-redux';
@@ -92,12 +92,16 @@ interface ConnectionsBottomSheetProps {
   viewMode?: boolean;
   datas: any[];
   onStateChange: (state: any) => void;
+  fetchMore: (page: number) => Promise<any>;
   name?: string;
 }
 
 const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
-  React.forwardRef(({viewMode, name, datas, onStateChange}, ref) => {
+  React.forwardRef(({viewMode, name, datas, onStateChange, fetchMore}, ref) => {
     const {theme} = useContext(AppContext);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [nextPage, setNextPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
 
     let heading = 'Friends';
     let subHeading = viewMode
@@ -139,6 +143,21 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
       );
     };
 
+    const fetchData = (page: number) => {
+      setLoading(true);
+      fetchMore(page)
+        .then(response => {
+          setNextPage(response.nextPage);
+          setTotalPages(response.totalPages);
+          if (response.page === 0) {
+            datas = response.datas;
+          } else {
+            datas = [...datas, ...response.datas];
+          }
+        })
+        .finally(() => setLoading(false));
+    };
+
     const renderItem = ({item}) => {
       return (
         <ConnectionsUserCard
@@ -160,12 +179,27 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
         }
         flatListProps={{
           data: datas,
+          refreshControl: (
+            <RefreshControl
+              tintColor={theme.text02}
+              refreshing={loading}
+              onRefresh={() => {
+                fetchData(0);
+              }}
+            />
+          ),
           renderItem: renderItem,
           keyExtractor: item => item.friendId,
           showsVerticalScrollIndicator: false,
           ListEmptyComponent: () => (
             <ListEmptyComponent listType="users" spacing={30} />
           ),
+          onEndReachedThreshold: 0.8,
+          onEndReached: async () => {
+            if (nextPage < totalPages && !loading) {
+              fetchData(nextPage);
+            }
+          },
         }}
         adjustToContentHeight
       />

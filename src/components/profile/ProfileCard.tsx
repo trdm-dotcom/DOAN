@@ -40,7 +40,7 @@ const ProfileCard = ({
   const {theme} = useContext(AppContext);
 
   return (
-    <View style={[space(IconSizes.x8).mb, space(IconSizes.x1).mt]}>
+    <View style={[space(IconSizes.x1).mt]}>
       <View
         style={[
           {

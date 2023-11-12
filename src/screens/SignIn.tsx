@@ -29,6 +29,8 @@ import {ThemeStatic} from '../theme/Colors';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useDispatch} from 'react-redux';
 import {useSelector} from 'react-redux';
+import {getNotificationSetting} from '../reducers/action/notification';
+import {CLIENT_SECRET} from '@env';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -36,7 +38,7 @@ type props = NativeStackScreenProps<RootStackParamList, 'SignIn'>;
 
 const SignIn = ({navigation}: props) => {
   const dispatch = useDispatch();
-  const {theme} = useContext(AppContext);
+  const {theme, deviceId, setOnNotification} = useContext(AppContext);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const {loading, isLoading, error} = useSelector((state: any) => state.user);
@@ -74,7 +76,7 @@ const SignIn = ({navigation}: props) => {
           username: username,
           password: password,
           grant_type: 'password',
-          client_secret: 'iW4rurIrZJ',
+          client_secret: CLIENT_SECRET,
           hash: getHash('LOGIN'),
         };
         dispatch({
@@ -84,25 +86,31 @@ const SignIn = ({navigation}: props) => {
         dispatch({
           type: 'userLoginSuccess',
         });
-        try {
-          dispatch({
-            type: 'getUsersRequest',
-          });
-          const userInfoRes: IUserInfoResponse = await getUserInfo();
-          dispatch({
-            type: 'getUsersSuccess',
-            payload: userInfoRes,
-          });
-        } catch (err: any) {
-          dispatch({
-            type: 'getUsersFailed',
-          });
-        }
       } catch (err: any) {
         dispatch({
           type: 'userLoginFailed',
           payload: err.message,
         });
+      }
+      try {
+        dispatch({
+          type: 'getUsersRequest',
+        });
+        const userInfoRes: IUserInfoResponse = await getUserInfo();
+        dispatch({
+          type: 'getUsersSuccess',
+          payload: userInfoRes,
+        });
+      } catch (err: any) {
+        dispatch({
+          type: 'getUsersFailed',
+        });
+      }
+      try {
+        const res = await getNotificationSetting({deviceId: deviceId});
+        setOnNotification(res.receive);
+      } catch (err: any) {
+        setOnNotification(false);
       }
     }
   };

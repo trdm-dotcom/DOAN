@@ -82,7 +82,7 @@ const Camera = ({navigation}: props) => {
   const onOpenGallery = () => {
     closeOptions();
     ImagePicker.openPicker({
-      compressImageQuality: 0.8,
+      compressImageQuality: 0.6,
       includeBase64: true,
       writeTempFile: false,
     })
@@ -97,7 +97,7 @@ const Camera = ({navigation}: props) => {
   const onOpenCamera = () => {
     closeOptions();
     ImagePicker.openCamera({
-      compressImageQuality: 0.8,
+      compressImageQuality: 0.6,
       includeBase64: true,
       writeTempFile: false,
     })

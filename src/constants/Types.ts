@@ -88,6 +88,7 @@ export type NotificationTextType = {
   REQUEST: string;
   COMMENT: string;
   LIKE: string;
+  TAG: string;
   ACCEPT: string;
 };
 

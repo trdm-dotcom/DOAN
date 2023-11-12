@@ -3,7 +3,6 @@ import {Text, View} from 'react-native';
 import {styles} from '../components/style';
 import {AppContext} from '../context';
 import Typography from '../theme/Typography';
-import Group from '../../assets/svg/Group.svg';
 import {IconSizes} from '../constants/Constants';
 
 const {FontWeights} = Typography;
@@ -25,14 +24,6 @@ const Loading = () => {
           alignItems: 'center',
           flexDirection: 'row',
         }}>
-        <Group
-          style={{
-            width: 12,
-            height: 12,
-            flexShrink: 0,
-          }}
-          fill={theme.text01}
-        />
         <Text
           style={{
             ...FontWeights.Bold,

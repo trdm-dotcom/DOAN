@@ -18,6 +18,8 @@ import {updatePost} from '../../reducers/action/post';
 import {getHash} from '../../utils/Crypto';
 import {ThemeStatic} from '../../theme/Colors';
 import {MaterialIndicator} from 'react-native-indicators';
+import {showError} from '../../utils/Toast';
+import {apiPost} from '../../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -33,18 +35,28 @@ const EditPostBottomSheet: React.FC<EditPostBottomSheetProps> = forwardRef(
     const [caption, setCaption] = useState<any>(post.caption);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const doUpdatePost = () => {
-      setLoading(true);
-      const body = {
-        post: post.id,
-        hash: getHash('UPDATE_POST'),
-        caption: caption,
-      };
-      updatePost(body).then(() => {
-        setLoading(false);
-        // @ts-ignore
-        return ref.current.close();
+    const requestTextModeration = async (text: string) =>
+      await apiPost<any>('/moderation/text', {
+        data: {text: text},
       });
+
+    const doUpdatePost = async () => {
+      try {
+        setLoading(true);
+        if (caption !== post.caption) {
+          await requestTextModeration(caption);
+        }
+        const body = {
+          post: post.id,
+          hash: getHash('UPDATE_POST'),
+          caption: caption,
+        };
+        await updatePost(body);
+      } catch (err: any) {
+        showError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
     const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;

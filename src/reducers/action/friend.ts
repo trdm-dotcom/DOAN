@@ -1,9 +1,8 @@
 import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
 import {IParam} from '../../models/IParam';
-import IFriendResponse from '../../models/response/IFriendResponse';
 
 export const getSuggestFriend = async (queryParams: IParam) =>
-  await apiGet<IFriendResponse[]>('/user/friend/suggestByContact', {
+  await apiGet<any>('/user/friend/suggestByContact', {
     params: queryParams,
   });
 
@@ -17,7 +16,7 @@ export const requestAddFriend = async (id: number) =>
   );
 
 export const getFriendRequest = async (queryParams: IParam) =>
-  await apiGet<IFriendResponse[]>('/user/friend/request', {
+  await apiGet<any>('/user/friend/request', {
     params: queryParams,
   });
 
@@ -36,7 +35,7 @@ export const rejectFriend = async (id: number) =>
   await apiDelete<any>('user/friend', {params: {friend: id}});
 
 export const getFriendList = async (queryParams: IParam) =>
-  await apiGet<IFriendResponse[]>('/user/friend', {
+  await apiGet<any>('/user/friend', {
     params: queryParams,
   });
 
@@ -53,7 +52,7 @@ export const unblockUser = async (id: number) =>
   await apiDelete<any>('/user/friend/block', {params: {friend: id}});
 
 export const getBlockList = async (queryParams: IParam) =>
-  await apiGet<any[]>('/user/friend/block', {params: queryParams});
+  await apiGet<any>('/user/friend/block', {params: queryParams});
 
 export const checkFriend = async (queryParams: IParam) =>
   await apiGet<any>('/user/checkFriend', {params: queryParams});

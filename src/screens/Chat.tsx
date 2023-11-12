@@ -5,12 +5,7 @@ import {space, styles} from '../components/style';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
-  FETCHING_HEIGHT,
-  IconSizes,
-  Pagination,
-  SCREEN_WIDTH,
-} from '../constants/Constants';
+import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
 import Header from '../components/header/Header';
 import MessageScreenPlaceholder from '../components/placeholder/MessageScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
@@ -26,22 +21,28 @@ import LoadingIndicator from '../components/shared/LoadingIndicator';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
 import AnimatedSearchBar from '../components/control/AnimatedSearchBar';
+import {showError} from '../utils/Toast';
 
 type props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 const Chat = ({navigation}: props) => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
-  const {chats, isLoading, error} = useSelector((state: any) => state.chat);
-
-  const {user} = useSelector((state: any) => state.user);
   const [search, setSearch] = useState<any>(null);
-  const [pageNumber, setPageNumber] = useState<number>(0);
-  const [offsetY, setOffsetY] = useState(0);
+  const {user} = useSelector((state: any) => state.user);
+  const {chats, isLoading, error, nextPage, totalPages} = useSelector(
+    (state: any) => state.chat,
+  );
 
   useEffect(() => {
-    fetchMessages(pageNumber, search);
-    return () => {};
-  }, [pageNumber]);
+    if (error) {
+      showError(error.message);
+      dispatch({type: 'clearErrors'});
+    }
+  }, [error]);
+
+  useEffect(() => {
+    fetchMessages(0, search);
+  }, []);
 
   const fetchMessages = async (page: number, searchChat: any) => {
     getConversations({
@@ -51,32 +52,8 @@ const Chat = ({navigation}: props) => {
     })(dispatch);
   };
 
-  function onScroll(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-  }
-
-  function onScrollEndDrag(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-    if (y <= -FETCHING_HEIGHT && !isLoading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  function onRelease() {
-    if (offsetY <= -FETCHING_HEIGHT && !isLoading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
   const refreshControl = () => {
     const onRefresh = () => {
-      setPageNumber(0);
       fetchMessages(0, null);
     };
 
@@ -87,10 +64,6 @@ const Chat = ({navigation}: props) => {
         onRefresh={onRefresh}
       />
     );
-  };
-
-  const setChatSearch = (text: string) => {
-    fetchMessages(pageNumber, text);
   };
 
   const renderItem = ({item}) => {
@@ -148,9 +121,12 @@ const Chat = ({navigation}: props) => {
         )}
         style={styles(theme).flatGridList}
         renderItem={renderItem}
-        onScroll={onScroll}
-        onScrollEndDrag={onScrollEndDrag}
-        onResponderRelease={onRelease}
+        onEndReachedThreshold={0.8}
+        onEndReached={() => {
+          if (nextPage < totalPages && !isLoading) {
+            fetchMessages(nextPage, search);
+          }
+        }}
         keyExtractor={item => item.id.toString()}
       />
     );
@@ -179,12 +155,12 @@ const Chat = ({navigation}: props) => {
         placeholder="Search"
         onBlur={() => {
           setSearch(null);
-          setPageNumber(0);
+          fetchMessages(0, null);
         }}
-        onFocus={() => {
-          setPageNumber(0);
+        onChangeText={(text: string) => {
+          setSearch(text);
+          fetchMessages(0, text);
         }}
-        onChangeText={setChatSearch}
       />
       {content}
     </View>

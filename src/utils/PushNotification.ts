@@ -1,18 +1,8 @@
 import messaging from '@react-native-firebase/messaging';
-import {loadFCMToken, saveFCMToken} from './Storage';
 
 export const getFcmTokenFromLocalStorage = async () => {
-  let fcmtoken: string | null = await loadFCMToken();
-  if (fcmtoken == null) {
-    try {
-      await messaging().registerDeviceForRemoteMessages();
-      fcmtoken = await messaging().getToken();
-      saveFCMToken(fcmtoken);
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  return fcmtoken;
+  await messaging().registerDeviceForRemoteMessages();
+  return await messaging().getToken();
 };
 
 export const requestUserPermission = async () => {

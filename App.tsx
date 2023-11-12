@@ -43,8 +43,6 @@ const SafeAreaApp = () => {
   const {user} = useSelector((state: any) => state.user);
   const socket = getSocket();
 
-  setDeviceId(getDeviceId());
-
   setupAxiosInterceptors(() => {
     removeToken().then(() => {
       dispatch({
@@ -53,12 +51,17 @@ const SafeAreaApp = () => {
     });
   });
 
-  const initializeTheme = async () => {
-    const themeType = await loadThemeType();
-    if (themeType !== null) {
-      toggleTheme(themeType);
-    }
-  };
+  const initializeTheme = () =>
+    loadThemeType().then(themeType => {
+      if (themeType !== null) {
+        toggleTheme(themeType);
+      }
+    });
+
+  const getFcmtoken = () =>
+    getFcmTokenFromLocalStorage().then(fcmToken => {
+      setFcmToken(fcmToken);
+    });
 
   const checkLoginCredentials = async () => {
     const credentials: CredentialType | null = await loadToken();
@@ -81,7 +84,6 @@ const SafeAreaApp = () => {
   };
 
   const userInfo = async () => {
-    await fetchToken();
     try {
       dispatch({
         type: 'getUsersRequest',
@@ -102,17 +104,13 @@ const SafeAreaApp = () => {
     }
   };
 
-  const getFcmtoken = async () => {
-    const fcmToken = await getFcmTokenFromLocalStorage();
-    setFcmToken(fcmToken);
-  };
-
   const initializeApp = () => {
     setLoading(true);
     Promise.all([
-      initializeTheme(),
-      getFcmtoken(),
       checkLoginCredentials(),
+      getFcmtoken(),
+      initializeTheme(),
+      setDeviceId(getDeviceId()),
     ]).finally(() => {
       setLoading(false);
     });
@@ -128,6 +126,14 @@ const SafeAreaApp = () => {
         });
       }
     });
+    socket.on('delete.room', (data: any) => {
+      if (data.to === user.id) {
+        dispatch({
+          type: 'deleteChat',
+          payload: data.data,
+        });
+      }
+    });
     socket.on('post.reaction', (data: any) => {
       dispatch({
         type: 'updatePostsReactions',
@@ -137,6 +143,12 @@ const SafeAreaApp = () => {
     socket.on('post.comment', (data: any) => {
       dispatch({
         type: 'updatePostsComments',
+        payload: data,
+      });
+    });
+    socket.on('delete.comment', (data: any) => {
+      dispatch({
+        type: 'deletePostsComments',
         payload: data,
       });
     });

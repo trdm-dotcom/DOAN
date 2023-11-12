@@ -38,6 +38,7 @@ import {Modalize} from 'react-native-modalize';
 import Option from '../components/shared/Option';
 import {Image as ImageCompressor} from 'react-native-compressor';
 import {settingReceiveNotification} from '../reducers/action/notification';
+import {CLIENT_SECRET} from '@env';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -102,7 +103,7 @@ const Password = ({navigation, route}: props) => {
             username: phoneNumber,
             password: password,
             grant_type: 'password',
-            client_secret: 'iW4rurIrZJ',
+            client_secret: CLIENT_SECRET,
             hash: getHash('LOGIN'),
           };
           await loginPassword(bodyLogin);
@@ -176,7 +177,7 @@ const Password = ({navigation, route}: props) => {
       width: 300,
       height: 300,
       cropping: true,
-      compressImageQuality: 0.8,
+      compressImageQuality: 0.6,
       includeBase64: true,
       writeTempFile: false,
       useFrontCamera: true,
@@ -206,7 +207,7 @@ const Password = ({navigation, route}: props) => {
       width: 300,
       height: 300,
       cropping: true,
-      compressImageQuality: 0.8,
+      compressImageQuality: 0.6,
       includeBase64: true,
       writeTempFile: false,
     })

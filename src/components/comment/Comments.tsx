@@ -33,6 +33,11 @@ const Comments = ({postId}: CommentsProps) => {
         setComments([...comments, ...[data.data.comments]]);
       }
     });
+    socket.on('delete.comment', (data: any) => {
+      if (data.to === postId) {
+        setComments(comments.filter(comment => comment.id !== data.data.id));
+      }
+    });
   }, []);
 
   const fetchComments = (post: string) => {

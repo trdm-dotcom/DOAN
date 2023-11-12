@@ -5,11 +5,7 @@ import BottomSheetHeader from '../header/BottomSheetHeader';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {getBlockList, unblockUser} from '../../reducers/action/friend';
 import {space, styles} from '../style';
-import {
-  FETCHING_HEIGHT,
-  IconSizes,
-  Pagination,
-} from '../../constants/Constants';
+import {IconSizes, Pagination} from '../../constants/Constants';
 import ListEmptyComponent from '../shared/ListEmptyComponent';
 import {ThemeStatic} from '../../theme/Colors';
 import {Text} from 'react-native';
@@ -28,11 +24,10 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = React.useState<boolean>(false);
     const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
-    const [pageNumber, setPageNumber] = useState<number>(0);
-    const [offsetY, setOffsetY] = useState(0);
+    const [nextPage, setNextPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
 
     const handleOpen = () => {
-      setPageNumber(0);
       fetchBlockedUsers(0);
     };
 
@@ -43,7 +38,9 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
         pageSize: Pagination.PAGE_SIZE,
       })
         .then(res => {
-          setBlockedUsers([...blockedUsers, ...res]);
+          setBlockedUsers([...blockedUsers, ...res.datas]);
+          setNextPage(res.nextPage + 1);
+          setTotalPages(res.totalPages);
         })
         .catch(err => {
           console.log(err);
@@ -53,31 +50,6 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
           setLoading(false);
         });
     };
-
-    function onScroll(event: any) {
-      const {nativeEvent} = event;
-      const {contentOffset} = nativeEvent;
-      const {y} = contentOffset;
-      setOffsetY(y);
-    }
-
-    function onScrollEndDrag(event: any) {
-      const {nativeEvent} = event;
-      const {contentOffset} = nativeEvent;
-      const {y} = contentOffset;
-      setOffsetY(y);
-      if (y <= -FETCHING_HEIGHT && !loading) {
-        setPageNumber(pageNumber + 1);
-        fetchBlockedUsers(pageNumber + 1);
-      }
-    }
-
-    function onRelease() {
-      if (offsetY <= -FETCHING_HEIGHT && !loading) {
-        setPageNumber(pageNumber + 1);
-        fetchBlockedUsers(pageNumber + 1);
-      }
-    }
 
     const onUnBlock = async (friendId: number) => {
       await unblockUser(friendId);
@@ -132,9 +104,12 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
           data: blockedUsers,
           renderItem: renderItem,
           keyExtractor: item => item.id,
-          onScroll: onScroll,
-          onScrollEndDrag: onScrollEndDrag,
-          onResponderRelease: onRelease,
+          onEndReachedThreshold: 0.8,
+          onEndReached: () => {
+            if (nextPage < totalPages) {
+              fetchBlockedUsers(nextPage);
+            }
+          },
           showsVerticalScrollIndicator: false,
           ListEmptyComponent: () =>
             loading || error ? (

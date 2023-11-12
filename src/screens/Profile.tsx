@@ -4,25 +4,19 @@ import {AppContext} from '../context';
 import {space, styles} from '../components/style';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
-  FETCHING_HEIGHT,
-  IconSizes,
-  Pagination,
-  PostDimensions,
-} from '../constants/Constants';
+import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import HeaderBar from '../components/header/HeaderBar';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
 import {ThemeStatic} from '../theme/Colors';
 import ProfileOptionsBottomSheet from '../components/profile/ProfileOptionsBottomSheet';
 import ProfileScreenPlaceholder from '../components/placeholder/ProfileScreen.Placeholder';
-import {FlatGrid} from 'react-native-super-grid';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import ProfileCard from '../components/profile/ProfileCard';
 import PostThumbnail from '../components/post/PostThumbnail';
 import {getUserInfo} from '../reducers/action/user';
-import {getPostOfUser} from '../reducers/action/post';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {getPostOfUser, getPostTagged} from '../reducers/action/post';
+import {FlatList, GestureHandlerRootView} from 'react-native-gesture-handler';
 import {
   acceptFriendRequest,
   blockUser,
@@ -33,15 +27,29 @@ import {
   unblockUser,
 } from '../reducers/action/friend';
 import ConnectionsBottomSheet from '../components/bottomsheet/ConnectionsBottomSheet';
-import {RefreshControl, Text, TouchableOpacity, View} from 'react-native';
+import {Text, TouchableOpacity, View} from 'react-native';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {getConversationBetween} from '../reducers/action/chat';
 import Typography from '../theme/Typography';
 import {showError} from '../utils/Toast';
 import {useSelector} from 'react-redux';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
+import {
+  NavigationState,
+  SceneMap,
+  SceneRendererProps,
+  TabBar,
+  TabView,
+} from 'react-native-tab-view';
+import Feather from 'react-native-vector-icons/Feather';
 
 const {FontWeights, FontSizes} = Typography;
+
+type Route = {
+  key: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+};
+
+type State = NavigationState<Route>;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 const Profile = ({navigation, route}: props) => {
@@ -58,24 +66,33 @@ const Profile = ({navigation, route}: props) => {
   const [progessLoading, setProgressLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [userProfile, setUserProfile] = useState<any>({});
-  const [sortedPosts, setSortedPosts] = useState<any[]>([]);
-  const [pageNumber, setPageNumber] = useState<number>(0);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [postsTagged, setPostsTagged] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
-  const [offsetY, setOffsetY] = useState(0);
+  const [countFriends, setCountFriends] = useState<number>(0);
+  const [countPosts, setCountPosts] = useState<number>(0);
+  const [nextPage, setNextPage] = useState<number>(0);
+  const [nextPageTagged, setNextPageTagged] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalPagesTagged, setTotalPagesTagged] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    {key: 'post', icon: 'grid'},
+    {key: 'tag', icon: 'tag'},
+  ]);
 
   useEffect(() => {
     const fetchData = () => {
       setLoading(true);
       Promise.all([
         getUserInfo({userId: userId}),
-        getFriendOfUser({
-          friend: userId,
-          pageNumber: 0,
-          pageSize: Pagination.PAGE_SIZE,
-        }),
         checkFriend({
           friend: userId,
         }),
+        fetchPosts(0),
+        fetchPostTags(0),
+        fetchFriends(0),
       ])
         .catch(err => {
           console.log(err);
@@ -83,8 +100,7 @@ const Profile = ({navigation, route}: props) => {
         })
         .then(res => {
           setUserProfile(res[0]);
-          setFriends(res[1]);
-          setFriendStatus(res[2]);
+          setFriendStatus(res[1]);
         })
         .finally(() => setLoading(false));
     };
@@ -92,19 +108,56 @@ const Profile = ({navigation, route}: props) => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    fetchPosts(pageNumber);
-    return () => {};
-  }, [pageNumber]);
-
   const fetchPosts = (page: number) => {
+    setIsLoading(true);
     getPostOfUser({
       targetId: userId,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    }).then(res => {
-      setSortedPosts(page === 0 ? res : [...sortedPosts, ...res]);
-    });
+    })
+      .then(res => {
+        setCountPosts(res.total);
+        setPosts(res.page === 0 ? res.dtas : [...posts, ...res.datas]);
+        setNextPage(res.page + 1);
+        setTotalPages(res.totalPages);
+      })
+      .then(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const fetchPostTags = (page: number) => {
+    setIsLoading(true);
+    getPostTagged({
+      targetId: userId,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    })
+      .then(res => {
+        setPostsTagged(res.page === 0 ? res : [...postsTagged, ...res.datas]);
+        setNextPageTagged(res.page + 1);
+        setTotalPagesTagged(res.totalPages);
+      })
+      .then(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const fetchFriends = (page: number) => {
+    setLoading(true);
+    getFriendOfUser({
+      friend: userId,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    })
+      .then(res => {
+        setCountFriends(res.total);
+        setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
+      })
+      .catch(() => {
+        setError(true);
+      })
+      .finally(() => setLoading(false));
   };
 
   const profileOptionsBottomSheetRef = useRef();
@@ -204,9 +257,7 @@ const Profile = ({navigation, route}: props) => {
   };
 
   const messageInteraction = async () => {
-    const conversation = await getConversationBetween({recipientId: userId});
     navigation.navigate('Conversation', {
-      chatId: conversation.chatId,
       avatar: userProfile.avatar,
       name: userProfile.name,
       targetId: userId,
@@ -255,158 +306,8 @@ const Profile = ({navigation, route}: props) => {
       });
   };
 
-  const ListHeaderComponent = () => {
-    return (
-      <ProfileCard
-        avatar={userProfile.avatar}
-        name={userProfile.name}
-        onOptionPress={onProfileOptionsOpen}
-        renderInteractions={() => (
-          <View
-            style={[
-              {
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              },
-            ]}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={friendInteraction}
-              disabled={progessLoading}
-              style={[
-                styles(theme).button,
-                styles(theme).buttonPrimary,
-                {flex: 1, height: 55, marginRight: 10},
-              ]}>
-              {progessLoading ? (
-                <LoadingIndicator
-                  size={IconSizes.x0}
-                  color={ThemeStatic.white}
-                />
-              ) : (
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: ThemeStatic.white,
-                    },
-                  ]}>
-                  {friendStatus.status === 'FRIENDED'
-                    ? 'UNFRIEND'
-                    : friendStatus.status === 'PENDING'
-                    ? 'CANCEL'
-                    : friendStatus.status === 'BLOCKED'
-                    ? 'UNBLOCK'
-                    : 'ADD FRIEND'}
-                </Text>
-              )}
-            </TouchableOpacity>
-            {friendStatus.status === 'PENDING' &&
-              friendStatus.targetId === user.id && (
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  disabled={progessLoading}
-                  onPress={acceptRequest}
-                  style={[
-                    styles(theme).button,
-                    styles(theme).buttonPrimary,
-                    {flex: 1, height: 55, marginLeft: 10},
-                  ]}>
-                  {progessLoading ? (
-                    <LoadingIndicator
-                      size={IconSizes.x0}
-                      color={ThemeStatic.white}
-                    />
-                  ) : (
-                    <Text
-                      style={[
-                        {
-                          ...FontWeights.Bold,
-                          ...FontSizes.Body,
-                          color: ThemeStatic.white,
-                        },
-                      ]}>
-                      ACCEPT
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              )}
-            {friendStatus.status === 'FRIENDED' && (
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={messageInteraction}
-                disabled={progessLoading}
-                style={[
-                  styles(theme).button,
-                  styles(theme).buttonPrimary,
-                  space(IconSizes.x1).ml,
-                  {height: 55},
-                ]}>
-                <Ionicons
-                  name="chatbox-ellipses"
-                  size={IconSizes.x6}
-                  color={ThemeStatic.white}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-        posts={sortedPosts.length}
-        friends={friends.length}
-        onFriendsOpen={() => {
-          if (!userProfile.privateMode || friendStatus.status === 'FRIENDED') {
-            onFriendsOpen();
-          }
-        }}
-      />
-    );
-  };
-
-  function onScroll(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-  }
-
-  function onScrollEndDrag(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-    if (y <= -FETCHING_HEIGHT && !loading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  function onRelease() {
-    if (offsetY <= -FETCHING_HEIGHT && !loading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  const refreshControl = () => {
-    const onRefresh = () => setPageNumber(0);
-
-    return (
-      <RefreshControl
-        tintColor={theme.text02}
-        refreshing={loading}
-        onRefresh={onRefresh}
-      />
-    );
-  };
-
   const renderItem = ({item}) => {
-    return (
-      <PostThumbnail
-        id={item.id}
-        uri={item.source}
-        dimensions={PostDimensions.Medium}
-      />
-    );
+    return <PostThumbnail id={item.id} uri={item.source} />;
   };
 
   const handleStateChange = (friend: any) => {
@@ -415,56 +316,266 @@ const Profile = ({navigation, route}: props) => {
     );
   };
 
+  const PostRoute = () => (
+    <FlatList
+      numColumns={3}
+      data={posts}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={() => (
+        <ListEmptyComponent listType="posts" spacing={30} />
+      )}
+      ListFooterComponent={() => (
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            space(IconSizes.x1).mt,
+          ]}>
+          {loading && (
+            <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+          )}
+        </View>
+      )}
+      onEndReachedThreshold={0.8}
+      onEndReached={() => {
+        if (nextPage < totalPages && !isLoading) {
+          fetchPosts(nextPage);
+        }
+      }}
+      renderItem={renderItem}
+      keyExtractor={item => item.id.toString()}
+    />
+  );
+
+  const TagRoute = () => (
+    <FlatList
+      numColumns={3}
+      data={postsTagged}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={() => (
+        <ListEmptyComponent listType="posts" spacing={30} />
+      )}
+      ListFooterComponent={() => (
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            space(IconSizes.x1).mt,
+          ]}>
+          {loading && (
+            <LoadingIndicator size={IconSizes.x1} color={theme.placeholder} />
+          )}
+        </View>
+      )}
+      onEndReachedThreshold={0.8}
+      onEndReached={() => {
+        if (nextPageTagged < totalPagesTagged && !isLoading) {
+          fetchPostTags(nextPageTagged);
+        }
+      }}
+      renderItem={renderItem}
+      keyExtractor={item => item.id.toString()}
+    />
+  );
+
+  const renderIcon = ({
+    route: tabRoute,
+    color,
+  }: {
+    route: Route;
+    color: string;
+  }) => <Feather name={tabRoute.icon} size={IconSizes.x6} color={color} />;
+
+  const renderTabBar = (
+    props: SceneRendererProps & {navigationState: State},
+  ) => (
+    <TabBar
+      {...props}
+      style={[
+        styles(theme).defaultBackground,
+        {elevation: 0, shadowOpacity: 0, borderBottomWidth: 0},
+      ]}
+      labelStyle={{
+        ...FontWeights.Regular,
+        ...FontSizes.Body,
+        color: theme.text01,
+      }}
+      indicatorStyle={{backgroundColor: ThemeStatic.accent}}
+      renderIcon={renderIcon}
+    />
+  );
+
   let content =
     loading || error ? (
       <ProfileScreenPlaceholder viewMode />
     ) : (
       <>
-        <FlatGrid
-          refreshControl={refreshControl()}
-          ListHeaderComponent={ListHeaderComponent}
-          itemDimension={150}
-          data={sortedPosts}
-          ListEmptyComponent={() => (
-            <ListEmptyComponent listType="posts" spacing={30} />
-          )}
-          ListFooterComponent={() => (
+        <ProfileCard
+          avatar={userProfile.avatar}
+          name={userProfile.name}
+          onOptionPress={onProfileOptionsOpen}
+          renderInteractions={() => (
             <View
               style={[
                 {
-                  flex: 1,
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  justifyContent: 'space-between',
                 },
-                space(IconSizes.x1).mt,
               ]}>
-              {loading && (
-                <LoadingIndicator
-                  size={IconSizes.x1}
-                  color={theme.placeholder}
-                />
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={friendInteraction}
+                disabled={progessLoading}
+                style={[
+                  styles(theme).button,
+                  styles(theme).buttonPrimary,
+                  {flex: 1, height: 55, marginRight: 10},
+                ]}>
+                {progessLoading ? (
+                  <LoadingIndicator
+                    size={IconSizes.x0}
+                    color={ThemeStatic.white}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: ThemeStatic.white,
+                      },
+                    ]}>
+                    {friendStatus.status === 'FRIENDED'
+                      ? 'UNFRIEND'
+                      : friendStatus.status === 'PENDING'
+                      ? 'CANCEL'
+                      : friendStatus.status === 'BLOCKED'
+                      ? 'UNBLOCK'
+                      : 'ADD FRIEND'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+              {friendStatus.status === 'PENDING' &&
+                friendStatus.targetId === user.id && (
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    disabled={progessLoading}
+                    onPress={acceptRequest}
+                    style={[
+                      styles(theme).button,
+                      styles(theme).buttonPrimary,
+                      {flex: 1, height: 55, marginLeft: 10},
+                    ]}>
+                    {progessLoading ? (
+                      <LoadingIndicator
+                        size={IconSizes.x0}
+                        color={ThemeStatic.white}
+                      />
+                    ) : (
+                      <Text
+                        style={[
+                          {
+                            ...FontWeights.Bold,
+                            ...FontSizes.Body,
+                            color: ThemeStatic.white,
+                          },
+                        ]}>
+                        ACCEPT
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              {friendStatus.status === 'FRIENDED' && (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={messageInteraction}
+                  disabled={progessLoading}
+                  style={[
+                    styles(theme).button,
+                    styles(theme).buttonPrimary,
+                    space(IconSizes.x1).ml,
+                    {height: 55},
+                  ]}>
+                  <Ionicons
+                    name="chatbox-ellipses"
+                    size={IconSizes.x6}
+                    color={ThemeStatic.white}
+                  />
+                </TouchableOpacity>
               )}
             </View>
           )}
-          style={[
-            {
-              flex: 1,
-            },
-          ]}
-          showsVerticalScrollIndicator={false}
-          renderItem={renderItem}
-          onScroll={onScroll}
-          onScrollEndDrag={onScrollEndDrag}
-          onResponderRelease={onRelease}
-          keyExtractor={item => item.id.toString()}
+          posts={countPosts}
+          friends={countFriends}
+          onFriendsOpen={() => {
+            if (
+              userProfile.privateMode === 0 ||
+              friendStatus.status === 'FRIENDED'
+            ) {
+              onFriendsOpen();
+            }
+          }}
         />
-        <ConnectionsBottomSheet
-          viewMode
-          ref={friendsBottomSheetRef}
-          datas={friends}
-          name={userProfile.name}
-          onStateChange={handleStateChange}
-        />
+        {userProfile.privateMode === 0 || friendStatus.status === 'FRIENDED' ? (
+          <>
+            <TabView
+              navigationState={{index, routes}}
+              renderScene={SceneMap({
+                post: PostRoute,
+                tag: TagRoute,
+              })}
+              renderTabBar={renderTabBar}
+              onIndexChange={setIndex}
+              initialLayout={{
+                height: 0,
+                width: SCREEN_WIDTH,
+              }}
+            />
+            <ConnectionsBottomSheet
+              viewMode
+              ref={friendsBottomSheetRef}
+              datas={friends}
+              name={userProfile.name}
+              onStateChange={handleStateChange}
+              fetchMore={(page: number) =>
+                getFriendOfUser({
+                  friend: userId,
+                  pageNumber: page,
+                  pageSize: Pagination.PAGE_SIZE,
+                })
+              }
+            />
+          </>
+        ) : (
+          <View
+            style={[
+              {
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginHorizontal: 10,
+                height: responsiveHeight(20),
+              },
+            ]}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Light,
+                  ...FontSizes.Label,
+                  color: theme.text02,
+                },
+              ]}>
+              This profile is private
+            </Text>
+          </View>
+        )}
       </>
     );
 

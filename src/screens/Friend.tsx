@@ -1,10 +1,12 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useRef, useState} from 'react';
 import {AppContext} from '../context';
 import {
   PermissionsAndroid,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import Contacts, {Contact} from 'react-native-contacts';
@@ -32,12 +34,15 @@ import SearchUsersPlaceholder from '../components/placeholder/SearchUsers.Placeh
 import {ThemeStatic} from '../theme/Colors';
 import UserCardPress from '../components/user/UserCardPress';
 import {showError} from '../utils/Toast';
+import ConnectionsBottomSheet from '../components/bottomsheet/ConnectionsBottomSheet';
+import {useSelector} from 'react-redux';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 const {FontWeights, FontSizes} = Typography;
 
 const Friend = () => {
   const {theme} = useContext(AppContext);
-  const [pageNumber, setPageNumber] = useState(0);
+  const {user} = useSelector((state: any) => state.user);
   const [listfriendSuggest, setListFriendSuggest] = useState<IFriendResponse[]>(
     [],
   );
@@ -49,7 +54,23 @@ const Friend = () => {
   const [showModal, setShowModal] = useState(false);
   const [friendRejected, setFriendRejected] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [nextPage, setNextPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+
+  const friendListBottomSheetRef = useRef();
+  const friendRequestBottomSheetRef = useRef();
+
+  const onFriendsOpen = () => {
+    // @ts-ignore
+    return friendListBottomSheetRef.current.open();
+  };
+
+  const onFriendsRequestOpen = () => {
+    // @ts-ignore
+    return friendRequestBottomSheetRef.current.open();
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -60,9 +81,9 @@ const Friend = () => {
   const fetchInit = () => {
     setLoading(true);
     Promise.all([
-      fetchListRequestFriend(),
-      fetchListFriend(),
-      fetchListSuggestFriend(null, pageNumber),
+      fetchListRequestFriend(0),
+      fetchListFriend(0),
+      fetchListSuggestFriend(null, 0),
     ])
       .catch(err => {
         console.log(err);
@@ -70,11 +91,6 @@ const Friend = () => {
       })
       .finally(() => setLoading(false));
   };
-
-  useEffect(() => {
-    fetchListSuggestFriend(search, pageNumber);
-    return () => {};
-  }, [pageNumber]);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -119,37 +135,44 @@ const Friend = () => {
   };
 
   const fetchListSuggestFriend = (searchFriend: any, page: number) => {
+    setIsLoading(true);
     getContacts().then(listPhone => {
       getSuggestFriend({
         phone: searchFriend == null ? listPhone : null,
         search: searchFriend,
         pageNumber: page,
         pageSize: Pagination.PAGE_SIZE,
-      }).then(response =>
-        setListFriendSuggest(
-          page === 0 ? response : [...listfriendSuggest, ...response],
-        ),
-      );
+      })
+        .then(response => {
+          setListFriendSuggest(
+            response.page === 0
+              ? response.datas
+              : [...listfriendSuggest, ...response.datas],
+          );
+          setNextPage(response.page + 1);
+          setTotalPages(response.totalPages);
+        })
+        .finally(() => setIsLoading(false));
     });
   };
 
-  const fetchListRequestFriend = () => {
+  const fetchListRequestFriend = (page: number) => {
     getFriendRequest({
-      pageNumber: 0,
+      pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    }).then(response => setListRequestFriend(response));
+    }).then(response => setListRequestFriend(response.datas));
   };
 
-  const fetchListFriend = () => {
+  const fetchListFriend = (page: number) => {
     getFriendList({
-      pageNumber: 0,
+      pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
-    }).then(response => setListFriend(response));
+    }).then(response => setListFriend(response.datas));
   };
 
   const handleOnChangeText = async (text: string) => {
     setSearch(text);
-    fetchListSuggestFriend(text, pageNumber);
+    fetchListSuggestFriend(text, nextPage);
   };
 
   const deleteConfirmationToggle = () => {
@@ -179,31 +202,51 @@ const Friend = () => {
     setListRequestFriend([...listRequestFriend, friend]);
   };
 
-  let content = <SearchUsersPlaceholder />;
-
-  if (!error && !loading) {
-    content = (
+  let content =
+    error || loading ? (
+      <SearchUsersPlaceholder />
+    ) : (
       <>
         <View style={[{flex: 1}]}>
           {listRequestFriend.length > 0 && (
             <>
-              <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Label,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).ml,
-                  ]}>
-                  Request friend
-                </Text>
+              <View
+                style={[
+                  styles(theme).row,
+                  space(IconSizes.x5).mv,
+                  {justifyContent: 'space-between'},
+                ]}>
+                <View style={[styles(theme).row]}>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Label,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).ml,
+                    ]}>
+                    Request friend
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={onFriendsRequestOpen}>
+                  <Text
+                    style={[
+                      styles(theme).centerText,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: ThemeStatic.accent,
+                      },
+                    ]}>
+                    See all
+                  </Text>
+                </TouchableOpacity>
               </View>
               {listRequestFriend.map(item => (
                 <UserCardPress
@@ -255,23 +298,43 @@ const Friend = () => {
           )}
           {listFriend.length > 0 && (
             <>
-              <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-                <Ionicons
-                  name="people-outline"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Label,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).ml,
-                  ]}>
-                  Your Friends
-                </Text>
+              <View
+                style={[
+                  styles(theme).row,
+                  space(IconSizes.x5).mv,
+                  {justifyContent: 'space-between'},
+                ]}>
+                <View style={[styles(theme).row]}>
+                  <Ionicons
+                    name="people-outline"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Label,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).ml,
+                    ]}>
+                    Your Friends
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={onFriendsOpen}>
+                  <Text
+                    style={[
+                      styles(theme).centerText,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: ThemeStatic.accent,
+                      },
+                    ]}>
+                    See all
+                  </Text>
+                </TouchableOpacity>
               </View>
               {listFriend.map(item => (
                 <UserCard
@@ -353,91 +416,133 @@ const Friend = () => {
                   indicatorColor={ThemeStatic.accent}
                 />
               ))}
-              <AppButton
-                label="Load More"
-                onPress={() => {
-                  setPageNumber(pageNumber + 1);
-                }}
-                containerStyle={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  alignSelf: 'center',
-                  borderRadius: 50,
-                  backgroundColor: theme.placeholder,
-                  paddingHorizontal: IconSizes.x5,
-                  paddingVertical: IconSizes.x1,
-                  marginTop: IconSizes.x5,
-                }}
-                Icon={() => (
-                  <Ionicons
-                    name="add-circle-outline"
-                    size={IconSizes.x6}
-                    color={theme.text01}
-                  />
-                )}
-              />
+              {nextPage < totalPages && (
+                <AppButton
+                  label="Load More"
+                  onPress={() => {
+                    fetchListSuggestFriend(search, nextPage);
+                  }}
+                  disabled={nextPage >= totalPages || isLoading}
+                  containerStyle={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    alignSelf: 'center',
+                    borderRadius: 50,
+                    backgroundColor: theme.placeholder,
+                    paddingHorizontal: IconSizes.x5,
+                    paddingVertical: IconSizes.x1,
+                    marginTop: IconSizes.x5,
+                  }}
+                  Icon={() => (
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={IconSizes.x6}
+                      color={theme.text01}
+                    />
+                  )}
+                />
+              )}
             </>
           )}
         </View>
       </>
     );
-  }
+
+  const refreshControl = () => {
+    const onRefresh = () => {
+      fetchInit();
+    };
+
+    return (
+      <RefreshControl
+        tintColor={theme.text02}
+        refreshing={loading}
+        onRefresh={onRefresh}
+      />
+    );
+  };
 
   return (
-    <>
-      <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-        <ScrollView
-          stickyHeaderIndices={[0]}
-          showsVerticalScrollIndicator={false}>
-          <View style={[styles(theme).defaultBackground]}>
-            <Header title="Your friend" />
-            <AnimatedSearchBar
-              value={search}
-              placeholder="Search"
-              onBlur={() => {
-                setSearch(null);
-                setPageNumber(0);
-                fetchInit();
-              }}
-              onFocus={() => {
-                setListFriendSuggest([]);
-                setListFriend([]);
-                setListRequestFriend([]);
-                setPageNumber(0);
-              }}
-              onChangeText={handleOnChangeText}
+    <GestureHandlerRootView
+      style={[styles(theme).container, styles(theme).defaultBackground]}>
+      <ScrollView
+        refreshControl={refreshControl()}
+        stickyHeaderIndices={[0]}
+        showsVerticalScrollIndicator={false}>
+        <View style={[styles(theme).defaultBackground]}>
+          <Header title="Your friend" />
+          <AnimatedSearchBar
+            value={search}
+            placeholder="Search"
+            onBlur={() => {
+              setSearch(null);
+              fetchInit();
+            }}
+            onFocus={() => {
+              setListFriendSuggest([]);
+              setListFriend([]);
+              setListRequestFriend([]);
+            }}
+            onChangeText={handleOnChangeText}
+          />
+          <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
+            <Ionicons
+              name="share-social-outline"
+              size={IconSizes.x6}
+              color={theme.text01}
             />
-            <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-              <Ionicons
-                name="share-social-outline"
-                size={IconSizes.x6}
-                color={theme.text01}
-              />
-              <Text
-                style={[
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Label,
-                    color: theme.text01,
-                  },
-                  space(IconSizes.x1).ml,
-                ]}>
-                Invite from other apps
-              </Text>
-            </View>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Bold,
+                  ...FontSizes.Label,
+                  color: theme.text01,
+                },
+                space(IconSizes.x1).ml,
+              ]}>
+              Invite from other apps
+            </Text>
           </View>
-          {content}
-        </ScrollView>
-        <ConfirmationModal
-          label="Delete"
-          title="Are you sure you want to delete?"
-          color="red"
-          isVisible={showModal}
-          toggle={deleteConfirmationToggle}
-          onConfirm={deleteFriend}
-        />
-      </View>
-    </>
+        </View>
+        {content}
+      </ScrollView>
+      <ConfirmationModal
+        label="Delete"
+        title="Are you sure you want to delete?"
+        color="red"
+        isVisible={showModal}
+        toggle={deleteConfirmationToggle}
+        onConfirm={deleteFriend}
+      />
+      <ConnectionsBottomSheet
+        viewMode
+        ref={friendListBottomSheetRef}
+        datas={listFriend}
+        name={user.name}
+        onStateChange={(friend: any) => {
+          setListFriend(listFriend.filter(item => item.id !== friend.id));
+        }}
+        fetchMore={(page: number) =>
+          getFriendList({
+            pageNumber: page,
+            pageSize: Pagination.PAGE_SIZE,
+          })
+        }
+      />
+      <ConnectionsBottomSheet
+        viewMode
+        ref={friendRequestBottomSheetRef}
+        datas={listRequestFriend}
+        name={user.name}
+        onStateChange={(friend: any) => setListFriend([...listFriend, friend])}
+        fetchMore={(page: number) =>
+          getFriendRequest({
+            pageNumber: page,
+            pageSize: Pagination.PAGE_SIZE,
+          })
+        }
+      />
+    </GestureHandlerRootView>
   );
 };
 

@@ -1,16 +1,11 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {RefreshControl, View} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
 import PostCard from '../components/post/PostCard';
 import PostCardPlaceholder from '../components/placeholder/PostCard.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
-import {
-  FETCHING_HEIGHT,
-  IconSizes,
-  Pagination,
-  SCREEN_WIDTH,
-} from '../constants/Constants';
+import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
 import {getPosts} from '../reducers/action/post';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import HeaderBar from '../components/header/HeaderBar';
@@ -19,50 +14,33 @@ import Feather from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
-import {sortPostDescendingTime} from '../utils/shared';
+import {showError} from '../utils/Toast';
 
 const Feed = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
-  const {posts, isLoading, error} = useSelector((state: any) => state.post);
-
-  const [pageNumber, setPageNumber] = useState(0);
+  const {posts, isLoading, error, nextPage, totalPages} = useSelector(
+    (state: any) => state.post,
+  );
   const navigation = useNavigation();
-  const [offsetY, setOffsetY] = useState(0);
 
   useEffect(() => {
-    fetchFeed(pageNumber);
-  }, [pageNumber]);
+    if (error) {
+      showError(error.message);
+      dispatch({type: 'clearErrors'});
+    }
+  }, [error]);
+
+  useEffect(() => {
+    fetchFeed(0);
+  }, []);
 
   const fetchFeed = (page: number) => {
     getPosts({
-      page: page,
-      limit: Pagination.PAGE_SIZE,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
     })(dispatch);
   };
-
-  function onScroll(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-  }
-
-  function onScrollEndDrag(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-    if (y <= -FETCHING_HEIGHT && !isLoading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  function onRelease() {
-    if (offsetY <= -FETCHING_HEIGHT && !isLoading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
 
   const renderItem = ({item}) => {
     return (
@@ -81,7 +59,6 @@ const Feed = () => {
 
   const refreshControl = () => {
     const onRefresh = () => {
-      setPageNumber(0);
       fetchFeed(0);
     };
 
@@ -102,7 +79,7 @@ const Feed = () => {
         refreshControl={refreshControl()}
         showsVerticalScrollIndicator={false}
         itemDimension={SCREEN_WIDTH}
-        data={sortPostDescendingTime(posts)}
+        data={posts}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="posts" spacing={30} />
         )}
@@ -127,9 +104,12 @@ const Feed = () => {
           },
         ]}
         renderItem={renderItem}
-        onScroll={onScroll}
-        onScrollEndDrag={onScrollEndDrag}
-        onResponderRelease={onRelease}
+        onEndReachedThreshold={0.8}
+        onEndReached={() => {
+          if (nextPage < totalPages && !isLoading) {
+            fetchFeed(nextPage);
+          }
+        }}
         keyExtractor={item => item.id.toString()}
       />
     );

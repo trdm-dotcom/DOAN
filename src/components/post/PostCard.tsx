@@ -100,6 +100,7 @@ const PostCard = ({
             tags.length > 0 &&
             tags.map(tag => (
               <NativeImage
+                key={tag.id}
                 uri={tag.avatar}
                 style={{
                   height: 30,
@@ -216,7 +217,7 @@ const PostCard = ({
                   ...FontWeights.Regular,
                   ...FontSizes.Body,
                   marginLeft: 8,
-                  color: ThemeStatic.white,
+                  color: theme.text02,
                 }}>
                 {parseLikes(likes.length)}
               </Text>
@@ -232,7 +233,7 @@ const PostCard = ({
                   ...FontWeights.Regular,
                   ...FontSizes.Body,
                   marginLeft: 8,
-                  color: ThemeStatic.white,
+                  color: theme.text02,
                 }}>
                 {parseComments(comments.length)}
               </Text>

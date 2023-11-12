@@ -1,13 +1,8 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useEffect} from 'react';
 import {RefreshControl, View} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
-import {
-  FETCHING_HEIGHT,
-  IconSizes,
-  Pagination,
-  SCREEN_WIDTH,
-} from '../constants/Constants';
+import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
 import NotificationScreenPlaceholder from '../components/placeholder/NotificationScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
 import NotificationCard from '../components/notification/NotificationCard';
@@ -20,27 +15,31 @@ import Header from '../components/header/Header';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
+import {showError} from '../utils/Toast';
 
 const Notifi = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
-  const {notifications, isLoading, error} = useSelector(
+  const {notifications, isLoading, error, nextPage, totalPages} = useSelector(
     (state: any) => state.notification,
   );
-  const [pageNumber, setPageNumber] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
-      remarkAllNotification();
+      remarkNotification();
     }, []),
   );
 
   useEffect(() => {
-    fetchNotifications(pageNumber);
-  }, [pageNumber]);
+    if (error) {
+      showError(error.message);
+      dispatch({type: 'clearErrors'});
+    }
+  }, [error]);
 
-  const remarkAllNotification = () => remarkNotification()(dispatch);
+  useEffect(() => {
+    fetchNotifications(0);
+  }, []);
 
   const fetchNotifications = (page: number) => {
     getNotifications({
@@ -49,31 +48,8 @@ const Notifi = () => {
     })(dispatch);
   };
 
-  function onScroll(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-  }
-
-  function onScrollEndDrag(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-    if (y <= -FETCHING_HEIGHT && !isLoading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
-  function onRelease() {
-    if (offsetY <= -FETCHING_HEIGHT && !isLoading) {
-      setPageNumber(pageNumber + 1);
-    }
-  }
-
   const refreshControl = () => {
-    const onRefresh = () => fetchNotifications(1);
+    const onRefresh = () => fetchNotifications(0);
 
     return (
       <RefreshControl
@@ -125,9 +101,12 @@ const Notifi = () => {
         )}
         style={styles(theme).flatGridList}
         renderItem={renderItem}
-        onScroll={onScroll}
-        onScrollEndDrag={onScrollEndDrag}
-        onResponderRelease={onRelease}
+        onEndReachedThreshold={0.8}
+        onEndReached={() => {
+          if (nextPage < totalPages && !isLoading) {
+            fetchNotifications(nextPage);
+          }
+        }}
         keyExtractor={item => item.id.toString()}
       />
     );

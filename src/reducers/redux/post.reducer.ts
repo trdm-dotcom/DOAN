@@ -8,11 +8,18 @@ const initialState: any = {
 
 export const postReducer = createReducer(initialState, {
   getAllPostsRequest: state => {
+    state.error = null;
     state.isLoading = true;
   },
   getAllPostsSuccess: (state, action) => {
     state.isLoading = false;
-    state.posts = action.payload;
+    state.nextPage = action.payload.page + 1;
+    state.totalPages = action.payload.totalPages;
+    if (action.payload.page === 0) {
+      state.posts = action.payload.datas;
+    } else {
+      state.posts = [...state.posts, ...action.payload.datas];
+    }
   },
   getAllPostsFailed: (state, action) => {
     state.isLoading = false;
@@ -32,6 +39,16 @@ export const postReducer = createReducer(initialState, {
     );
     if (existingIndex !== -1) {
       state.posts[existingIndex].comments.push(action.payload.data.comments);
+    }
+  },
+  deletePostsComments: (state, action) => {
+    const existingIndex = state.posts.findIndex(
+      post => post.id === action.payload.to,
+    );
+    if (existingIndex !== -1) {
+      state.posts[existingIndex].comments = state.posts[
+        existingIndex
+      ].comments.filter(comment => comment.id !== action.payload.data.id);
     }
   },
   clearErrors: state => {
