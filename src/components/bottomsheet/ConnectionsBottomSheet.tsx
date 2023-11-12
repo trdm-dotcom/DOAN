@@ -21,6 +21,7 @@ type UserCardProps = {
   name: string;
   handlerOnPress: () => Promise<void>;
   friendStatus: string;
+  viewMode?: boolean;
   isAccept: boolean;
   handlerOnAccept: () => Promise<void>;
 };
@@ -31,6 +32,7 @@ const ConnectionsUserCard = ({
   name,
   handlerOnPress,
   friendStatus,
+  viewMode,
   isAccept,
   handlerOnAccept,
 }: UserCardProps) => {
@@ -46,22 +48,72 @@ const ConnectionsUserCard = ({
     navigation.navigate('Profile', {userId: userId});
   };
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={navigateToProfile}
-      style={[styles(theme).userCardContainer, space(IconSizes.x1).mt]}>
-      <View style={[styles(theme).row]}>
-        <NativeImage uri={avatar} style={styles(theme).tinyImage} />
-        <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
-          {name}
-        </Text>
-      </View>
-      <View style={[styles(theme).row]}>
+  const buttonControl = viewMode ? (
+    friendStatus === null &&
+    userId !== user.id && (
+      <TouchableOpacity
+        onPress={() => {
+          setLoading(true);
+          handlerOnPress().finally(() => setLoading(false));
+        }}
+        disabled={loading}
+        activeOpacity={0.9}
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.placeholder,
+            padding: IconSizes.x1,
+            borderRadius: 50,
+            width: 50,
+          },
+        ]}>
+        {loading ? (
+          <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+        ) : (
+          <Ionicons name="add" size={IconSizes.x6} color={ThemeStatic.accent} />
+        )}
+      </TouchableOpacity>
+    )
+  ) : (
+    <View style={[styles(theme).row]}>
+      <TouchableOpacity
+        onPress={() => {
+          setLoading(true);
+          handlerOnPress().finally(() => setLoading(false));
+        }}
+        disabled={loading}
+        activeOpacity={0.9}
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.placeholder,
+            padding: IconSizes.x1,
+            borderRadius: 50,
+            width: 50,
+          },
+        ]}>
+        {loading ? (
+          <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+        ) : friendStatus !== null ||
+          (friendStatus !== 'PENDING' && !isAccept) ? (
+          <Ionicons
+            name="close"
+            size={IconSizes.x6}
+            color={ThemeStatic.accent}
+          />
+        ) : (
+          <Ionicons name="add" size={IconSizes.x6} color={ThemeStatic.accent} />
+        )}
+      </TouchableOpacity>
+      {friendStatus !== null && friendStatus === 'PENDING' && isAccept && (
         <TouchableOpacity
           onPress={() => {
             setLoading(true);
-            handlerOnPress().finally(() => setLoading(false));
+            handlerOnAccept().finally(() => setLoading(false));
           }}
           disabled={loading}
           activeOpacity={0.9}
@@ -74,53 +126,32 @@ const ConnectionsUserCard = ({
               padding: IconSizes.x1,
               borderRadius: 50,
               width: 50,
+              marginLeft: 10,
             },
           ]}>
-          {loading ? (
-            <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
-          ) : friendStatus !== null ? (
-            <Ionicons
-              name="close"
-              size={IconSizes.x6}
-              color={ThemeStatic.accent}
-            />
-          ) : (
-            <Ionicons
-              name="add"
-              size={IconSizes.x6}
-              color={ThemeStatic.accent}
-            />
-          )}
+          <Ionicons
+            name="checkmark"
+            size={IconSizes.x6}
+            color={ThemeStatic.accent}
+          />
         </TouchableOpacity>
-        {friendStatus !== null && friendStatus === 'PENDING' && isAccept && (
-          <TouchableOpacity
-            onPress={() => {
-              setLoading(true);
-              handlerOnAccept().finally(() => setLoading(false));
-            }}
-            disabled={loading}
-            activeOpacity={0.9}
-            style={[
-              {
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
-                padding: IconSizes.x1,
-                borderRadius: 50,
-                width: 50,
-                marginLeft: 10,
-              },
-            ]}>
-            <Ionicons
-              name="checkmark"
-              size={IconSizes.x6}
-              color={ThemeStatic.accent}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  return (
+    <View style={[styles(theme).userCardContainer, space(IconSizes.x1).mt]}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={navigateToProfile}
+        style={[styles(theme).row]}>
+        <NativeImage uri={avatar} style={styles(theme).tinyImage} />
+        <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
+          {name}
+        </Text>
+      </TouchableOpacity>
+      {buttonControl}
+    </View>
   );
 };
 
@@ -212,6 +243,7 @@ const ConnectionsBottomSheet: React.FC<ConnectionsBottomSheetProps> =
           name={item.name}
           friendStatus={item.friendStatus}
           handlerOnPress={() => onPress(item)}
+          viewMode={viewMode}
           isAccept={item.isAccept}
           handlerOnAccept={() => acceptFriend(item)}
         />

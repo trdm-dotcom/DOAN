@@ -514,7 +514,6 @@ const Friend = () => {
         onConfirm={deleteFriend}
       />
       <ConnectionsBottomSheet
-        viewMode
         ref={friendListBottomSheetRef}
         datas={listFriend}
         name={user.name}
@@ -529,7 +528,6 @@ const Friend = () => {
         }
       />
       <ConnectionsBottomSheet
-        viewMode
         ref={friendRequestBottomSheetRef}
         datas={listRequestFriend}
         name={user.name}

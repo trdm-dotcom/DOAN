@@ -6,7 +6,7 @@ import {AppContext} from '../../context';
 import {ThemeStatic} from '../../theme/Colors';
 import Typography from '../../theme/Typography';
 import {NativeImage} from '../shared/NativeImage';
-import {CONTENT_SPACING, IconSizes} from '../../constants/Constants';
+import {IconSizes} from '../../constants/Constants';
 import {space, styles as globalStyles} from '../style';
 import IconButton from '../control/IconButton';
 
@@ -110,9 +110,6 @@ const ProfileCard = ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-around',
-            backgroundColor: theme.placeholder,
-            borderRadius: 10,
-            padding: CONTENT_SPACING,
           },
           space(IconSizes.x5).mv,
         ]}>
@@ -164,7 +161,7 @@ const styles = (theme = {} as ThemeColors) =>
     connectionsText: {
       ...FontWeights.Regular,
       ...FontSizes.SubHeading,
-      color: theme.text01,
+      color: theme.text02,
     },
     connectionsType: {
       ...FontWeights.Bold,

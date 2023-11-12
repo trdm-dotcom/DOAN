@@ -393,7 +393,7 @@ const Profile = ({navigation, route}: props) => {
         ...FontSizes.Body,
         color: theme.text01,
       }}
-      indicatorStyle={{backgroundColor: ThemeStatic.accent}}
+      indicatorStyle={{backgroundColor: theme.placeholder}}
       renderIcon={renderIcon}
     />
   );
@@ -415,6 +415,7 @@ const Profile = ({navigation, route}: props) => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                 },
+                space(IconSizes.x5).mb,
               ]}>
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -503,14 +504,14 @@ const Profile = ({navigation, route}: props) => {
           friends={countFriends}
           onFriendsOpen={() => {
             if (
-              userProfile.privateMode === 0 ||
+              !userProfile.privateMode ||
               friendStatus.status === 'FRIENDED'
             ) {
               onFriendsOpen();
             }
           }}
         />
-        {userProfile.privateMode === 0 || friendStatus.status === 'FRIENDED' ? (
+        {!userProfile.privateMode || friendStatus.status === 'FRIENDED' ? (
           <>
             <TabView
               navigationState={{index, routes}}

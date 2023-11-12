@@ -475,7 +475,7 @@ const MyProfile = () => {
         ...FontSizes.Body,
         color: theme.text01,
       }}
-      indicatorStyle={{backgroundColor: ThemeStatic.accent}}
+      indicatorStyle={{backgroundColor: theme.placeholder}}
       renderIcon={renderIcon}
     />
   );
