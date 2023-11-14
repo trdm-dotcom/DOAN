@@ -90,6 +90,8 @@ export const NotificationType: NotificationTextType = {
   LIKE: 'LIKE',
   ACCEPT: 'ACCEPT',
   TAG: 'TAG',
+  MENTION_ON_COMMENT: 'MENTION_ON_COMMENT',
+  MENTION_ON_POST: 'MENTION_ON_POST',
 };
 
 export const NotificationText: NotificationTextType = {
@@ -98,6 +100,8 @@ export const NotificationText: NotificationTextType = {
   LIKE: 'liked your post',
   ACCEPT: 'accepted your friend request',
   TAG: 'tagged you in a post',
+  MENTION_ON_COMMENT: 'mentioned you in a comment',
+  MENTION_ON_POST: 'mentioned you in a post',
 };
 
 export const OnlineDotColor: OnlineDotColorType = {

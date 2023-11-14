@@ -169,6 +169,8 @@ const NewPassword = ({navigation, route}: props) => {
               color: theme.text01,
               marginRight: 10,
             }}
+            checkBoxColor={theme.text02}
+            checkedCheckBoxColor={ThemeStatic.accent}
           />
         </View>
         <Text

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {space, styles} from '../components/style';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes} from '../constants/Constants';
+import {IconSizes, Pagination} from '../constants/Constants';
 import IconButton from '../components/control/IconButton';
 import {NativeImage} from '../components/shared/NativeImage';
 import {RootStackParamList} from '../navigators/RootStack';
@@ -26,9 +26,15 @@ import {ThemeStatic} from '../theme/Colors';
 import {showError} from '../utils/Toast';
 import {Modalize} from 'react-native-modalize';
 import Option from '../components/shared/Option';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {FlatList, GestureHandlerRootView} from 'react-native-gesture-handler';
 import {MaterialIndicator} from 'react-native-indicators';
 import {Image as ImageCompressor} from 'react-native-compressor';
+import Feather from 'react-native-vector-icons/Feather';
+import BottomSheetHeader from '../components/header/BottomSheetHeader';
+import ConnectionsPlaceholder from '../components/placeholder/Connections.Placeholder';
+import ListEmptyComponent from '../components/shared/ListEmptyComponent';
+import {getFriendList} from '../reducers/action/friend';
+import CheckBox from 'react-native-check-box';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -37,9 +43,16 @@ const Camera = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
   const [imageSource, setImageSource] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [caption, setCaption] = useState<any>(null);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [tags, setTags] = useState<any[]>([]);
+  const [choose, setChoose] = useState<any[]>([]);
+  const [nextPage, setNextPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
   const cameraOptionsBottomSheetRef = useRef();
+  const tagBottomSheetRef = useRef();
 
   const openOptions = () => {
     // @ts-ignore
@@ -49,6 +62,11 @@ const Camera = ({navigation}: props) => {
   const closeOptions = () => {
     // @ts-ignore
     return cameraOptionsBottomSheetRef.current.close();
+  };
+
+  const openTagBottomSheet = () => {
+    // @ts-ignore
+    return tagBottomSheetRef.current.open();
   };
 
   const doUpPost = async () => {
@@ -65,6 +83,7 @@ const Camera = ({navigation}: props) => {
       const body: IParam = {
         source: `data:image/jpeg;base64,${imageData}`,
         caption: caption,
+        tags: tags,
         hash: getHash('UP_POST'),
       };
       await upPost(body);
@@ -76,8 +95,6 @@ const Camera = ({navigation}: props) => {
       setLoading(false);
     }
   };
-
-  const download = () => {};
 
   const onOpenGallery = () => {
     closeOptions();
@@ -106,6 +123,22 @@ const Camera = ({navigation}: props) => {
       })
       .catch(err => {
         console.log(err);
+      });
+  };
+
+  const fetchFriends = async (page: number) => {
+    setIsLoading(true);
+    getFriendList({
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    })
+      .then(response => {
+        setFriends(response.datas);
+        setNextPage(response.page + 1);
+        setTotalPages(response.totalPages);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
@@ -180,6 +213,49 @@ const Camera = ({navigation}: props) => {
             placeholderTextColor={theme.text02}
           />
         </View>
+        <View>
+          <Text
+            style={[
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+              space(IconSizes.x1).mv,
+            ]}>
+            {choose.length > 0
+              ? `You tagged ${choose.length} friends`
+              : 'Tag friends'}
+          </Text>
+          <View
+            style={[
+              styles(theme).row,
+              {
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+              },
+            ]}>
+            <FlatList
+              data={choose}
+              keyExtractor={item => item.id.toString()}
+              horizontal
+              renderItem={({item}) => (
+                <NativeImage
+                  uri={item.avatar}
+                  style={[
+                    {
+                      height: 40,
+                      width: 40,
+                      borderRadius: 40,
+                      backgroundColor: theme.placeholder,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}
+                />
+              )}
+            />
+          </View>
+        </View>
         <View
           style={[
             styles(theme).row,
@@ -225,16 +301,74 @@ const Camera = ({navigation}: props) => {
           </TouchableOpacity>
           <IconButton
             Icon={() => (
-              <Ionicons
-                name="download-outline"
-                size={IconSizes.x9}
-                color={theme.text01}
-              />
+              <Feather name="tag" size={IconSizes.x9} color={theme.text01} />
             )}
-            onPress={download}
+            onPress={openTagBottomSheet}
           />
         </View>
       </KeyboardAvoidingView>
+      <Modalize
+        ref={tagBottomSheetRef}
+        onOpen={() => {
+          fetchFriends(0);
+        }}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight
+        HeaderComponent={
+          <BottomSheetHeader
+            heading="Your friends"
+            subHeading={'Below are the people you can tag.'}
+          />
+        }
+        flatListProps={{
+          data: friends,
+          renderItem: ({item}) => (
+            <View
+              style={[styles(theme).userCardContainer, space(IconSizes.x1).mt]}>
+              <View style={[styles(theme).row]}>
+                <NativeImage
+                  uri={item.avatar}
+                  style={styles(theme).tinyImage}
+                />
+                <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
+                  {item.name}
+                </Text>
+              </View>
+              <CheckBox
+                onClick={() => {
+                  const index = tags.indexOf(item.friendId);
+                  if (index > -1) {
+                    setTags(tags.filter(tag => tag !== item.friendId));
+                    setChoose(
+                      choose.filter(it => it.friendId !== item.friendId),
+                    );
+                  } else {
+                    setTags([...tags, item.friendId]);
+                    setChoose([...choose, item]);
+                  }
+                }}
+                isChecked={tags.includes(item.friendId)}
+                checkBoxColor={theme.text02}
+                checkedCheckBoxColor={ThemeStatic.accent}
+              />
+            </View>
+          ),
+          keyExtractor: item => item.id,
+          onEndReachedThreshold: 0.8,
+          onEndReached: () => {
+            if (nextPage < totalPages) {
+              fetchFriends(nextPage);
+            }
+          },
+          showsVerticalScrollIndicator: false,
+          ListEmptyComponent: () =>
+            isLoading ? (
+              <ConnectionsPlaceholder />
+            ) : (
+              <ListEmptyComponent listType="users" spacing={30} />
+            ),
+        }}
+      />
       <Modalize
         ref={cameraOptionsBottomSheetRef}
         scrollViewProps={{showsVerticalScrollIndicator: false}}

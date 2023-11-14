@@ -259,17 +259,6 @@ const SignIn = ({navigation}: props) => {
                 </Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => {}}
-              style={[styles(theme).button, space(IconSizes.x5).ml]}
-              disabled={loading || isLoading}>
-              <Ionicons
-                name="finger-print"
-                size={IconSizes.x9}
-                color={theme.text01}
-              />
-            </TouchableOpacity>
           </View>
         </Animated.View>
       </KeyboardAvoidingView>

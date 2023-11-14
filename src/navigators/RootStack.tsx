@@ -23,6 +23,7 @@ import MyProfile from '../screens/MyProfile';
 import {useSelector} from 'react-redux';
 import NewPassword from '../screens/NewPassword';
 import {useNavigation} from '@react-navigation/native';
+import EditPost from '../screens/EditPost';
 
 export type RootStackParamList = {
   Start: undefined;
@@ -53,6 +54,9 @@ export type RootStackParamList = {
     phoneNumber: string;
     mail: string;
     otpKey: string;
+  };
+  EditPost: {
+    postId: string;
   };
   Otp: {
     mail: string;
@@ -126,6 +130,7 @@ const RootStack = () => {
           <Stack.Screen name="Conversation" component={Conversation} />
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="Setting" component={Setting} />
+          <Stack.Screen name="EditPost" component={EditPost} />
         </>
       ) : (
         <>

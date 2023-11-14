@@ -97,7 +97,7 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
         HeaderComponent={
           <BottomSheetHeader
             heading="Blocked Users"
-            subHeading={"Below are the users you've blocked"}
+            subHeading={"Below are the people you've blocked"}
           />
         }
         flatListProps={{

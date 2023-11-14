@@ -39,17 +39,16 @@ import LikesBottomSheet from '../components/bottomsheet/LikesBottomSheet';
 import {getHash} from '../utils/Crypto';
 import {IParam} from '../models/IParam';
 import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomSheet';
-import EditPostBottomSheet from '../components/bottomsheet/EditPostBottomSheet';
 import {useSelector} from 'react-redux';
 import {getSocket} from '../utils/Socket';
 import {showError} from '../utils/Toast';
+import {EU} from 'react-native-mentions-editor';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'PostView'>;
 const PostView = ({navigation, route}: props) => {
   const {user} = useSelector((state: any) => state.user);
-
   const {theme} = useContext(AppContext);
   const {postId} = route.params;
 
@@ -70,7 +69,6 @@ const PostView = ({navigation, route}: props) => {
 
   const scrollViewRef = useRef();
   const postOptionsBottomSheetRef = useRef();
-  const editPostBottomSheetRef = useRef();
   const likesBottomSheetRef = useRef();
   const doubleTapRef = useRef();
   const likeBounceAnimationRef = createRef();
@@ -117,12 +115,6 @@ const PostView = ({navigation, route}: props) => {
   const closeOptions = () => {
     // @ts-ignore
     return postOptionsBottomSheetRef.current.close();
-  };
-
-  const onPostEdit = () => {
-    closeOptions();
-    // @ts-ignore
-    return editPostBottomSheetRef.current.open();
   };
 
   const openLikes = () => {
@@ -175,6 +167,26 @@ const PostView = ({navigation, route}: props) => {
       await disablePost(body);
     } catch (err: any) {}
   };
+
+  const formatMentionNode = (txt, key) => (
+    <Text
+      onPress={() => {
+        const mentionId = key.split('-')[1];
+        if (mentionId === user.id) {
+          navigation.navigate('MyProfile');
+        } else {
+          navigation.navigate('Profile', {userId: mentionId});
+        }
+      }}
+      key={key}
+      style={{
+        ...FontWeights.Light,
+        ...FontSizes.Body,
+        color: '#244dc9',
+      }}>
+      {txt}
+    </Text>
+  );
 
   let content =
     loading || error ? (
@@ -292,7 +304,7 @@ const PostView = ({navigation, route}: props) => {
             style={styles(theme).nameText}>
             {post.author.name}{' '}
           </Text>
-          {post.caption}
+          {EU.displayTextWithMentions(post.caption || '', formatMentionNode)}
         </Text>
         <Comments postId={post.id} />
       </>
@@ -303,7 +315,10 @@ const PostView = ({navigation, route}: props) => {
       <PostOptionsBottomSheet
         ref={postOptionsBottomSheetRef}
         post={post}
-        onPostEdit={onPostEdit}
+        onPostEdit={() => {
+          closeOptions();
+          navigation.navigate('EditPost', {postId: postId});
+        }}
         onPostDelete={onPostDelete}
         onPostDiable={onPostDisable}
       />
@@ -324,7 +339,6 @@ const PostView = ({navigation, route}: props) => {
         onConfirm={doDisablePost}
       />
       <LikesBottomSheet ref={likesBottomSheetRef} postId={post.id} />
-      <EditPostBottomSheet post={post} ref={editPostBottomSheetRef} />
     </>
   );
 

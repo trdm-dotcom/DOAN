@@ -90,6 +90,8 @@ export type NotificationTextType = {
   LIKE: string;
   TAG: string;
   ACCEPT: string;
+  MENTION_ON_COMMENT: string;
+  MENTION_ON_POST: string;
 };
 
 export type OnlineDotColorType = {

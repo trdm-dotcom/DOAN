@@ -44,7 +44,9 @@ const NotificationCard = ({
     } else if (
       type === NotificationType.LIKE ||
       type === NotificationType.COMMENT ||
-      type === NotificationType.TAG
+      type === NotificationType.TAG ||
+      type === NotificationType.MENTION_ON_COMMENT ||
+      type === NotificationType.MENTION_ON_POST
     ) {
       navigation.navigate('PostView', {postId: resourceId});
     }

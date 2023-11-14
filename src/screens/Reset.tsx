@@ -109,6 +109,7 @@ const Reset = ({navigation}: props) => {
         }
       />
       <KeyboardAvoidingView
+        style={{flex: 1}}
         behavior={keyboardBehavior}
         keyboardVerticalOffset={20}>
         <Header title="Forgot Password" />

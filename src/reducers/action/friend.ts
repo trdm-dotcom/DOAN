@@ -59,3 +59,6 @@ export const checkFriend = async (queryParams: IParam) =>
 
 export const getFriendOfUser = async (queryParams: IParam) =>
   await apiGet<any>('/user/friendOfUser', {params: queryParams});
+
+export const searchFriend = async (queryParams: IParam) =>
+  await apiGet<any>('/user/friend/search', {params: queryParams});
