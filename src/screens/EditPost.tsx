@@ -3,8 +3,7 @@ import {RootStackParamList} from '../navigators/RootStack';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {getPostDetail, updatePost} from '../reducers/action/post';
 import {getHash} from '../utils/Crypto';
-import {showError} from '../utils/Toast';
-import {getFriendList} from '../reducers/action/friend';
+import {getFriendList, searchFriend} from '../reducers/action/friend';
 import {IconSizes, Pagination} from '../constants/Constants';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {space, styles} from '../components/style';
@@ -18,7 +17,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -35,6 +33,9 @@ import {useSelector} from 'react-redux';
 import {AppContext} from '../context';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
 import EditPostScreenPlaceholder from '../components/placeholder/EditPost.Placeholder';
+import {showError} from '../utils/Toast';
+import {MentionInput} from 'react-native-controlled-mentions';
+import Suggestions from '../components/shared/Suggestions';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -55,6 +56,7 @@ const EditPost = ({navigation, route}: props) => {
   const [choose, setChoose] = useState<any[]>(post.tags);
   const [nextPage, setNextPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
 
   const tagBottomSheetRef = useRef();
 
@@ -67,39 +69,42 @@ const EditPost = ({navigation, route}: props) => {
     fetchPost();
   }, []);
 
-  const fetchPost = async () => {
-    try {
-      setLoading(true);
-      const res = await getPostDetail({post: postId});
-      setPost(res);
-      setCaption(res.caption);
-      setTags(res.tags.map((item: any) => item.id));
-      setChoose(res.tags);
-    } catch (err: any) {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+  const fetchPost = () => {
+    setLoading(true);
+    getPostDetail({post: postId})
+      .then(res => {
+        setPost(res);
+        setCaption(res.caption);
+        setTags(res.tags.map((item: any) => item.id));
+        setChoose(res.tags);
+      })
+      .catch(() => {
+        setError(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
-  const doUpdatePost = async () => {
-    try {
-      setLoading(true);
-      const body = {
-        post: post.id,
-        hash: getHash('UPDATE_POST'),
-        tags: tags,
-        caption: caption,
-      };
-      await updatePost(body);
-    } catch (err: any) {
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const doUpdatePost = () => {
+    setLoading(true);
+    const body = {
+      post: post.id,
+      hash: getHash('UPDATE_POST'),
+      tags: tags,
+      caption: caption,
+    };
+    updatePost(body)
+      .catch((err: any) => {
+        setError(true);
+        showError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
-  const fetchFriends = async (page: number) => {
+  const fetchFriends = (page: number) => {
     setIsLoading(true);
     getFriendList({
       pageNumber: page,
@@ -113,6 +118,19 @@ const EditPost = ({navigation, route}: props) => {
       .finally(() => {
         setIsLoading(false);
       });
+  };
+
+  const identifyKeyword = (text: string) => {
+    const pattern = new RegExp('\\B@[a-z0-9_-]+|\\B@', 'gi');
+    const keywordArray = text.match(pattern);
+    if (keywordArray && !!keywordArray.length) {
+      const lastKeyword = keywordArray[keywordArray.length - 1];
+      if (lastKeyword.slice(1).trim().length > 0) {
+        searchFriend({search: lastKeyword.slice(1)}).then(res => {
+          setSuggestions(res);
+        });
+      }
+    }
   };
 
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
@@ -136,21 +154,32 @@ const EditPost = ({navigation, route}: props) => {
               {borderRadius: 40},
               space(IconSizes.x8).mt,
             ]}>
-            <TextInput
-              value={caption}
-              onChangeText={(text: string) => {
-                setCaption(text.trim());
-              }}
+            <MentionInput
+              containerStyle={[styles(theme).inputField]}
               style={[
-                styles(theme).inputField,
                 {
                   ...FontWeights.Bold,
                   ...FontSizes.Body,
                   color: theme.text01,
                 },
               ]}
+              value={caption}
               placeholder="Add a caption..."
-              placeholderTextColor={theme.text02}
+              onChange={(text: string) => {
+                identifyKeyword(text);
+                setCaption(text);
+              }}
+              partTypes={[
+                {
+                  trigger: '@',
+                  textStyle: {
+                    ...FontWeights.Regular,
+                    ...FontSizes.Body,
+                    color: '#244dc9',
+                  },
+                  renderSuggestions: Suggestions(suggestions),
+                },
+              ]}
             />
           </View>
           <View>

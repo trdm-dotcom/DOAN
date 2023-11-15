@@ -85,8 +85,7 @@ const Friend = () => {
       fetchListFriend(0),
       fetchListSuggestFriend(null, 0),
     ])
-      .catch(err => {
-        console.log(err);
+      .catch(() => {
         setError(true);
       })
       .finally(() => setLoading(false));

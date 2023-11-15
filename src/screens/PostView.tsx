@@ -42,7 +42,7 @@ import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomS
 import {useSelector} from 'react-redux';
 import {getSocket} from '../utils/Socket';
 import {showError} from '../utils/Toast';
-import {EU} from 'react-native-mentions-editor';
+import renderValue from '../components/shared/MentionText';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -67,7 +67,6 @@ const PostView = ({navigation, route}: props) => {
   const [isConfirmModalHideVisible, setIsConfirmModalHideVisible] =
     useState(false);
 
-  const scrollViewRef = useRef();
   const postOptionsBottomSheetRef = useRef();
   const likesBottomSheetRef = useRef();
   const doubleTapRef = useRef();
@@ -85,18 +84,20 @@ const PostView = ({navigation, route}: props) => {
     });
   }, []);
 
-  const fetchPost = async () => {
-    try {
-      setLoading(true);
-      const res = await getPostDetail({post: postId});
-      setPost(res);
-      setLikes(res.reactions);
-      setIsLiked(res.reactions.includes(user.id));
-    } catch (err: any) {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+  const fetchPost = () => {
+    setLoading(true);
+    getPostDetail({post: postId})
+      .then(res => {
+        setPost(res);
+        setLikes(res.reactions);
+        setIsLiked(res.reactions.includes(user.id));
+      })
+      .catch(() => {
+        setError(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const confirmationDeleteToggle = () => {
@@ -167,26 +168,6 @@ const PostView = ({navigation, route}: props) => {
       await disablePost(body);
     } catch (err: any) {}
   };
-
-  const formatMentionNode = (txt, key) => (
-    <Text
-      onPress={() => {
-        const mentionId = key.split('-')[1];
-        if (mentionId === user.id) {
-          navigation.navigate('MyProfile');
-        } else {
-          navigation.navigate('Profile', {userId: mentionId});
-        }
-      }}
-      key={key}
-      style={{
-        ...FontWeights.Light,
-        ...FontSizes.Body,
-        color: '#244dc9',
-      }}>
-      {txt}
-    </Text>
-  );
 
   let content =
     loading || error ? (
@@ -304,7 +285,20 @@ const PostView = ({navigation, route}: props) => {
             style={styles(theme).nameText}>
             {post.author.name}{' '}
           </Text>
-          {EU.displayTextWithMentions(post.caption || '', formatMentionNode)}
+          {renderValue(
+            post.caption,
+            [
+              {
+                trigger: '@',
+                textStyle: {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  color: '#244dc9',
+                },
+              },
+            ],
+            user,
+          )}
         </Text>
         <Comments postId={post.id} />
       </>
@@ -347,32 +341,32 @@ const PostView = ({navigation, route}: props) => {
   return (
     <GestureHandlerRootView
       style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        contentLeft={
-          <IconButton
-            Icon={() => (
-              <Ionicons
-                name="arrow-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
-              />
-            )}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-        }
-      />
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{flex: 1, justifyContent: 'flex-end'}}
         behavior={keyboardBehavior}
         keyboardVerticalOffset={20}>
+        <HeaderBar
+          contentLeft={
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="arrow-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+          }
+        />
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={[{flex: 1}, space(IconSizes.x1).pt]}>
           {content}
         </ScrollView>
-        <CommentInput postId={post.id} scrollViewRef={scrollViewRef} />
+        <CommentInput postId={post.id} />
       </KeyboardAvoidingView>
       {bottomSheets}
     </GestureHandlerRootView>

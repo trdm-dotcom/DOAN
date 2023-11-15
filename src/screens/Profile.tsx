@@ -95,8 +95,7 @@ const Profile = ({navigation, route}: props) => {
         fetchPostTags(0),
         fetchFriends(0),
       ])
-        .catch(err => {
-          console.log(err);
+        .catch(() => {
           setError(true);
         })
         .then(res => {

@@ -104,8 +104,7 @@ const MyProfile = () => {
         fetchPostTags(0),
         fetchPostHiden(0),
       ])
-        .catch(err => {
-          console.log(err);
+        .catch(() => {
           setError(true);
         })
         .finally(() => setLoading(false));

@@ -17,7 +17,7 @@ import {NativeImage} from '../shared/NativeImage';
 import LikeBounceAnimation from './LikeBounceAnimation';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import IconButton from '../control/IconButton';
-import {EU} from 'react-native-mentions-editor';
+import renderValue from '../shared/MentionText';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -71,26 +71,6 @@ const PostCard = ({
     // @ts-ignore
     return likeBounceAnimationRef.current.animate();
   };
-
-  const formatMentionNode = (txt, key) => (
-    <Text
-      onPress={() => {
-        const mentionId = key.split('-')[1];
-        if (mentionId === user.id) {
-          navigation.navigate('MyProfile');
-        } else {
-          navigation.navigate('Profile', {userId: mentionId});
-        }
-      }}
-      key={key}
-      style={{
-        ...FontWeights.Light,
-        ...FontSizes.Body,
-        color: '#244dc9',
-      }}>
-      {txt}
-    </Text>
-  );
 
   return (
     <View style={{flexDirection: 'row'}}>
@@ -179,7 +159,20 @@ const PostCard = ({
             color: theme.text01,
             marginVertical: 10,
           }}>
-          {EU.displayTextWithMentions(caption || '', formatMentionNode)}
+          {renderValue(
+            caption,
+            [
+              {
+                trigger: '@',
+                textStyle: {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  color: '#244dc9',
+                },
+              },
+            ],
+            user,
+          )}
         </Text>
         <GestureHandlerRootView>
           <TapGestureHandler

@@ -42,8 +42,7 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
           setNextPage(res.nextPage + 1);
           setTotalPages(res.totalPages);
         })
-        .catch(err => {
-          console.log(err);
+        .catch(() => {
           setError(true);
         })
         .finally(() => {

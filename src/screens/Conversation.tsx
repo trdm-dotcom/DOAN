@@ -63,8 +63,7 @@ const Conversation = ({navigation, route}: props) => {
           })),
         );
       })
-      .catch(err => {
-        console.log(err);
+      .catch(() => {
         setError(true);
       })
       .finally(() => {

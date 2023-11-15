@@ -10,7 +10,7 @@ import IconButton from '../control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {NativeImage} from '../shared/NativeImage';
 import {useSelector} from 'react-redux';
-import {EU} from 'react-native-mentions-editor';
+import renderValue from '../shared/MentionText';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -44,26 +44,6 @@ const CommentCard = ({
     }
     navigation.navigate('Profile', {userId: userId});
   };
-
-  const formatMentionNode = (txt, key) => (
-    <Text
-      onPress={() => {
-        const mentionId = key.split('-')[1];
-        if (mentionId === user.id) {
-          navigation.navigate('MyProfile');
-        } else {
-          navigation.navigate('Profile', {userId: mentionId});
-        }
-      }}
-      key={key}
-      style={{
-        ...FontWeights.Light,
-        ...FontSizes.Body,
-        color: '#244dc9',
-      }}>
-      {txt}
-    </Text>
-  );
 
   return (
     <View
@@ -111,7 +91,20 @@ const CommentCard = ({
             ]}>
             {name}{' '}
           </Text>
-          {EU.displayTextWithMentions(comment || '', formatMentionNode)}
+          {renderValue(
+            comment,
+            [
+              {
+                trigger: '@',
+                textStyle: {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  color: '#244dc9',
+                },
+              },
+            ],
+            user,
+          )}
         </Text>
         <View
           style={[

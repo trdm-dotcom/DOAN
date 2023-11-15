@@ -4,7 +4,6 @@ import {Modalize} from 'react-native-modalize';
 import UserCard from '../user/UserCard';
 import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
 import {IUserInfoResponse} from '../../models/response/IUserInfoResponse';
-import {showError} from '../../utils/Toast';
 import {space, styles} from '../style';
 import {getReactionsOfPost} from '../../reducers/action/post';
 import BottomSheetHeader from '../header/BottomSheetHeader';
@@ -50,9 +49,8 @@ const LikesBottomSheet: React.FC<LikesBottomSheetProps> = forwardRef(
       setLoading(true);
       getReactionsOfPost({postId: postId})
         .then(res => setUsers(res))
-        .catch((err: any) => {
+        .catch(() => {
           setError(true);
-          showError(err.message);
         })
         .finally(() => setLoading(false));
     };

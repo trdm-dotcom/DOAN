@@ -3,7 +3,6 @@ import {AppContext} from '../context';
 import {
   TouchableOpacity,
   View,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -33,8 +32,10 @@ import Feather from 'react-native-vector-icons/Feather';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
 import ConnectionsPlaceholder from '../components/placeholder/Connections.Placeholder';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
-import {getFriendList} from '../reducers/action/friend';
+import {getFriendList, searchFriend} from '../reducers/action/friend';
 import CheckBox from 'react-native-check-box';
+import Suggestions from '../components/shared/Suggestions';
+import {MentionInput} from 'react-native-controlled-mentions';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -50,6 +51,7 @@ const Camera = ({navigation}: props) => {
   const [choose, setChoose] = useState<any[]>([]);
   const [nextPage, setNextPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
 
   const cameraOptionsBottomSheetRef = useRef();
   const tagBottomSheetRef = useRef();
@@ -142,6 +144,19 @@ const Camera = ({navigation}: props) => {
       });
   };
 
+  const identifyKeyword = (text: string) => {
+    const pattern = new RegExp('\\B@[a-z0-9_-]+|\\B@', 'gi');
+    const keywordArray = text.match(pattern);
+    if (keywordArray && !!keywordArray.length) {
+      const lastKeyword = keywordArray[keywordArray.length - 1];
+      if (lastKeyword.slice(1).trim().length > 0) {
+        searchFriend({search: lastKeyword.slice(1)}).then(res => {
+          setSuggestions(res);
+        });
+      }
+    }
+  };
+
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
@@ -191,28 +206,33 @@ const Camera = ({navigation}: props) => {
             />
           )}
         </TouchableOpacity>
-        <View
+        <MentionInput
+          containerStyle={[styles(theme).inputField]}
           style={[
-            styles(theme).inputContainer,
-            {borderRadius: 40},
-            space(IconSizes.x8).mt,
-          ]}>
-          <TextInput
-            onChangeText={(text: string) => {
-              setCaption(text.trim());
-            }}
-            style={[
-              styles(theme).inputField,
-              {
-                ...FontWeights.Bold,
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.Body,
+              color: theme.text01,
+            },
+          ]}
+          value={caption}
+          placeholder="Add a caption..."
+          onChange={(text: string) => {
+            identifyKeyword(text);
+            setCaption(text);
+          }}
+          partTypes={[
+            {
+              trigger: '@',
+              textStyle: {
+                ...FontWeights.Regular,
                 ...FontSizes.Body,
-                color: theme.text01,
+                color: '#244dc9',
               },
-            ]}
-            placeholder="Add a caption..."
-            placeholderTextColor={theme.text02}
-          />
-        </View>
+              renderSuggestions: Suggestions(suggestions),
+            },
+          ]}
+        />
         <View>
           <Text
             style={[

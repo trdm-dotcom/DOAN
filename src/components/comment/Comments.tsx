@@ -27,10 +27,12 @@ const Comments = ({postId}: CommentsProps) => {
   const socket = getSocket();
 
   useEffect(() => {
-    fetchComments(postId);
+    if (postId) {
+      fetchComments(postId);
+    }
     socket.on('comment', (data: any) => {
       if (data.to === postId) {
-        setComments([...comments, ...[data.data.comments]]);
+        setComments([...comments, ...[data.data]]);
       }
     });
     socket.on('delete.comment', (data: any) => {
@@ -48,8 +50,7 @@ const Comments = ({postId}: CommentsProps) => {
       .then(response => {
         setComments(response);
       })
-      .catch(err => {
-        console.log(err);
+      .catch(() => {
         setError(true);
       })
       .finally(() => {
