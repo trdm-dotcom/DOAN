@@ -40,6 +40,7 @@ const Otp = ({navigation, route}: props) => {
   const [minutes, setMinutes] = useState<number>(1);
   const [seconds, setSeconds] = useState<number>(30);
   const [loading, setLoading] = useState<boolean>(false);
+  const [validError, setValidError] = useState<any>({});
 
   const getOtp = async () => {
     try {
@@ -89,12 +90,13 @@ const Otp = ({navigation, route}: props) => {
   }, [minutes, seconds]);
 
   const isValidData = () => {
-    const error = checkEmpty(otpValue, 'Please enter code');
+    let errors = {};
+    const error = checkEmpty(otpValue, 'Code is required.');
     if (error) {
-      showError(error);
-      return false;
+      errors['otp'] = error;
     }
-    return true;
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleOnChangeText = (text: string) => {
@@ -254,6 +256,17 @@ const Otp = ({navigation, route}: props) => {
             )}
           </TouchableOpacity>
         </View>
+        {Object.values(validError).map((errMessage: any, index: number) => (
+          <Text
+            key={index}
+            style={{
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: 'red',
+            }}>
+            {errMessage}
+          </Text>
+        ))}
       </KeyboardAvoidingView>
     </View>
   );

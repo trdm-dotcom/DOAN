@@ -13,6 +13,7 @@ import {createAsyncDelay} from '../../utils/shared';
 import {searchFriend} from '../../reducers/action/friend';
 import {MentionInput} from 'react-native-controlled-mentions';
 import Suggestions from '../shared/Suggestions';
+import {checkEmpty} from 'src/utils/Validate';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -29,6 +30,9 @@ const CommentInput: React.FC<CommentInputProps> = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
 
   const postComment = async () => {
+    if (checkEmpty(comment, 'Comment is empty.') != null) {
+      return;
+    }
     try {
       setLoading(true);
       await addComment({comment: comment, postId: postId});

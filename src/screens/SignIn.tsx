@@ -43,6 +43,7 @@ const SignIn = ({navigation}: props) => {
   const [password, setPassword] = useState<string>('');
   const {loading, isLoading, error} = useSelector((state: any) => state.user);
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
+  const [validError, setValidError] = useState<any>({});
 
   useEffect(() => {
     if (error != null) {
@@ -51,14 +52,17 @@ const SignIn = ({navigation}: props) => {
   }, [error]);
 
   const isValidData = () => {
-    const validError =
-      checkEmpty(username, 'Please enter your email address') ||
-      checkEmpty(password, 'Please enter your password');
-    if (validError) {
-      showError(validError);
-      return false;
+    let errors = {};
+    const validUsername = checkEmpty(username, 'Phone or email is required.');
+    if (validUsername) {
+      errors['email'] = validUsername;
     }
-    return true;
+    const validPassword = checkEmpty(password, 'Password is required.');
+    if (validPassword) {
+      errors['password'] = validPassword;
+    }
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleOnUsernameChangeText = (text: string) => {
@@ -261,6 +265,17 @@ const SignIn = ({navigation}: props) => {
             </TouchableOpacity>
           </View>
         </Animated.View>
+        {Object.values(validError).map((errMessage: any, index: number) => (
+          <Text
+            key={index}
+            style={{
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: 'red',
+            }}>
+            {errMessage}
+          </Text>
+        ))}
       </KeyboardAvoidingView>
     </View>
   );

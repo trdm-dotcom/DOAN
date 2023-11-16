@@ -16,11 +16,11 @@ import {space, styles} from '../components/style';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes} from '../constants/Constants';
+import {IconSizes, PASSWORD_REGEX} from '../constants/Constants';
 import Header from '../components/header/Header';
 import CheckBox from 'react-native-check-box';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
-import {checkEmpty} from '../utils/Validate';
+import {checkEmpty, checkRegex} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import IChangePasswordRequest from '../models/request/IChangePasswordRequest';
 import {getHash} from '../utils/Crypto';
@@ -37,19 +37,25 @@ const NewPassword = ({navigation, route}: props) => {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [validError, setValidError] = useState<any>({});
 
   const isValidData = () => {
-    const error =
-      checkEmpty(password, 'Please enter your password') ||
-      checkEmpty(confirmPassword, 'Please enter your confirm password') ||
-      (password !== confirmPassword
-        ? 'Password and confirm password do not match'
-        : null);
-    if (error) {
-      showError(error);
-      return false;
+    let errors = {};
+    const validPassword =
+      checkEmpty(password, 'Password is required.') ||
+      checkRegex(password, 'Password is invalid.', PASSWORD_REGEX);
+    if (validPassword) {
+      errors['password'] = validPassword;
     }
-    return true;
+    const validComparePassword =
+      password !== confirmPassword
+        ? 'Password and confirm password do not match'
+        : null;
+    if (validComparePassword) {
+      errors['confirmPassword'] = validComparePassword;
+    }
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleContinue = () => {
@@ -155,14 +161,14 @@ const NewPassword = ({navigation, route}: props) => {
             placeholderTextColor={theme.text02}
           />
         </View>
-        <View style={{alignItems: 'flex-end'}}>
+        <View style={[{alignItems: 'flex-end'}, space(IconSizes.x5).mv]}>
           <CheckBox
             style={{flex: 1}}
             onClick={() => {
               setPasswordVisible(!isPasswordVisible);
             }}
             isChecked={isPasswordVisible}
-            leftText="Show"
+            leftText={'Show'}
             leftTextStyle={{
               ...FontWeights.Regular,
               ...FontSizes.Body,
@@ -207,6 +213,17 @@ const NewPassword = ({navigation, route}: props) => {
             )}
           </TouchableOpacity>
         </View>
+        {Object.values(validError).map((errMessage: any, index: number) => (
+          <Text
+            key={index}
+            style={{
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: 'red',
+            }}>
+            {errMessage}
+          </Text>
+        ))}
       </KeyboardAvoidingView>
     </View>
   );

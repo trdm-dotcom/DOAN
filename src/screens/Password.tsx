@@ -11,9 +11,9 @@ import {space, styles} from '../components/style';
 import {getHash} from '../utils/Crypto';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigators/RootStack';
-import {checkEmpty} from '../utils/Validate';
+import {checkEmpty, checkRegex} from '../utils/Validate';
 import {showError} from '../utils/Toast';
-import {IconSizes} from '../constants/Constants';
+import {IconSizes, PASSWORD_REGEX} from '../constants/Constants';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   register,
@@ -54,6 +54,7 @@ const Password = ({navigation, route}: props) => {
   const [accountCreated, setAccountCreated] = useState<boolean>(false);
   const [avatarData, setAvatarData] = useState<any>(null);
   const {loading, isLoading, error} = useSelector((state: any) => state.user);
+  const [validError, setValidError] = useState<any>({});
 
   const avatarOptionsBottomSheetRef = useRef();
 
@@ -64,17 +65,22 @@ const Password = ({navigation, route}: props) => {
   }, [error]);
 
   const isValidData = () => {
-    const validError =
-      checkEmpty(password, 'Please enter your password') ||
-      checkEmpty(confirmPassword, 'Please enter your confirm password') ||
-      (password !== confirmPassword
-        ? 'Password and confirm password do not match'
-        : null);
-    if (validError) {
-      showError(validError);
-      return false;
+    let errors = {};
+    const validPassword =
+      checkEmpty(password, 'Password is required.') ||
+      checkRegex(password, 'Password is invalid.', PASSWORD_REGEX);
+    if (validPassword) {
+      errors['password'] = validPassword;
     }
-    return true;
+    const validComparePassword =
+      password !== confirmPassword
+        ? 'Password and confirm password do not match'
+        : null;
+    if (validComparePassword) {
+      errors['confirmPassword'] = validComparePassword;
+    }
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const createAccount = async () => {
@@ -426,7 +432,7 @@ const Password = ({navigation, route}: props) => {
                   setPasswordVisible(!isPasswordVisible);
                 }}
                 isChecked={isPasswordVisible}
-                leftText="Show"
+                leftText={'Show'}
                 leftTextStyle={{
                   ...FontWeights.Regular,
                   ...FontSizes.Body,
@@ -474,6 +480,17 @@ const Password = ({navigation, route}: props) => {
                 )}
               </TouchableOpacity>
             </View>
+            {Object.values(validError).map((errMessage: any, index: number) => (
+              <Text
+                key={index}
+                style={{
+                  ...FontWeights.Regular,
+                  ...FontSizes.Caption,
+                  color: 'red',
+                }}>
+                {errMessage}
+              </Text>
+            ))}
           </KeyboardAvoidingView>
         </>
       )}

@@ -179,6 +179,7 @@ const PostCard = ({
             onActivated={() =>
               navigation.navigate('PostView', {
                 postId: id,
+                userId: author.userId,
               })
             }
             numberOfTaps={1}

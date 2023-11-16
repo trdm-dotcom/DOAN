@@ -3,7 +3,12 @@ import {AppContext} from '../context';
 import {space, styles} from '../components/style';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
+import {
+  FULLNAME_REGEX,
+  IconSizes,
+  Pagination,
+  SCREEN_WIDTH,
+} from '../constants/Constants';
 import HeaderBar from '../components/header/HeaderBar';
 import ProfileScreenPlaceholder from '../components/placeholder/ProfileScreen.Placeholder';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
@@ -35,7 +40,7 @@ import {putUserInfo} from '../reducers/action/user';
 import {showError} from '../utils/Toast';
 import {useDispatch, useSelector} from 'react-redux';
 import {ThemeStatic} from '../theme/Colors';
-import {checkEmpty} from '../utils/Validate';
+import {checkEmpty, checkRegex} from '../utils/Validate';
 import {NativeImage} from '../components/shared/NativeImage';
 import Option from '../components/shared/Option';
 import {Image as ImageCompressor} from 'react-native-compressor';
@@ -83,7 +88,8 @@ const MyProfile = () => {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalPagesTagged, setTotalPagesTagged] = useState<number>(0);
   const [totalPagesHiden, setTotalPagesHiden] = useState<number>(0);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState<number>(0);
+  const [validError, setValidError] = useState<any>({});
 
   const [routes] = useState<Route[]>([
     {key: 'post', icon: 'grid'},
@@ -96,20 +102,6 @@ const MyProfile = () => {
   );
 
   useEffect(() => {
-    const fetchData = () => {
-      setLoading(true);
-      Promise.all([
-        fetchPosts(0),
-        fetchFriends(0),
-        fetchPostTags(0),
-        fetchPostHiden(0),
-      ])
-        .catch(() => {
-          setError(true);
-        })
-        .finally(() => setLoading(false));
-    };
-
     fetchData();
   }, []);
 
@@ -149,11 +141,19 @@ const MyProfile = () => {
     return avatarOptionsBottomSheetRef.current.close();
   };
 
-  useEffect(() => {
-    if (errorRedux != null) {
-      showError(errorRedux);
-    }
-  }, [errorRedux]);
+  const fetchData = () => {
+    setLoading(true);
+    Promise.all([
+      fetchPosts(0),
+      fetchFriends(0),
+      fetchPostTags(0),
+      fetchPostHiden(0),
+    ])
+      .catch(() => {
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  };
 
   const fetchFriends = async (page: number) => {
     const res = await getFriendList({
@@ -271,11 +271,6 @@ const MyProfile = () => {
     aboutEdit: any,
     avatarFilenameEdit: any,
   ) => {
-    const errorValid = checkEmpty(name, 'Please enter your name');
-    if (errorValid) {
-      showError(errorValid);
-      return;
-    }
     try {
       dispatch({
         type: 'updateUserRequest',
@@ -309,7 +304,23 @@ const MyProfile = () => {
     }
   };
 
-  const handleOnPress = () => editInfo(name, avatar, about, avatarFilename);
+  const isValidData = () => {
+    let errors = {};
+    const validName =
+      checkEmpty(name, 'Name is required.') ||
+      checkRegex(name, 'Name is invalid.', FULLNAME_REGEX);
+    if (validName) {
+      errors['name'] = validName;
+    }
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleOnPress = () => {
+    if (isValidData()) {
+      editInfo(name, avatar, about, avatarFilename);
+    }
+  };
 
   const fetchPosts = async (page: number) => {
     const res = await getPostOfUser({
@@ -346,7 +357,9 @@ const MyProfile = () => {
   };
 
   const renderItem = ({item}) => {
-    return <PostThumbnail id={item.id} uri={item.source} />;
+    return (
+      <PostThumbnail id={item.id} uri={item.source} userId={item.userId} />
+    );
   };
 
   const handleStateChange = (friend: any) => {
@@ -557,7 +570,10 @@ const MyProfile = () => {
         ref={modalizeRef}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight>
+        adjustToContentHeight
+        onClosed={() => {
+          setValidError({});
+        }}>
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={keyboardBehavior}
@@ -655,27 +671,43 @@ const MyProfile = () => {
               placeholderTextColor={theme.text02}
             />
           </View>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={handleOnPress}
-            disabled={isLoading}
-            style={[styles(theme).button, styles(theme).buttonPrimary]}>
-            {isLoading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
-            ) : (
-              <Text
-                style={[
-                  styles(theme).centerText,
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Body,
-                    color: ThemeStatic.white,
-                  },
-                ]}>
-                Done
-              </Text>
-            )}
-          </TouchableOpacity>
+          <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={handleOnPress}
+              disabled={isLoading}
+              style={[styles(theme).button, styles(theme).buttonPrimary]}>
+              {isLoading ? (
+                <LoadingIndicator
+                  size={IconSizes.x1}
+                  color={ThemeStatic.white}
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles(theme).centerText,
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                      color: ThemeStatic.white,
+                    },
+                  ]}>
+                  Done
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          {Object.values(validError).map((errMessage: any, i: number) => (
+            <Text
+              key={i}
+              style={{
+                ...FontWeights.Regular,
+                ...FontSizes.Caption,
+                color: 'red',
+              }}>
+              {errMessage}
+            </Text>
+          ))}
         </KeyboardAvoidingView>
       </Modalize>
       <Modalize

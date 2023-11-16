@@ -13,7 +13,12 @@ import {
 } from 'react-native';
 import {Theme, ThemeStatic} from '../theme/Colors';
 import {signOut} from '../reducers/action/authentications';
-import {CONTENT_SPACING, IconSizes} from '../constants/Constants';
+import {
+  CONTENT_SPACING,
+  FULLNAME_REGEX,
+  IconSizes,
+  PASSWORD_REGEX,
+} from '../constants/Constants';
 import AppOption from '../components/shared/AppOption';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../theme/Typography';
@@ -45,7 +50,7 @@ import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
-import {checkEmpty} from '../utils/Validate';
+import {checkEmpty, checkRegex} from '../utils/Validate';
 import {useDispatch, useSelector} from 'react-redux';
 import BlockListBottomSheet from '../components/bottomsheet/BlockListBottomSheet';
 import Option from '../components/shared/Option';
@@ -89,6 +94,7 @@ const Setting = ({navigation}: props) => {
   const [turnOffNotificationModal, setTurnOffNotificationModal] =
     useState<boolean>(false);
   const [loading, setLoading] = useState(false);
+  const [validError, setValidError] = useState<any>({});
 
   useEffect(() => {
     if (error != null) {
@@ -294,8 +300,14 @@ const Setting = ({navigation}: props) => {
     aboutEdit: any,
     avatarFilenameEdit: any,
   ) => {
-    const validError = checkEmpty(name, 'Please enter your name');
-    if (validError) {
+    let errors = {};
+    const validName =
+      checkEmpty(name, 'Name is required.') ||
+      checkRegex(name, 'Name is invalid.', FULLNAME_REGEX);
+    if (validName) {
+      errors['name'] = validName;
+    }
+    if (Object.keys(errors).length === 0) {
       showError(validError);
       return;
     }
@@ -334,9 +346,13 @@ const Setting = ({navigation}: props) => {
   };
 
   const verifyOtp = async () => {
-    const validError = checkEmpty(name, 'Please enter code');
-    if (validError) {
-      showError(validError);
+    let errors = {};
+    const validCode = checkEmpty(name, 'Please enter code');
+    if (validCode) {
+      errors['otp'] = validCode;
+    }
+    setValidError(errors);
+    if (Object.keys(errors).length === 0) {
       return;
     }
     setLoading(true);
@@ -367,11 +383,22 @@ const Setting = ({navigation}: props) => {
   };
 
   const changePass = () => {
-    const validError =
-      checkEmpty(oldPassword, 'Please enter your old password') ||
-      checkEmpty(newPassword, 'Please enter your new password');
-    if (validError) {
-      showError(validError);
+    let errors = {};
+    const validPassword = checkEmpty(password, 'Password is required.');
+    if (validPassword) {
+      errors['password'] = validPassword;
+    }
+    const validNewPassword =
+      checkEmpty(newPassword, 'New password is required.') ||
+      password === newPassword
+        ? 'New password must be different from old password.'
+        : null ||
+          checkRegex(newPassword, 'New password is invalid.', PASSWORD_REGEX);
+    if (validNewPassword) {
+      errors['newPassword'] = validNewPassword;
+    }
+    setValidError(errors);
+    if (Object.keys(errors).length === 0) {
       return;
     }
     setProgess('verifyOtp');
@@ -883,14 +910,14 @@ const Setting = ({navigation}: props) => {
                   placeholderTextColor={theme.text02}
                 />
               </View>
-              <View style={{alignItems: 'flex-end'}}>
+              <View style={[{alignItems: 'flex-end'}, space(IconSizes.x5).mv]}>
                 <CheckBox
                   style={{flex: 1}}
                   onClick={() => {
                     setPasswordVisible(!isPasswordVisible);
                   }}
                   isChecked={isPasswordVisible}
-                  leftText="Show"
+                  leftText={'Show'}
                   leftTextStyle={{
                     ...FontWeights.Regular,
                     ...FontSizes.Body,
@@ -1017,7 +1044,10 @@ const Setting = ({navigation}: props) => {
         ref={deleteAccountBottomSheetRef}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight>
+        adjustToContentHeight
+        onClosed={() => {
+          setValidError({});
+        }}>
         {progess === 'confirm' && (
           <>
             <Header title="Verify password" />
@@ -1115,15 +1145,34 @@ const Setting = ({navigation}: props) => {
             </View>
           </>
         )}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={handleOnPress}
-          disabled={isLoading || loading}
-          style={[styles(theme).button, styles(theme).buttonPrimary]}>
-          {isLoading || loading ? (
-            <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
-          ) : progess === 'confirm' || progess === 'changePass' ? (
-            <>
+        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={handleOnPress}
+            disabled={isLoading || loading}
+            style={[styles(theme).button, styles(theme).buttonPrimary]}>
+            {isLoading || loading ? (
+              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
+            ) : progess === 'confirm' || progess === 'changePass' ? (
+              <>
+                <Text
+                  style={[
+                    styles(theme).centerText,
+                    {
+                      ...FontWeights.Bold,
+                      ...FontSizes.Body,
+                      color: ThemeStatic.white,
+                    },
+                  ]}>
+                  Next step
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={IconSizes.x6}
+                  color={ThemeStatic.white}
+                />
+              </>
+            ) : (
               <Text
                 style={[
                   styles(theme).centerText,
@@ -1133,28 +1182,22 @@ const Setting = ({navigation}: props) => {
                     color: ThemeStatic.white,
                   },
                 ]}>
-                Next step
+                Done
               </Text>
-              <Ionicons
-                name="arrow-forward"
-                size={IconSizes.x6}
-                color={ThemeStatic.white}
-              />
-            </>
-          ) : (
-            <Text
-              style={[
-                styles(theme).centerText,
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Body,
-                  color: ThemeStatic.white,
-                },
-              ]}>
-              Done
-            </Text>
-          )}
-        </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+        </View>
+        {Object.values(validError).map((errMessage: any, index: number) => (
+          <Text
+            key={index}
+            style={{
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: 'red',
+            }}>
+            {errMessage}
+          </Text>
+        ))}
       </Modalize>
       <Modalize
         ref={avatarOptionsBottomSheetRef}

@@ -27,6 +27,7 @@ import BounceView from '../components/shared/BounceView';
 import {
   deletePost,
   disablePost,
+  getCommentsOfPost,
   getPostDetail,
   postLike,
 } from '../reducers/action/post';
@@ -43,6 +44,11 @@ import {useSelector} from 'react-redux';
 import {getSocket} from '../utils/Socket';
 import {showError} from '../utils/Toast';
 import renderValue from '../components/shared/MentionText';
+import Feather from 'react-native-vector-icons/Feather';
+import {Modalize} from 'react-native-modalize';
+import BottomSheetHeader from '../components/header/BottomSheetHeader';
+import {checkFriend} from 'src/reducers/action/friend';
+import {responsiveHeight} from 'react-native-responsive-dimensions';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -50,7 +56,7 @@ type props = NativeStackScreenProps<RootStackParamList, 'PostView'>;
 const PostView = ({navigation, route}: props) => {
   const {user} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
-  const {postId} = route.params;
+  const {postId, userId} = route.params;
 
   const [post, setPost] = useState<any>({
     author: {},
@@ -66,38 +72,63 @@ const PostView = ({navigation, route}: props) => {
     useState(false);
   const [isConfirmModalHideVisible, setIsConfirmModalHideVisible] =
     useState(false);
+  const [comments, setComments] = useState<any>([]);
+  const [friendStatus, setFriendStatus] = useState<any>({});
 
   const postOptionsBottomSheetRef = useRef();
   const likesBottomSheetRef = useRef();
   const doubleTapRef = useRef();
   const likeBounceAnimationRef = createRef();
+  const taggedBottomSheetRef = useRef();
   const socket = getSocket();
 
   const {readableTime} = parseTimeElapsed(post.createdAt);
 
   useEffect(() => {
-    fetchPost();
+    fetchData();
     socket.on('post.reaction', (data: any) => {
       if (data.to === postId) {
         setLikes([...likes, ...data.data.reactions]);
       }
     });
+    socket.on('comment', (data: any) => {
+      if (data.to === postId) {
+        setComments([...comments, ...[data.data]]);
+      }
+    });
+    socket.on('delete.comment', (data: any) => {
+      if (data.to === postId) {
+        setComments(comments.filter(comment => comment.id !== data.data.id));
+      }
+    });
   }, []);
 
-  const fetchPost = () => {
+  const fetchData = () => {
     setLoading(true);
-    getPostDetail({post: postId})
-      .then(res => {
-        setPost(res);
-        setLikes(res.reactions);
-        setIsLiked(res.reactions.includes(user.id));
-      })
-      .catch(() => {
-        setError(true);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    Promise.all([fetchPost(), fetchComments(), fetchFriendStatus()])
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  };
+
+  const fetchPost = async () => {
+    const res = await getPostDetail({post: postId});
+    setPost(res);
+    setLikes(res.reactions);
+    setIsLiked(res.reactions.includes(user.id));
+  };
+
+  const fetchComments = async () => {
+    const res = await getCommentsOfPost({
+      postId: postId,
+    });
+    setComments(res);
+  };
+
+  const fetchFriendStatus = async () => {
+    if (userId !== user.id) {
+      const res = await checkFriend({friend: userId});
+      setFriendStatus(res);
+    }
   };
 
   const confirmationDeleteToggle = () => {
@@ -106,6 +137,11 @@ const PostView = ({navigation, route}: props) => {
 
   const confirmationHideToggle = () => {
     setIsConfirmModalHideVisible(previousState => !previousState);
+  };
+
+  const openTagged = () => {
+    // @ts-ignore
+    return taggedBottomSheetRef.current.open();
   };
 
   const openOptions = () => {
@@ -194,6 +230,12 @@ const PostView = ({navigation, route}: props) => {
               <Text style={styles(theme).timeText}>{readableTime}</Text>
             </View>
           </TouchableOpacity>
+          <IconButton
+            onPress={openTagged}
+            Icon={() => (
+              <Feather name="tag" size={IconSizes.x6} color={theme.text01} />
+            )}
+          />
           {post.author.id === user.id && (
             <IconButton
               onPress={openOptions}
@@ -300,12 +342,48 @@ const PostView = ({navigation, route}: props) => {
             user,
           )}
         </Text>
-        <Comments postId={post.id} />
+        <Comments postId={post.id} comments={comments} />
       </>
     );
 
   let bottomSheets = (
     <>
+      <Modalize
+        ref={taggedBottomSheetRef}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight
+        HeaderComponent={
+          <BottomSheetHeader
+            heading="Tagged"
+            subHeading={'People tagged in this post'}
+          />
+        }
+        flatListProps={{
+          data: post.tags,
+          keyExtractor: (item: any) => item.id,
+          renderItem: ({item}: any) => (
+            <TouchableOpacity
+              onPress={() => {
+                if (item.id === user.id) {
+                  navigation.navigate('MyProfile');
+                } else {
+                  navigation.navigate('Profile', {userId: item.id});
+                }
+              }}
+              style={[
+                styles(theme).row,
+                styles(theme).postViewHeader,
+                space(IconSizes.x1).mb,
+              ]}>
+              <NativeImage uri={item.avatar} style={styles(theme).tinyImage} />
+              <View style={[space(IconSizes.x1).ml]}>
+                <Text style={styles(theme).nameText}>{item.name}</Text>
+              </View>
+            </TouchableOpacity>
+          ),
+          showsVerticalScrollIndicator: false,
+        }}
+      />
       <PostOptionsBottomSheet
         ref={postOptionsBottomSheetRef}
         post={post}
@@ -341,34 +419,61 @@ const PostView = ({navigation, route}: props) => {
   return (
     <GestureHandlerRootView
       style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <KeyboardAvoidingView
-        style={{flex: 1, justifyContent: 'flex-end'}}
-        behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}>
-        <HeaderBar
-          contentLeft={
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="arrow-back-outline"
-                  size={IconSizes.x8}
-                  color={theme.text01}
-                />
-              )}
-              onPress={() => {
-                navigation.goBack();
-              }}
-            />
-          }
-        />
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={[{flex: 1}, space(IconSizes.x1).pt]}>
-          {content}
-        </ScrollView>
-        <CommentInput postId={post.id} />
-      </KeyboardAvoidingView>
-      {bottomSheets}
+      <HeaderBar
+        contentLeft={
+          <IconButton
+            Icon={() => (
+              <Ionicons
+                name="arrow-back-outline"
+                size={IconSizes.x8}
+                color={theme.text01}
+              />
+            )}
+            onPress={() => {
+              navigation.goBack();
+            }}
+          />
+        }
+      />
+      {(friendStatus.status !== 'FRIENDED' && post.author.privateMode) ||
+      post.author.status === 'INACTIVE' ? (
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginHorizontal: 10,
+              height: responsiveHeight(20),
+            },
+          ]}>
+          <Text
+            style={[
+              {
+                ...FontWeights.Light,
+                ...FontSizes.Label,
+                color: theme.text02,
+              },
+            ]}>
+            Sorry, this page isn't available
+          </Text>
+        </View>
+      ) : (
+        <>
+          <KeyboardAvoidingView
+            style={{flex: 1, justifyContent: 'flex-end'}}
+            behavior={keyboardBehavior}
+            keyboardVerticalOffset={20}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={[{flex: 1}, space(IconSizes.x1).pt]}>
+              {content}
+            </ScrollView>
+            <CommentInput postId={post.id} />
+          </KeyboardAvoidingView>
+          {bottomSheets}
+        </>
+      )}
     </GestureHandlerRootView>
   );
 };

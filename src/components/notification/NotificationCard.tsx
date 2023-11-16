@@ -21,6 +21,7 @@ type NotificationCardPros = {
   resourceId: string;
   type: keyof typeof NotificationType;
   time: string;
+  author: any;
 };
 
 const NotificationCard = ({
@@ -29,13 +30,13 @@ const NotificationCard = ({
   name,
   type,
   time,
+  author,
 }: NotificationCardPros) => {
   const {theme} = useContext(AppContext);
   const navigation = useNavigation();
   const {readableTime} = parseTimeElapsed(time);
 
   const navigateAction = () => {
-    console.log('navigateAction', resourceId, resourceId == null);
     if (resourceId == null) {
       return;
     }
@@ -48,7 +49,7 @@ const NotificationCard = ({
       type === NotificationType.MENTION_ON_COMMENT ||
       type === NotificationType.MENTION_ON_POST
     ) {
-      navigation.navigate('PostView', {postId: resourceId});
+      navigation.navigate('PostView', {postId: resourceId, userId: author.id});
     }
   };
 

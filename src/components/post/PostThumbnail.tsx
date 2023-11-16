@@ -9,13 +9,15 @@ import {CONTENT_SPACING, SCREEN_WIDTH} from '../../constants/Constants';
 interface PostThumbnailProps {
   id: string;
   uri: string;
+  userId: number;
 }
 
-const PostThumbnail: React.FC<PostThumbnailProps> = ({id, uri}) => {
+const PostThumbnail: React.FC<PostThumbnailProps> = ({id, uri, userId}) => {
   const {theme} = useContext(AppContext);
   const {navigate} = useNavigation();
 
-  const navigateToPost = () => navigate('PostView', {postId: id});
+  const navigateToPost = () =>
+    navigate('PostView', {postId: id, userId: userId});
 
   return (
     <TouchableOpacity

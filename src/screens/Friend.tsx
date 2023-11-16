@@ -483,24 +483,6 @@ const Friend = () => {
             }}
             onChangeText={handleOnChangeText}
           />
-          {/* <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-            <Ionicons
-              name="share-social-outline"
-              size={IconSizes.x6}
-              color={theme.text01}
-            />
-            <Text
-              style={[
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Label,
-                  color: theme.text01,
-                },
-                space(IconSizes.x1).ml,
-              ]}>
-              Invite from other apps
-            </Text>
-          </View> */}
         </View>
         {content}
       </ScrollView>

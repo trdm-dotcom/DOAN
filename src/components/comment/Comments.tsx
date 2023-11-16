@@ -1,62 +1,24 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {AppContext} from '../../context';
 import CommentCard from './CommentCard';
 import {Text, StyleSheet} from 'react-native';
-import ListEmptyComponent from '../shared/ListEmptyComponent';
 import {ThemeColors} from '../../constants/Types';
 import Typography from '../../theme/Typography';
-import {deleteComment, getCommentsOfPost} from '../../reducers/action/post';
-import ConnectionsPlaceholder from '../placeholder/Connections.Placeholder';
+import {deleteComment} from '../../reducers/action/post';
 import {showError} from '../../utils/Toast';
 import ConfirmationModal from '../shared/ConfirmationModal';
-import {getSocket} from '../../utils/Socket';
 import {sortCommentDescendingTime} from '../../utils/shared';
 const {FontWeights, FontSizes} = Typography;
 
 type CommentsProps = {
+  comments: any[];
   postId: string;
 };
 
-const Comments = ({postId}: CommentsProps) => {
+const Comments = ({comments, postId}: CommentsProps) => {
   const {theme} = useContext(AppContext);
-  const [comments, setComments] = useState<any>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [commentPressOption, setCommentPressOption] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
-  const socket = getSocket();
-
-  useEffect(() => {
-    if (postId) {
-      fetchComments(postId);
-    }
-    socket.on('comment', (data: any) => {
-      if (data.to === postId) {
-        setComments([...comments, ...[data.data]]);
-      }
-    });
-    socket.on('delete.comment', (data: any) => {
-      if (data.to === postId) {
-        setComments(comments.filter(comment => comment.id !== data.data.id));
-      }
-    });
-  }, []);
-
-  const fetchComments = (post: string) => {
-    setLoading(true);
-    getCommentsOfPost({
-      postId: post,
-    })
-      .then(response => {
-        setComments(response);
-      })
-      .catch(() => {
-        setError(true);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
 
   const toggleModal = (comment: any) => {
     setCommentPressOption(comment);
@@ -66,11 +28,6 @@ const Comments = ({postId}: CommentsProps) => {
   const onConfirm = () => {
     setShowModal(false);
     deleteComment({postId: postId, commentId: commentPressOption.id})
-      .then(() => {
-        setComments(
-          comments.filter(comment => comment.id !== commentPressOption.id),
-        );
-      })
       .catch(err => {
         showError(err.message);
       })
@@ -84,11 +41,12 @@ const Comments = ({postId}: CommentsProps) => {
     setCommentPressOption(null);
   };
 
-  let content =
-    loading || error ? (
-      <ConnectionsPlaceholder />
-    ) : comments.length > 0 ? (
-      sortCommentDescendingTime(comments).map(comment => {
+  return (
+    <>
+      <Text style={[styles(theme).commentsHeader, {marginBottom: 20}]}>
+        Comments
+      </Text>
+      {sortCommentDescendingTime(comments).map(comment => {
         return (
           <CommentCard
             key={comment.id}
@@ -100,23 +58,7 @@ const Comments = ({postId}: CommentsProps) => {
             onPressOption={() => toggleModal(comment)}
           />
         );
-      })
-    ) : (
-      <ListEmptyComponent
-        placeholder="Be the first one to comment"
-        placeholderStyle={styles().placeholderStyle}
-        spacing={10}
-      />
-    );
-
-  const marginBottom = comments.length === 0 ? 0 : 20;
-
-  return (
-    <>
-      <Text style={[styles(theme).commentsHeader, {marginBottom}]}>
-        Comments
-      </Text>
-      {content}
+      })}
       <ConfirmationModal
         label="Delete"
         title="Are you sure you want to delete this comment?"

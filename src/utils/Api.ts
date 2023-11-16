@@ -85,7 +85,6 @@ function apiReq<T>(
   headers = {},
 ): Promise<T> {
   const rId: string = Math.floor(Math.random() * Date.now()).toString(8);
-
   headers = {
     ...headers,
     rId: rId,

@@ -43,6 +43,7 @@ export type RootStackParamList = {
   };
   PostView: {
     postId: string;
+    userId: number;
   };
   Profile: {userId: number};
   NewPassword: {

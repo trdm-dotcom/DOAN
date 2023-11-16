@@ -3,7 +3,7 @@ import {RootStackParamList} from '../navigators/RootStack';
 import Typography from '../theme/Typography';
 import {useContext, useState} from 'react';
 import {AppContext} from '../context';
-import {checkEmpty} from '../utils/Validate';
+import {checkEmpty, checkRegex} from '../utils/Validate';
 import {showError} from '../utils/Toast';
 import {checkExist} from '../reducers/action/authentications';
 import {OtpIdType} from '../models/enum/OtpIdType';
@@ -23,7 +23,12 @@ import {space, styles} from '../components/style';
 import HeaderBar from '../components/header/HeaderBar';
 import IconButton from '../components/control/IconButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {IconSizes} from '../constants/Constants';
+import {
+  EMAIL_REGEX,
+  FULLNAME_REGEX,
+  IconSizes,
+  PHONE_NUMBER_REGEX,
+} from '../constants/Constants';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import Header from '../components/header/Header';
 import {ThemeStatic} from '../theme/Colors';
@@ -39,16 +44,30 @@ const SignUp = ({navigation}: props) => {
   const [name, setName] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [validError, setValidError] = useState<any>({});
 
   const isValidData = () => {
-    const error =
-      checkEmpty(mail, 'Please enter your email address') ||
-      checkEmpty(name, 'Please enter your name');
-    if (error) {
-      showError(error);
-      return false;
+    let errors = {};
+    const validEmail =
+      checkEmpty(mail, 'Email address is required.') ||
+      checkRegex(mail, 'Email address is invalid.', EMAIL_REGEX);
+    if (validEmail) {
+      errors['email'] = validEmail;
     }
-    return true;
+    const validName =
+      checkEmpty(name, 'Name is required.') ||
+      checkRegex(name, 'Name is invalid.', FULLNAME_REGEX);
+    if (validName) {
+      errors['name'] = validName;
+    }
+    const validPhone =
+      checkEmpty(phoneNumber, 'Phone number is required.') ||
+      checkRegex(phoneNumber, 'Phone number is invalid.', PHONE_NUMBER_REGEX);
+    if (validPhone) {
+      errors['phoneNumber'] = validPhone;
+    }
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleOnNameChangeText = (text: string) => {
@@ -142,7 +161,7 @@ const SignUp = ({navigation}: props) => {
               color: theme.text02,
             },
           ]}>
-          Enter your phone number
+          Enter your credentials
         </Text>
         <Animated.View
           style={[{flex: 1}, space(IconSizes.x5).mt]}
@@ -244,6 +263,17 @@ const SignUp = ({navigation}: props) => {
             </TouchableOpacity>
           </View>
         </Animated.View>
+        {Object.values(validError).map((errMessage: any, index: number) => (
+          <Text
+            key={index}
+            style={{
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: 'red',
+            }}>
+            {errMessage}
+          </Text>
+        ))}
       </KeyboardAvoidingView>
     </View>
   );

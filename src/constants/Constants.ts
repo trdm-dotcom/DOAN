@@ -4,7 +4,6 @@ import {
   AssetType,
   IconSizesType,
   NotificationTextType,
-  OnlineDotColorType,
   PaginationType,
   PollIntervalsType,
   PostDimensionsType,
@@ -29,12 +28,6 @@ export const SCREEN_HEIGHT = Platform.select<number>({
     Dimensions.get('screen').height - StaticSafeAreaInsets.safeAreaInsetsBottom,
   ios: Dimensions.get('window').height,
 }) as number;
-
-// The maximum zoom _factor_ you should be able to zoom in
-export const MAX_ZOOM_FACTOR = 20;
-export const SCALE_FULL_ZOOM = 3;
-export const CAPTURE_BUTTON_SIZE = 78;
-export const FETCHING_HEIGHT = 300;
 
 export const IconSizes: IconSizesType = {
   x00: 4,
@@ -104,7 +97,13 @@ export const NotificationText: NotificationTextType = {
   MENTION_ON_POST: 'mentioned you in a post',
 };
 
-export const OnlineDotColor: OnlineDotColorType = {
-  true: '#4caf50',
-  false: '#BBBBBB',
-};
+export const PASSWORD_REGEX = new RegExp(
+  '^(?<!\\.)(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[\\W,_])[.!-~]{6,}$(?<!\\.)',
+);
+export const PHONE_NUMBER_REGEX = new RegExp('^(?<!\\.)\\d{10}$(?<!\\.)');
+export const FULLNAME_REGEX = new RegExp(
+  '[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸ]+',
+);
+export const EMAIL_REGEX = new RegExp(
+  '^(?!\\.)[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]*$(?<!\\.)',
+);

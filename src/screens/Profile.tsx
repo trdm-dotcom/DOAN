@@ -83,33 +83,33 @@ const Profile = ({navigation, route}: props) => {
   ]);
 
   useEffect(() => {
-    const fetchData = () => {
-      setLoading(true);
-      setIsLoading(true);
-      Promise.all([
-        getUserInfo({userId: userId}),
-        checkFriend({
-          friend: userId,
-        }),
-        fetchPosts(0),
-        fetchPostTags(0),
-        fetchFriends(0),
-      ])
-        .catch(() => {
-          setError(true);
-        })
-        .then(res => {
-          setUserProfile(res[0]);
-          setFriendStatus(res[1]);
-        })
-        .finally(() => {
-          setLoading(false);
-          setIsLoading(false);
-        });
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = () => {
+    setLoading(true);
+    setIsLoading(true);
+    Promise.all([
+      getUserInfo({userId: userId}),
+      checkFriend({
+        friend: userId,
+      }),
+      fetchPosts(0),
+      fetchPostTags(0),
+      fetchFriends(0),
+    ])
+      .catch(() => {
+        setError(true);
+      })
+      .then(res => {
+        setUserProfile(res[0]);
+        setFriendStatus(res[1]);
+      })
+      .finally(() => {
+        setLoading(false);
+        setIsLoading(false);
+      });
+  };
 
   const fetchPosts = async (page: number) => {
     const res = await getPostOfUser({
@@ -291,7 +291,9 @@ const Profile = ({navigation, route}: props) => {
   };
 
   const renderItem = ({item}) => {
-    return <PostThumbnail id={item.id} uri={item.source} />;
+    return (
+      <PostThumbnail id={item.id} uri={item.source} userId={item.userId} />
+    );
   };
 
   const handleStateChange = (friend: any) => {
@@ -590,29 +592,27 @@ const Profile = ({navigation, route}: props) => {
       {(friendStatus.status === 'BLOCKED' &&
         friendStatus.targetId === user.id) ||
       userProfile.status === 'INACTIVE' ? (
-        <>
-          <View
+        <View
+          style={[
+            {
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginHorizontal: 10,
+              height: responsiveHeight(20),
+            },
+          ]}>
+          <Text
             style={[
               {
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginHorizontal: 10,
-                height: responsiveHeight(20),
+                ...FontWeights.Light,
+                ...FontSizes.Label,
+                color: theme.text02,
               },
             ]}>
-            <Text
-              style={[
-                {
-                  ...FontWeights.Light,
-                  ...FontSizes.Label,
-                  color: theme.text02,
-                },
-              ]}>
-              Sorry, this page isn't available
-            </Text>
-          </View>
-        </>
+            Sorry, this page isn't available
+          </Text>
+        </View>
       ) : (
         <>
           {content}

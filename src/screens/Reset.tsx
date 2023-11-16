@@ -37,18 +37,20 @@ const Reset = ({navigation}: props) => {
   const {theme} = useContext(AppContext);
   const [id, setId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [validError, setValidError] = useState<any>({});
 
   const handleOnChangeText = (text: string) => {
     setId(text.trim());
   };
 
   const isValidData = () => {
-    const error = checkEmpty(id, 'Please enter your email address');
-    if (error) {
-      showError(error);
-      return false;
+    let errors = {};
+    const validEmail = checkEmpty(id, 'Email is required.');
+    if (validEmail) {
+      errors['email'] = validEmail;
     }
-    return true;
+    setValidError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleContinue = async () => {
@@ -171,6 +173,17 @@ const Reset = ({navigation}: props) => {
             )}
           </TouchableOpacity>
         </View>
+        {Object.values(validError).map((errMessage: any, index: number) => (
+          <Text
+            key={index}
+            style={{
+              ...FontWeights.Regular,
+              ...FontSizes.Caption,
+              color: 'red',
+            }}>
+            {errMessage}
+          </Text>
+        ))}
       </KeyboardAvoidingView>
     </View>
   );

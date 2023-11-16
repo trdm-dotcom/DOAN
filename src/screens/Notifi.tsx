@@ -68,6 +68,7 @@ const Notifi = () => {
         type={item.type}
         resourceId={item.sourceId}
         time={item.date}
+        author={item.author}
       />
     );
   };
