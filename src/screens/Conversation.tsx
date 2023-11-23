@@ -35,6 +35,7 @@ const Conversation = ({navigation, route}: props) => {
   const socket = getSocket();
 
   useEffect(() => {
+    loadMessages();
     socket.on('receive-message', (data: any) => {
       if (user.id === data.to && data.data.user._id === targetId) {
         const newMessage = {
@@ -47,7 +48,6 @@ const Conversation = ({navigation, route}: props) => {
         setMessages(previousMessages => [...previousMessages, ...[newMessage]]);
       }
     });
-    loadMessages();
   }, []);
 
   const loadMessages = () => {

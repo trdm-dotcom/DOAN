@@ -101,10 +101,8 @@ const Password = ({navigation, route}: props) => {
         dispatch({
           type: 'userRegisterSuccess',
         });
+        setAccountCreated(true);
         try {
-          dispatch({
-            type: 'userLoginRequest',
-          });
           const bodyLogin: ILoginRequest = {
             username: phoneNumber,
             password: password,
@@ -112,20 +110,16 @@ const Password = ({navigation, route}: props) => {
             client_secret: CLIENT_SECRET,
             hash: getHash('LOGIN'),
           };
+          dispatch({
+            type: 'userLoginRequest',
+          });
           await loginPassword(bodyLogin);
-          setAccountCreated(true);
         } catch (err: any) {
           dispatch({
             type: 'userLoginFailed',
             payload: err.message,
           });
         }
-        const bodySettingNotification = {
-          isReceive: true,
-          deviceId: deviceId,
-          registrationToken: fcmToken,
-        };
-        settingReceiveNotification(bodySettingNotification);
       } catch (err: any) {
         dispatch({
           type: 'userRegisterFailed',
@@ -161,12 +155,17 @@ const Password = ({navigation, route}: props) => {
       dispatch({
         type: 'getUsersRequest',
       });
-
       const userInfoRes: IUserInfoResponse = await getUserInfo();
       dispatch({
         type: 'getUsersSuccess',
         payload: userInfoRes,
       });
+      const bodySettingNotification = {
+        isReceive: true,
+        deviceId: deviceId,
+        registrationToken: fcmToken,
+      };
+      settingReceiveNotification(bodySettingNotification);
       navigation.navigate('Friend');
     } catch (err: any) {
       dispatch({

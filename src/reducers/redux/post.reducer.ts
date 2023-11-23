@@ -51,6 +51,11 @@ export const postReducer = createReducer(initialState, {
       ].comments.filter(comment => comment.id !== action.payload.data.id);
     }
   },
+  deleteOrDisablePost: (state, action) => {
+    state.posts = state.posts.filter(
+      post => post.id !== action.payload.data.id,
+    );
+  },
   clearErrors: state => {
     state.error = null;
   },

@@ -626,13 +626,8 @@ const MyProfile = () => {
             </View>
           </View>
           <View style={[styles(theme).inputContainer, styles(theme).row]}>
-            <Ionicons
-              name="person-outline"
-              size={IconSizes.x6}
-              color={theme.text02}
-            />
             <TextInput
-              value={user.name}
+              value={name}
               onChangeText={(text: string) => {
                 setName(text);
               }}
@@ -649,13 +644,8 @@ const MyProfile = () => {
             />
           </View>
           <View style={[styles(theme).inputContainer, styles(theme).row]}>
-            <Ionicons
-              name="person-outline"
-              size={IconSizes.x6}
-              color={theme.text02}
-            />
             <TextInput
-              value={user.about}
+              value={about}
               onChangeText={(text: string) => {
                 setAbout(text);
               }}

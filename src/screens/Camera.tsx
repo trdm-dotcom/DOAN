@@ -36,6 +36,7 @@ import {getFriendList, searchFriend} from '../reducers/action/friend';
 import CheckBox from 'react-native-check-box';
 import Suggestions from '../components/shared/Suggestions';
 import {MentionInput} from 'react-native-controlled-mentions';
+import PhotoEditor from '@baronha/react-native-photo-editor';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -91,6 +92,8 @@ const Camera = ({navigation}: props) => {
       await upPost(body);
       setCaption(null);
       setImageSource(null);
+      setSuggestions([]);
+      setChoose([]);
     } catch (err: any) {
       showError(err.message);
     } finally {
@@ -122,6 +125,16 @@ const Camera = ({navigation}: props) => {
     })
       .then((image: Image) => {
         setImageSource(image.path);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
+  const onEdit = () => {
+    PhotoEditor.open({path: imageSource, stickers: []})
+      .then(result => {
+        setImageSource(result);
       })
       .catch(err => {
         console.log(err);
@@ -215,6 +228,7 @@ const Camera = ({navigation}: props) => {
               color: theme.text01,
             },
           ]}
+          placeholderTextColor={theme.text02}
           value={caption}
           placeholder="Add a caption..."
           onChange={(text: string) => {
@@ -285,15 +299,13 @@ const Camera = ({navigation}: props) => {
             },
             space(IconSizes.x8).mv,
           ]}>
-          <IconButton
-            Icon={() => (
-              <Ionicons name="close" size={IconSizes.x9} color={theme.text01} />
-            )}
-            onPress={() => {
-              setImageSource(null);
-              closeOptions();
-            }}
-          />
+          <TouchableOpacity disabled={imageSource == null} onPress={onEdit}>
+            <Ionicons
+              name="options-outline"
+              size={IconSizes.x9}
+              color={theme.text01}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={doUpPost}
             activeOpacity={0.9}

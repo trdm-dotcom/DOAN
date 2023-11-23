@@ -16,7 +16,6 @@ import {IconSizes} from '../../constants/Constants';
 import {NativeImage} from '../shared/NativeImage';
 import LikeBounceAnimation from './LikeBounceAnimation';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
-import IconButton from '../control/IconButton';
 import renderValue from '../shared/MentionText';
 
 const {FontWeights, FontSizes} = Typography;
@@ -98,12 +97,12 @@ const PostCard = ({
             alignSelf: 'center',
           }}>
           {tags != null &&
-            tags.length > 0 &&
-            tags.map(tag => (
+            tags.slice(0, 3).map(tag => (
               <NativeImage
                 key={tag.id}
                 uri={tag.avatar}
                 style={{
+                  marginTop: 3,
                   height: 30,
                   width: 30,
                   backgroundColor: ThemeStatic.placeholder,
@@ -254,25 +253,6 @@ const PostCard = ({
               </Text>
             </View>
           </View>
-          {author.userId === user.id && (
-            <View
-              style={{
-                flexDirection: 'row',
-                marginLeft: IconSizes.x1,
-                alignSelf: 'flex-end',
-              }}>
-              <IconButton
-                onPress={() => {}}
-                Icon={() => (
-                  <Ionicons
-                    name="share-social-outline"
-                    color={theme.text01}
-                    size={IconSizes.x6}
-                  />
-                )}
-              />
-            </View>
-          )}
         </View>
       </View>
     </View>

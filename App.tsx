@@ -134,6 +134,12 @@ const SafeAreaApp = () => {
         });
       }
     });
+    socket.on('post.deleteOrDisable', (data: any) => {
+      dispatch({
+        type: 'deleteOrDisablePost',
+        payload: data,
+      });
+    });
     socket.on('post.reaction', (data: any) => {
       dispatch({
         type: 'updatePostsReactions',

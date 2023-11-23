@@ -608,11 +608,6 @@ const Setting = ({navigation}: props) => {
                   value={themeType === Theme.dark.type}
                   onValueChange={value => {
                     toggleTheme(value ? Theme.dark.type : Theme.light.type);
-                    if (value) {
-                      turnOffNotificationModalToggle();
-                    } else {
-                      requestSettingReceiveNotification(true);
-                    }
                   }}
                   thumbColor={
                     themeType === Theme.dark.type
@@ -719,20 +714,6 @@ const Setting = ({navigation}: props) => {
                 style={space(IconSizes.x00).mb}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {}}>
-              <AppOption
-                label="Biometric"
-                iconName="finger-print-outline"
-                children={
-                  <Ionicons
-                    name="chevron-forward"
-                    color={theme.base}
-                    size={IconSizes.x6}
-                  />
-                }
-                style={space(IconSizes.x00).mb}
-              />
-            </TouchableOpacity>
             <TouchableOpacity onPress={() => onBlockListOpen()}>
               <AppOption
                 label="Blocked users"
@@ -779,10 +760,9 @@ const Setting = ({navigation}: props) => {
                     size={IconSizes.x6}
                   />
                 }
-                style={space(IconSizes.x00).mb}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={deleteAccountConfirmationToggle}>
+            {/* <TouchableOpacity onPress={deleteAccountConfirmationToggle}>
               <AppOption
                 label="Delete Account"
                 iconName="sad-outline"
@@ -795,7 +775,7 @@ const Setting = ({navigation}: props) => {
                   />
                 }
               />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
       </ScrollView>
@@ -814,13 +794,8 @@ const Setting = ({navigation}: props) => {
                 subHeading="Edit your personal information"
               />
               <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <Ionicons
-                  name="person-outline"
-                  size={IconSizes.x6}
-                  color={theme.text02}
-                />
                 <TextInput
-                  value={user.name}
+                  value={name}
                   onChangeText={(text: string) => {
                     setName(text);
                   }}
@@ -837,13 +812,8 @@ const Setting = ({navigation}: props) => {
                 />
               </View>
               <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <Ionicons
-                  name="person-outline"
-                  size={IconSizes.x6}
-                  color={theme.text02}
-                />
                 <TextInput
-                  value={user.about}
+                  value={about}
                   onChangeText={(text: string) => {
                     setAbout(text);
                   }}
@@ -865,11 +835,6 @@ const Setting = ({navigation}: props) => {
             <>
               <Header title="Change password" />
               <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={IconSizes.x6}
-                  color={theme.text02}
-                />
                 <TextInput
                   onChangeText={(text: string) => {
                     setOldPassword(text.trim());
@@ -888,11 +853,6 @@ const Setting = ({navigation}: props) => {
                 />
               </View>
               <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={IconSizes.x6}
-                  color={theme.text02}
-                />
                 <TextInput
                   onChangeText={(text: string) => {
                     setNewPassword(text.trim());
@@ -1252,7 +1212,10 @@ const Setting = ({navigation}: props) => {
         title="Turn off notification?"
         isVisible={turnOffNotificationModal}
         toggle={turnOffNotificationModalToggle}
-        onConfirm={() => requestSettingReceiveNotification(false)}
+        onConfirm={() => {
+          requestSettingReceiveNotification(false);
+          turnOffNotificationModalToggle();
+        }}
       />
       <ConfirmationModal
         label="Continue deleting account"

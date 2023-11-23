@@ -163,6 +163,7 @@ const EditPost = ({navigation, route}: props) => {
                   color: theme.text01,
                 },
               ]}
+              placeholderTextColor={theme.text02}
               value={caption}
               placeholder="Add a caption..."
               onChange={(text: string) => {

@@ -13,7 +13,7 @@ import {createAsyncDelay} from '../../utils/shared';
 import {searchFriend} from '../../reducers/action/friend';
 import {MentionInput} from 'react-native-controlled-mentions';
 import Suggestions from '../shared/Suggestions';
-import {checkEmpty} from 'src/utils/Validate';
+import {checkEmpty} from '../../utils/Validate';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -70,6 +70,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
             color: theme.text01,
           },
         ]}
+        placeholderTextColor={theme.text02}
         value={comment}
         placeholder="Add comment..."
         onChange={(text: string) => {

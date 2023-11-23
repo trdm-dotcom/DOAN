@@ -47,7 +47,7 @@ import renderValue from '../components/shared/MentionText';
 import Feather from 'react-native-vector-icons/Feather';
 import {Modalize} from 'react-native-modalize';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
-import {checkFriend} from 'src/reducers/action/friend';
+import {checkFriend} from '../reducers/action/friend';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
 
 const {FontWeights, FontSizes} = Typography;
@@ -67,13 +67,14 @@ const PostView = ({navigation, route}: props) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
-  const [likes, setLikes] = useState<any[]>(post.reactions);
   const [isConfirmModalDeleteVisible, setIsConfirmModalDeleteVisible] =
     useState(false);
   const [isConfirmModalHideVisible, setIsConfirmModalHideVisible] =
     useState(false);
   const [comments, setComments] = useState<any>([]);
   const [friendStatus, setFriendStatus] = useState<any>({});
+  const [like, setLike] = useState<any[]>([]);
+  const [comment, setComment] = useState<any>({});
 
   const postOptionsBottomSheetRef = useRef();
   const likesBottomSheetRef = useRef();
@@ -85,20 +86,31 @@ const PostView = ({navigation, route}: props) => {
   const {readableTime} = parseTimeElapsed(post.createdAt);
 
   useEffect(() => {
+    setPost({
+      ...post,
+      reactions: post.reactions.concat(like),
+    });
+  }, [like]);
+
+  useEffect(() => {
+    setComments(comments.concat([comment]));
+  }, [comment]);
+
+  useEffect(() => {
     fetchData();
     socket.on('post.reaction', (data: any) => {
       if (data.to === postId) {
-        setLikes([...likes, ...data.data.reactions]);
+        setLike(data.data.reactions);
       }
     });
     socket.on('comment', (data: any) => {
       if (data.to === postId) {
-        setComments([...comments, ...[data.data]]);
+        setComment(data.data);
       }
     });
     socket.on('delete.comment', (data: any) => {
       if (data.to === postId) {
-        setComments(comments.filter(comment => comment.id !== data.data.id));
+        setComments(comments.filter(cmt => cmt.id !== data.data.id));
       }
     });
   }, []);
@@ -113,7 +125,6 @@ const PostView = ({navigation, route}: props) => {
   const fetchPost = async () => {
     const res = await getPostDetail({post: postId});
     setPost(res);
-    setLikes(res.reactions);
     setIsLiked(res.reactions.includes(user.id));
   };
 
@@ -169,15 +180,22 @@ const PostView = ({navigation, route}: props) => {
     confirmationHideToggle();
   };
 
+  const onPostUndisable = () => {
+    doDisablePost().then(() => {
+      closeOptions();
+    });
+  };
+
   const likeInteractionHandler = (liked: boolean) => {
     if (!liked) {
       const body = {
         postId: post.id,
         reaction: 'like',
       };
-      postLike(body);
-      setIsLiked(!liked);
-      setLikes([...likes, user.id]);
+      postLike(body).then(() => {
+        setIsLiked(!liked);
+        setPost({...post, reactions: post.reactions.concat([user.id])});
+      });
     }
     // @ts-ignore
     likeBounceAnimationRef.current.animate();
@@ -199,10 +217,13 @@ const PostView = ({navigation, route}: props) => {
     const body: IParam = {
       post: post.id,
       hash: getHash('DISABLE_POST'),
+      disable: !post.disable,
     };
     try {
       await disablePost(body);
-    } catch (err: any) {}
+    } catch (err: any) {
+      showError(err.message);
+    }
   };
 
   let content =
@@ -230,24 +251,27 @@ const PostView = ({navigation, route}: props) => {
               <Text style={styles(theme).timeText}>{readableTime}</Text>
             </View>
           </TouchableOpacity>
-          <IconButton
-            onPress={openTagged}
-            Icon={() => (
-              <Feather name="tag" size={IconSizes.x6} color={theme.text01} />
-            )}
-          />
-          {post.author.id === user.id && (
+          <View style={[styles(theme).row]}>
             <IconButton
-              onPress={openOptions}
+              onPress={openTagged}
               Icon={() => (
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={IconSizes.x6}
-                  color={theme.text01}
-                />
+                <Feather name="tag" size={IconSizes.x6} color={theme.text01} />
               )}
             />
-          )}
+            {post.author.id === user.id && (
+              <IconButton
+                style={[space(IconSizes.x1).ml]}
+                onPress={openOptions}
+                Icon={() => (
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                )}
+              />
+            )}
+          </View>
         </View>
         <TapGestureHandler
           maxDelayMs={300}
@@ -290,21 +314,9 @@ const PostView = ({navigation, route}: props) => {
                   color: theme.text01,
                 },
               ]}>
-              {parseLikes(likes.length)}
+              {parseLikes(post.reactions.length)}
             </Text>
           </View>
-          {post.author.id === user.id && (
-            <IconButton
-              onPress={() => {}}
-              Icon={() => (
-                <Ionicons
-                  name="share-social-outline"
-                  color={theme.text01}
-                  size={IconSizes.x6}
-                />
-              )}
-            />
-          )}
         </View>
         <Text
           style={[
@@ -393,6 +405,7 @@ const PostView = ({navigation, route}: props) => {
         }}
         onPostDelete={onPostDelete}
         onPostDiable={onPostDisable}
+        onPostUnDiable={onPostUndisable}
       />
       <ConfirmationModal
         label="Delete"
@@ -435,8 +448,9 @@ const PostView = ({navigation, route}: props) => {
           />
         }
       />
-      {(friendStatus.status !== 'FRIENDED' && post.author.privateMode) ||
-      post.author.status === 'INACTIVE' ? (
+      {(friendStatus.status !== 'FRIENDED' && post.author.privateMode === 1) ||
+      post.author.status === 'INACTIVE' ||
+      post.disable ? (
         <View
           style={[
             {
