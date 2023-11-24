@@ -67,13 +67,12 @@ const MyProfile = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
+  const {myPost, myPostHide} = useSelector((state: any) => state.post);
   const navigation = useNavigation();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [posts, setPosts] = useState<any[]>([]);
   const [postsTagged, setPostsTagged] = useState<any[]>([]);
-  const [postsHiden, setPostsHiden] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
   const [name, setName] = useState<string>(user.name);
   const [about, setAbout] = useState<string>(user.about);
@@ -195,7 +194,7 @@ const MyProfile = () => {
         if (autoUpdate) {
           const res = await requestImageModeration(
             compressedImage,
-            image.filename!,
+            'image.jpg',
           );
           if (res.summary.action === 'reject') {
             showError('Content is not allowed');
@@ -240,7 +239,7 @@ const MyProfile = () => {
         if (autoUpdate) {
           const res = await requestImageModeration(
             compressedImage,
-            image.filename!,
+            'image.jpg',
           );
           if (res.summary.action === 'reject') {
             showError('Content is not allowed');
@@ -329,7 +328,7 @@ const MyProfile = () => {
       pageSize: Pagination.PAGE_SIZE,
     });
     setCountPosts(res.total);
-    setPosts(res.page === 0 ? res.datas : [...posts, ...res.datas]);
+    dispatch({type: 'addMyPost', payload: res.datas});
     setNextPage(res.page + 1);
     setTotalPages(res.totalPages);
   };
@@ -351,15 +350,13 @@ const MyProfile = () => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
-    setPostsHiden(res.page === 0 ? res.datas : [...postsHiden, ...res.datas]);
+    dispatch({type: 'addMyPostHide', payload: res.datas});
     setNextPageHiden(res.page + 1);
     setTotalPagesHiden(res.totalPages);
   };
 
   const renderItem = ({item}) => {
-    return (
-      <PostThumbnail id={item.id} uri={item.source} userId={item.userId} />
-    );
+    return <PostThumbnail id={item.id} uri={item.source} userId={user.id} />;
   };
 
   const handleStateChange = (friend: any) => {
@@ -370,7 +367,7 @@ const MyProfile = () => {
   const PostRoute = () => (
     <FlatList
       numColumns={3}
-      data={posts}
+      data={myPost}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={() => (
         <ListEmptyComponent listType="posts" spacing={30} />
@@ -438,7 +435,7 @@ const MyProfile = () => {
   const HideRoute = () => (
     <FlatList
       numColumns={3}
-      data={postsHiden}
+      data={myPostHide}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={() => (
         <ListEmptyComponent listType="posts" spacing={30} />

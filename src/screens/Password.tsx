@@ -39,6 +39,7 @@ import Option from '../components/shared/Option';
 import {Image as ImageCompressor} from 'react-native-compressor';
 import {settingReceiveNotification} from '../reducers/action/notification';
 import {CLIENT_SECRET} from '@env';
+import {apiPost} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -61,6 +62,7 @@ const Password = ({navigation, route}: props) => {
   useEffect(() => {
     if (error != null) {
       showError(error);
+      dispatch({type: 'clearErrors'});
     }
   }, [error]);
 
@@ -83,6 +85,11 @@ const Password = ({navigation, route}: props) => {
     return Object.keys(errors).length === 0;
   };
 
+  const requestImageModeration = async (imageData: string, filename: string) =>
+    await apiPost<any>('/moderation/image', {
+      data: {imageData: imageData, filename: filename},
+    });
+
   const createAccount = async () => {
     if (isValidData()) {
       try {
@@ -101,19 +108,19 @@ const Password = ({navigation, route}: props) => {
         dispatch({
           type: 'userRegisterSuccess',
         });
-        setAccountCreated(true);
         try {
-          const bodyLogin: ILoginRequest = {
-            username: phoneNumber,
+          const body: ILoginRequest = {
+            username: mail,
             password: password,
             grant_type: 'password',
             client_secret: CLIENT_SECRET,
             hash: getHash('LOGIN'),
           };
+          console.log(body);
           dispatch({
             type: 'userLoginRequest',
           });
-          await loginPassword(bodyLogin);
+          await loginPassword(body);
         } catch (err: any) {
           dispatch({
             type: 'userLoginFailed',
@@ -126,6 +133,7 @@ const Password = ({navigation, route}: props) => {
           payload: err.message,
         });
       }
+      setAccountCreated(true);
     }
   };
 
@@ -143,6 +151,11 @@ const Password = ({navigation, route}: props) => {
     try {
       if (avatarData != null) {
         try {
+          const res = await requestImageModeration(avatarData, 'image.jpg');
+          if (res.summary.action === 'reject') {
+            showError('Content is not allowed');
+            return;
+          }
           await putUserInfo({
             name: name,
             avatar: avatarData,

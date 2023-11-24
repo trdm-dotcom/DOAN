@@ -37,11 +37,14 @@ import CheckBox from 'react-native-check-box';
 import Suggestions from '../components/shared/Suggestions';
 import {MentionInput} from 'react-native-controlled-mentions';
 import PhotoEditor from '@baronha/react-native-photo-editor';
+import {useDispatch, useSelector} from 'react-redux';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 const Camera = ({navigation}: props) => {
+  const dispatch = useDispatch();
+  const {user} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
   const [imageSource, setImageSource] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -89,7 +92,35 @@ const Camera = ({navigation}: props) => {
         tags: tags,
         hash: getHash('UP_POST'),
       };
-      await upPost(body);
+      const res = await upPost(body);
+      dispatch({
+        type: 'addPost',
+        payload: [
+          {
+            id: res.id,
+            caption: body.caption,
+            source: body.source,
+            tags: body.tags,
+            reactions: [],
+            comments: [],
+            createdAt: res.createdAt,
+            author: {
+              name: user.name,
+              avatar: user.avatar,
+              userId: user.id,
+            },
+          },
+        ],
+      });
+      dispatch({
+        type: 'addMyPost',
+        payload: [
+          {
+            id: res.id,
+            source: body.source,
+          },
+        ],
+      });
       setCaption(null);
       setImageSource(null);
       setSuggestions([]);

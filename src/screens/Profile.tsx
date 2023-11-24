@@ -622,7 +622,7 @@ const Profile = ({navigation, route}: props) => {
           />
           <ConfirmationModal
             label="Ok"
-            title="Are you sure you want to block this user?"
+            title="Block this user?"
             color={ThemeStatic.delete}
             isVisible={blockConfirmationModal}
             toggle={toggleBlockConfirmationModal}
@@ -630,7 +630,7 @@ const Profile = ({navigation, route}: props) => {
           />
           <ConfirmationModal
             label="Ok"
-            title="Are you sure you want to unfriend this user?"
+            title="Unfriend this user?"
             color={ThemeStatic.delete}
             isVisible={unfriendConfirmationModal}
             toggle={toggleUnfriendConfirmationModal}

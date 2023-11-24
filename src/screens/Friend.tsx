@@ -488,7 +488,7 @@ const Friend = () => {
       </ScrollView>
       <ConfirmationModal
         label="Delete"
-        title="Are you sure you want to delete?"
+        title="Delete?"
         color="red"
         isVisible={showModal}
         toggle={deleteConfirmationToggle}

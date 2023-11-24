@@ -75,7 +75,6 @@ const Setting = ({navigation}: props) => {
   const [name, setName] = useState<string>(user.name);
   const [about, setAbout] = useState<string>(user.about);
   const [avatar, setAvatar] = useState<any>(user.avatar);
-  const [avatarFilename, setAvatarFilename] = useState<any>(null);
   const [progess, setProgess] = useState<
     null | 'changePass' | 'editInfo' | 'verifyOtp' | 'confirm' | 'deleteAccount'
   >(null);
@@ -99,6 +98,7 @@ const Setting = ({navigation}: props) => {
   useEffect(() => {
     if (error != null) {
       showError(error);
+      dispatch({type: 'clearErrors'});
     }
   }, [error]);
 
@@ -187,13 +187,7 @@ const Setting = ({navigation}: props) => {
           returnableOutputType: 'base64',
         });
         setAvatar(`data:${image.mime};base64,${compressedImage}`);
-        setAvatarFilename(image.filename);
-        editInfo(
-          name,
-          `data:${image.mime};base64,${compressedImage}`,
-          about,
-          image.filename,
-        );
+        editInfo(name, `data:${image.mime};base64,${compressedImage}`, about);
       }
     } catch (err: any) {
       console.log(err);
@@ -218,12 +212,10 @@ const Setting = ({navigation}: props) => {
           returnableOutputType: 'base64',
         });
         setAvatar(`data:${image.mime};base64,${compressedImage}`);
-        setAvatarFilename(image.filename);
         await editInfo(
           name,
           `data:${image.mime};base64,${compressedImage}`,
           about,
-          image.filename,
         );
       }
     } catch (err: any) {
@@ -294,12 +286,7 @@ const Setting = ({navigation}: props) => {
     }
   };
 
-  const editInfo = async (
-    nameEdit: any,
-    avatarEdit: any,
-    aboutEdit: any,
-    avatarFilenameEdit: any,
-  ) => {
+  const editInfo = async (nameEdit: any, avatarEdit: any, aboutEdit: any) => {
     let errors = {};
     const validName =
       checkEmpty(name, 'Name is required.') ||
@@ -315,8 +302,8 @@ const Setting = ({navigation}: props) => {
       dispatch({
         type: 'updateUserRequest',
       });
-      if (avatarEdit != null && avatarFilenameEdit != null) {
-        await requestImageModeration(avatarEdit, avatarFilenameEdit);
+      if (avatarEdit != null) {
+        await requestImageModeration(avatarEdit, 'image.jpg');
       }
       if (about !== user.about) {
         await requestTextModeration(about);
@@ -335,7 +322,6 @@ const Setting = ({navigation}: props) => {
           about: aboutEdit,
         },
       });
-      setAvatarFilename(null);
       modalizeClose();
     } catch (err: any) {
       dispatch({
@@ -411,7 +397,7 @@ const Setting = ({navigation}: props) => {
         case 'changePass':
           return changePass();
         case 'editInfo':
-          return editInfo(name, avatar, about, avatarFilename);
+          return editInfo(name, avatar, about);
         case 'verifyOtp':
           return verifyOtp();
         case 'confirm':
@@ -427,6 +413,7 @@ const Setting = ({navigation}: props) => {
   };
 
   const deleteAccount = async () => {
+    deleteAccountClose();
     try {
       setLoading(true);
       const bodyVerifyOtp = {otpId: otpId, otpValue: otpValue};
@@ -443,7 +430,6 @@ const Setting = ({navigation}: props) => {
       };
       await disableUser(body);
       await logOut();
-      deleteAccountClose();
     } catch (err: any) {
       showError(err.message);
     } finally {
@@ -1188,13 +1174,13 @@ const Setting = ({navigation}: props) => {
             label="Delete"
             iconName="close-circle-outline"
             color="red"
-            onPress={() => editInfo(name, null, about, null)}
+            onPress={() => editInfo(name, null, about)}
           />
         </View>
       </Modalize>
       <ConfirmationModal
         label="Sign Out"
-        title="Are you sure you want to sign out?"
+        title="Sign out?"
         color="red"
         isVisible={signoutConfirmationModal}
         toggle={signoutConfirmationToggle}

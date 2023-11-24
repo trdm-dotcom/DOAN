@@ -61,7 +61,7 @@ const Comments = ({comments, postId}: CommentsProps) => {
       })}
       <ConfirmationModal
         label="Delete"
-        title="Are you sure you want to delete this comment?"
+        title="Delete this comment?"
         color="red"
         isVisible={showModal}
         toggle={deleteConfirmationToggle}

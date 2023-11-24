@@ -48,6 +48,7 @@ const SignIn = ({navigation}: props) => {
   useEffect(() => {
     if (error != null) {
       showError(error);
+      dispatch({type: 'clearErrors'});
     }
   }, [error]);
 

@@ -22,6 +22,7 @@ type MessageCardProps = {
   messageBody: string;
   seen: boolean;
   time: string;
+  longPress: () => void;
 };
 
 const MessageCard = ({
@@ -33,6 +34,7 @@ const MessageCard = ({
   messageBody,
   seen,
   time,
+  longPress,
 }: MessageCardProps) => {
   const {user} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
@@ -64,6 +66,7 @@ const MessageCard = ({
     // @ts-ignore
     <TouchableOpacity
       activeOpacity={0.9}
+      onLongPress={longPress}
       onPress={setSeenAndNavigate}
       style={styles().container}>
       <View style={styles().avatar}>

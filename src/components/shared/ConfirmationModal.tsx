@@ -5,8 +5,6 @@ import Modal from 'react-native-modal';
 import AppButton from '../control/AppButton';
 import {ThemeColors} from '../../constants/Types';
 import Typography from '../../theme/Typography';
-import {IconSizes} from '../../constants/Constants';
-import {space} from '../../components/style';
 import {ThemeStatic} from '../../theme/Colors';
 
 const {FontWeights, FontSizes} = Typography;

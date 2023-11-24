@@ -27,7 +27,6 @@ import BounceView from '../components/shared/BounceView';
 import {
   deletePost,
   disablePost,
-  getCommentsOfPost,
   getPostDetail,
   postLike,
 } from '../reducers/action/post';
@@ -40,7 +39,7 @@ import LikesBottomSheet from '../components/bottomsheet/LikesBottomSheet';
 import {getHash} from '../utils/Crypto';
 import {IParam} from '../models/IParam';
 import PostOptionsBottomSheet from '../components/bottomsheet/PostOptionsBottomSheet';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {getSocket} from '../utils/Socket';
 import {showError} from '../utils/Toast';
 import renderValue from '../components/shared/MentionText';
@@ -54,6 +53,7 @@ const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'PostView'>;
 const PostView = ({navigation, route}: props) => {
+  const dispatch = useDispatch();
   const {user} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
   const {postId, userId} = route.params;
@@ -117,7 +117,7 @@ const PostView = ({navigation, route}: props) => {
 
   const fetchData = () => {
     setLoading(true);
-    Promise.all([fetchPost(), fetchComments(), fetchFriendStatus()])
+    Promise.all([fetchPost(), fetchFriendStatus()])
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
@@ -125,14 +125,8 @@ const PostView = ({navigation, route}: props) => {
   const fetchPost = async () => {
     const res = await getPostDetail({post: postId});
     setPost(res);
+    setComments(res.comments);
     setIsLiked(res.reactions.includes(user.id));
-  };
-
-  const fetchComments = async () => {
-    const res = await getCommentsOfPost({
-      postId: postId,
-    });
-    setComments(res);
   };
 
   const fetchFriendStatus = async () => {
@@ -181,9 +175,8 @@ const PostView = ({navigation, route}: props) => {
   };
 
   const onPostUndisable = () => {
-    doDisablePost().then(() => {
-      closeOptions();
-    });
+    doUndisablePost();
+    closeOptions();
   };
 
   const likeInteractionHandler = (liked: boolean) => {
@@ -194,7 +187,6 @@ const PostView = ({navigation, route}: props) => {
       };
       postLike(body).then(() => {
         setIsLiked(!liked);
-        setPost({...post, reactions: post.reactions.concat([user.id])});
       });
     }
     // @ts-ignore
@@ -202,25 +194,88 @@ const PostView = ({navigation, route}: props) => {
   };
 
   const doDeletePost = async () => {
+    confirmationDeleteToggle();
     const body: IParam = {
       post: post.id,
       hash: getHash('DELETE_POST'),
     };
     try {
       await deletePost(body);
+      if (post.disable) {
+        dispatch({
+          type: 'removeMyPostHide',
+          payload: {
+            id: post.id,
+          },
+        });
+      } else {
+        dispatch({
+          type: 'removeMyPost',
+          payload: {
+            id: post.id,
+          },
+        });
+      }
+      navigation.goBack();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const doUndisablePost = async () => {
+    try {
+      const body: IParam = {
+        post: post.id,
+        hash: getHash('DISABLE_POST'),
+        disable: false,
+      };
+      await disablePost(body);
+      dispatch({
+        type: 'removeMyPostHide',
+        payload: {
+          id: post.id,
+        },
+      });
+      dispatch({
+        type: 'addMyPost',
+        payload: [
+          {
+            id: post.id,
+            source: post.source,
+          },
+        ],
+      });
+      navigation.goBack();
     } catch (err: any) {
       showError(err.message);
     }
   };
 
   const doDisablePost = async () => {
-    const body: IParam = {
-      post: post.id,
-      hash: getHash('DISABLE_POST'),
-      disable: !post.disable,
-    };
+    confirmationHideToggle();
     try {
+      const body: IParam = {
+        post: post.id,
+        hash: getHash('DISABLE_POST'),
+        disable: true,
+      };
       await disablePost(body);
+      dispatch({
+        type: 'addMyPostHide',
+        payload: [
+          {
+            id: post.id,
+            source: post.source,
+          },
+        ],
+      });
+      dispatch({
+        type: 'removeMyPost',
+        payload: {
+          id: post.id,
+        },
+      });
+      navigation.goBack();
     } catch (err: any) {
       showError(err.message);
     }
@@ -409,7 +464,7 @@ const PostView = ({navigation, route}: props) => {
       />
       <ConfirmationModal
         label="Delete"
-        title="Are you sure you want to delete this post?"
+        title="Delete this post?"
         color={ThemeStatic.delete}
         isVisible={isConfirmModalDeleteVisible}
         toggle={confirmationDeleteToggle}
@@ -417,7 +472,7 @@ const PostView = ({navigation, route}: props) => {
       />
       <ConfirmationModal
         label="Ok"
-        title="Are you sure you want to hide this post?"
+        title="Hide this post?"
         color={ThemeStatic.delete}
         isVisible={isConfirmModalHideVisible}
         toggle={confirmationHideToggle}
@@ -450,7 +505,7 @@ const PostView = ({navigation, route}: props) => {
       />
       {(friendStatus.status !== 'FRIENDED' && post.author.privateMode === 1) ||
       post.author.status === 'INACTIVE' ||
-      post.disable ? (
+      (post.disable && post.author.id !== user.id) ? (
         <View
           style={[
             {

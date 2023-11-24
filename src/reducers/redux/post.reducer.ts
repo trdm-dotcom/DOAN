@@ -2,6 +2,8 @@ import {createReducer} from '@reduxjs/toolkit';
 
 const initialState: any = {
   posts: [],
+  myPost: [],
+  myPostHide: [],
   error: null,
   isLoading: true,
 };
@@ -18,7 +20,10 @@ export const postReducer = createReducer(initialState, {
     if (action.payload.page === 0) {
       state.posts = action.payload.datas;
     } else {
-      state.posts = [...state.posts, ...action.payload.datas];
+      const newPosts = action.payload.filter(
+        newPost => !state.posts.some(post => post.id === newPost.id),
+      );
+      state.posts = [...state.posts, ...newPosts];
     }
   },
   getAllPostsFailed: (state, action) => {
@@ -54,6 +59,32 @@ export const postReducer = createReducer(initialState, {
   deleteOrDisablePost: (state, action) => {
     state.posts = state.posts.filter(
       post => post.id !== action.payload.data.id,
+    );
+  },
+  addPost: (state, action) => {
+    const newPosts = action.payload.filter(
+      newPost => !state.posts.some(post => post.id === newPost.id),
+    );
+    state.posts = [...state.posts, ...newPosts];
+  },
+  addMyPost: (state, action) => {
+    const newPosts = action.payload.filter(
+      newPost => !state.myPost.some(post => post.id === newPost.id),
+    );
+    state.myPost = [...state.myPost, ...newPosts];
+  },
+  addMyPostHide: (state, action) => {
+    const newPosts = action.payload.filter(
+      newPost => !state.myPostHide.some(post => post.id === newPost.id),
+    );
+    state.myPostHide = [...state.myPostHide, ...newPosts];
+  },
+  removeMyPost: (state, action) => {
+    state.myPost = state.myPost.filter(post => post.id !== action.payload.id);
+  },
+  removeMyPostHide: (state, action) => {
+    state.myPostHide = state.myPostHide.filter(
+      post => post.id !== action.payload.id,
     );
   },
   clearErrors: state => {

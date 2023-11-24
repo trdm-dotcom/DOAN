@@ -24,8 +24,10 @@ export const getConversations =
 export const getMessagesByRoomId = async (params: IParam) =>
   await apiGet<any[]>('/chat/conversation/messages', {params: params});
 
-export const deleteChat = async (roomId: string) =>
-  await apiDelete<any>('/chat/conversation', {params: {roomId}});
+export const deleteChat = async (recipientId: string) =>
+  await apiDelete<any>('/chat/conversation', {
+    params: {recipientId: recipientId},
+  });
 
 export const sendMessage = async (body: IParam) =>
   await apiPost<any>(
