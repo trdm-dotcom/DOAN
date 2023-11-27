@@ -20,7 +20,10 @@ export const notifiReducer = createReducer(initialState, {
     if (action.payload.page === 0) {
       state.notifications = action.payload.datas;
     } else {
-      state.notifications = [...state.notifications, ...action.payload.datas];
+      const newNotifications = action.payload.filter(
+        newNoti => !state.notifications.some(noti => noti.id === newNoti.id),
+      );
+      state.notifications = [...state.notifications, ...newNotifications];
     }
   },
   getNotificationFailed: (state, action) => {

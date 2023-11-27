@@ -4,6 +4,7 @@ const initialState: any = {
   posts: [],
   myPost: [],
   myPostHide: [],
+  myPostTag: [],
   error: null,
   isLoading: true,
 };
@@ -68,16 +69,44 @@ export const postReducer = createReducer(initialState, {
     state.posts = [...state.posts, ...newPosts];
   },
   addMyPost: (state, action) => {
-    const newPosts = action.payload.filter(
-      newPost => !state.myPost.some(post => post.id === newPost.id),
-    );
-    state.myPost = [...state.myPost, ...newPosts];
+    if (action.payload.page === 0) {
+      state.myPost = action.payload.datas;
+    } else {
+      const newPosts = action.payload.filter(
+        newPost => !state.myPost.some(post => post.id === newPost.id),
+      );
+      state.myPost = [...state.myPost, ...newPosts];
+    }
   },
   addMyPostHide: (state, action) => {
-    const newPosts = action.payload.filter(
-      newPost => !state.myPostHide.some(post => post.id === newPost.id),
-    );
-    state.myPostHide = [...state.myPostHide, ...newPosts];
+    if (action.payload.page === 0) {
+      state.myPostHide = action.payload.datas;
+    } else {
+      const newPosts = action.payload.filter(
+        newPost => !state.myPostHide.some(post => post.id === newPost.id),
+      );
+      state.myPostHide = [...state.myPostHide, ...newPosts];
+    }
+  },
+  addMyPostTag: (state, action) => {
+    if (action.payload.page === 0) {
+      state.myPostTag = action.payload.datas;
+    } else {
+      const newPosts = action.payload.filter(
+        newPost => !state.myPostTag.some(post => post.id === newPost.id),
+      );
+      state.myPostTag = [...state.myPostTag, ...newPosts];
+    }
+  },
+  addOneMyPost: (state, action) => {
+    if (!state.myPost.some(post => post.id === action.payload.id)) {
+      state.myPost = [...state.myPost, ...[action.payload]];
+    }
+  },
+  addOneMyPostHide: (state, action) => {
+    if (!state.myPostHide.some(post => post.id === action.payload.id)) {
+      state.myPostHide = [...state.myPostHide, ...[action.payload]];
+    }
   },
   removeMyPost: (state, action) => {
     state.myPost = state.myPost.filter(post => post.id !== action.payload.id);

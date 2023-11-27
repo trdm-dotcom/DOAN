@@ -21,7 +21,10 @@ export const chatReducer = createReducer(initialState, {
     if (action.payload.page === 0) {
       state.chats = action.payload.datas;
     } else {
-      state.chats = [...state.chats, ...action.payload.datas];
+      const newChats = action.payload.filter(
+        newChat => !state.chats.some(chat => chat.id === newChat.id),
+      );
+      state.chats = [...state.chats, ...newChats];
     }
   },
   getChatsFailed: (state, action) => {

@@ -83,20 +83,18 @@ const Profile = ({navigation, route}: props) => {
   ]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(userId);
+  }, [userId]);
 
-  const fetchData = () => {
+  const fetchData = (id: number) => {
     setLoading(true);
     setIsLoading(true);
     Promise.all([
-      getUserInfo({userId: userId}),
-      checkFriend({
-        friend: userId,
-      }),
-      fetchPosts(0),
-      fetchPostTags(0),
-      fetchFriends(0),
+      getUserInfo({userId: id}),
+      checkFriend({friend: id}),
+      fetchPosts(id, 0),
+      fetchPostTags(id, 0),
+      fetchFriends(id, 0),
     ])
       .catch(() => {
         setError(true);
@@ -111,9 +109,9 @@ const Profile = ({navigation, route}: props) => {
       });
   };
 
-  const fetchPosts = async (page: number) => {
+  const fetchPosts = async (id: number, page: number) => {
     const res = await getPostOfUser({
-      targetId: userId,
+      targetId: id,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
@@ -123,9 +121,9 @@ const Profile = ({navigation, route}: props) => {
     setTotalPages(res.totalPages);
   };
 
-  const fetchPostTags = async (page: number) => {
+  const fetchPostTags = async (id: number, page: number) => {
     const res = await getPostTagged({
-      targetId: userId,
+      targetId: id,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
@@ -134,9 +132,9 @@ const Profile = ({navigation, route}: props) => {
     setTotalPagesTagged(res.totalPages);
   };
 
-  const fetchFriends = async (page: number) => {
+  const fetchFriends = async (id: number, page: number) => {
     const res = await getFriendOfUser({
-      friend: userId,
+      friend: id,
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
@@ -329,7 +327,7 @@ const Profile = ({navigation, route}: props) => {
       onEndReached={() => {
         if (nextPage < totalPages && !isLoading) {
           setIsLoading(true);
-          fetchPosts(nextPage).then(() => setIsLoading(false));
+          fetchPosts(userId, nextPage).then(() => setIsLoading(false));
         }
       }}
       renderItem={renderItem}
@@ -364,7 +362,7 @@ const Profile = ({navigation, route}: props) => {
       onEndReached={() => {
         if (nextPageTagged < totalPagesTagged && !isLoading) {
           setIsLoading(true);
-          fetchPostTags(nextPageTagged).then(() => setIsLoading(false));
+          fetchPostTags(userId, nextPageTagged).then(() => setIsLoading(false));
         }
       }}
       renderItem={renderItem}

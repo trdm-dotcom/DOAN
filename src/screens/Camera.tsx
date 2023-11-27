@@ -113,13 +113,11 @@ const Camera = ({navigation}: props) => {
         ],
       });
       dispatch({
-        type: 'addMyPost',
-        payload: [
-          {
-            id: res.id,
-            source: body.source,
-          },
-        ],
+        type: 'addOneMyPost',
+        payload: {
+          id: res.id,
+          source: body.source,
+        },
       });
       setCaption(null);
       setImageSource(null);

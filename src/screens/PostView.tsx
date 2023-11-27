@@ -97,7 +97,7 @@ const PostView = ({navigation, route}: props) => {
   }, [comment]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(postId);
     socket.on('post.reaction', (data: any) => {
       if (data.to === postId) {
         setLike(data.data.reactions);
@@ -113,17 +113,17 @@ const PostView = ({navigation, route}: props) => {
         setComments(comments.filter(cmt => cmt.id !== data.data.id));
       }
     });
-  }, []);
+  }, [postId]);
 
-  const fetchData = () => {
+  const fetchData = (id: string) => {
     setLoading(true);
-    Promise.all([fetchPost(), fetchFriendStatus()])
+    Promise.all([fetchPost(id), fetchFriendStatus()])
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
 
-  const fetchPost = async () => {
-    const res = await getPostDetail({post: postId});
+  const fetchPost = async (id: string) => {
+    const res = await getPostDetail({post: id});
     setPost(res);
     setComments(res.comments);
     setIsLiked(res.reactions.includes(user.id));
@@ -237,13 +237,11 @@ const PostView = ({navigation, route}: props) => {
         },
       });
       dispatch({
-        type: 'addMyPost',
-        payload: [
-          {
-            id: post.id,
-            source: post.source,
-          },
-        ],
+        type: 'addOneMyPost',
+        payload: {
+          id: post.id,
+          source: post.source,
+        },
       });
       navigation.goBack();
     } catch (err: any) {
@@ -261,18 +259,16 @@ const PostView = ({navigation, route}: props) => {
       };
       await disablePost(body);
       dispatch({
-        type: 'addMyPostHide',
-        payload: [
-          {
-            id: post.id,
-            source: post.source,
-          },
-        ],
-      });
-      dispatch({
         type: 'removeMyPost',
         payload: {
           id: post.id,
+        },
+      });
+      dispatch({
+        type: 'addOneMyPostHide',
+        payload: {
+          id: post.id,
+          source: post.source,
         },
       });
       navigation.goBack();

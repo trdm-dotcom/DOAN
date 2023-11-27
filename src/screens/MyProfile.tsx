@@ -67,12 +67,13 @@ const MyProfile = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
-  const {myPost, myPostHide} = useSelector((state: any) => state.post);
+  const {myPost, myPostHide, myPostTag} = useSelector(
+    (state: any) => state.post,
+  );
   const navigation = useNavigation();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [postsTagged, setPostsTagged] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
   const [name, setName] = useState<string>(user.name);
   const [about, setAbout] = useState<string>(user.about);
@@ -159,7 +160,14 @@ const MyProfile = () => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
-    setFriends(res.page === 0 ? res.datas : [...friends, ...res.datas]);
+    if (res.page === 0) {
+      setFriends(res.datas);
+    } else {
+      const newUser = res.datas.filter(
+        item => !friends.some(it => it.id === item.id),
+      );
+      setFriends([...friends, ...newUser]);
+    }
     setCountFriends(res.total);
   };
 
@@ -328,7 +336,7 @@ const MyProfile = () => {
       pageSize: Pagination.PAGE_SIZE,
     });
     setCountPosts(res.total);
-    dispatch({type: 'addMyPost', payload: res.datas});
+    dispatch({type: 'addMyPost', payload: res});
     setNextPage(res.page + 1);
     setTotalPages(res.totalPages);
   };
@@ -339,7 +347,7 @@ const MyProfile = () => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
-    setPostsTagged(res.page === 0 ? res.datas : [...postsTagged, ...res.datas]);
+    dispatch({type: 'addMyPostTag', payload: res});
     setNextPageTagged(res.page + 1);
     setTotalPagesTagged(res.totalPages);
   };
@@ -350,7 +358,7 @@ const MyProfile = () => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
-    dispatch({type: 'addMyPostHide', payload: res.datas});
+    dispatch({type: 'addMyPostHide', payload: res});
     setNextPageHiden(res.page + 1);
     setTotalPagesHiden(res.totalPages);
   };
@@ -401,7 +409,7 @@ const MyProfile = () => {
   const TagRoute = () => (
     <FlatList
       numColumns={3}
-      data={postsTagged}
+      data={myPostTag}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={() => (
         <ListEmptyComponent listType="posts" spacing={30} />

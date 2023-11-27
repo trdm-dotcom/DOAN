@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useRef, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {AppContext} from '../context';
 import {
   PermissionsAndroid,
@@ -29,7 +29,6 @@ import IconButton from '../components/control/IconButton';
 import Header from '../components/header/Header';
 import IFriendResponse from '../models/response/IFriendResponse';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
-import {useFocusEffect} from '@react-navigation/native';
 import SearchUsersPlaceholder from '../components/placeholder/SearchUsers.Placeholder';
 import {ThemeStatic} from '../theme/Colors';
 import UserCardPress from '../components/user/UserCardPress';
@@ -72,11 +71,9 @@ const Friend = () => {
     return friendRequestBottomSheetRef.current.open();
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchInit();
-    }, []),
-  );
+  useEffect(() => {
+    fetchInit();
+  }, []);
 
   const fetchInit = () => {
     setLoading(true);
@@ -142,11 +139,14 @@ const Friend = () => {
         pageSize: Pagination.PAGE_SIZE,
       })
         .then(response => {
-          setListFriendSuggest(
-            response.page === 0
-              ? response.datas
-              : [...listfriendSuggest, ...response.datas],
-          );
+          if (response.page === 0) {
+            setListFriendSuggest(response.datas);
+          } else {
+            const newUser = response.datas.filter(
+              item => !listfriendSuggest.some(it => it.id === item.id),
+            );
+            setListFriendSuggest([...listfriendSuggest, ...newUser]);
+          }
           setNextPage(response.page + 1);
           setTotalPages(response.totalPages);
         })
@@ -370,23 +370,42 @@ const Friend = () => {
           )}
           {listfriendSuggest.length > 0 && (
             <>
-              <View style={[styles(theme).row, space(IconSizes.x5).mv]}>
-                <Ionicons
-                  name="bulb-outline"
-                  size={IconSizes.x6}
-                  color={theme.text01}
+              <View
+                style={[
+                  styles(theme).row,
+                  space(IconSizes.x5).mv,
+                  {justifyContent: 'space-between'},
+                ]}>
+                <View style={[styles(theme).row]}>
+                  <Ionicons
+                    name="bulb-outline"
+                    size={IconSizes.x6}
+                    color={theme.text01}
+                  />
+                  <Text
+                    style={[
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Label,
+                        color: theme.text01,
+                      },
+                      space(IconSizes.x1).ml,
+                    ]}>
+                    Suggestions
+                  </Text>
+                </View>
+                <IconButton
+                  Icon={() => (
+                    <Ionicons
+                      name="sync-outline"
+                      size={IconSizes.x6}
+                      color={ThemeStatic.accent}
+                    />
+                  )}
+                  onPress={() => {
+                    fetchListSuggestFriend(search, 0);
+                  }}
                 />
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Label,
-                      color: theme.text01,
-                    },
-                    space(IconSizes.x1).ml,
-                  ]}>
-                  Suggestions
-                </Text>
               </View>
               {listfriendSuggest.map(item => (
                 <UserCardPress
