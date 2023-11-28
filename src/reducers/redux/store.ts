@@ -1,17 +1,30 @@
-import {AnyAction, ThunkAction, configureStore} from '@reduxjs/toolkit';
+import {
+  AnyAction,
+  ThunkAction,
+  combineReducers,
+  configureStore,
+} from '@reduxjs/toolkit';
 import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
 import {postReducer} from './post.reducer';
 import {notifiReducer} from './notification.reducer';
 import {chatReducer} from './chat.reducer';
 import {userReducer} from './user.reducer';
 
-const store = configureStore({
-  reducer: {
+const rootReducer = (state, action) => {
+  if (action.type === 'logout') {
+    state = undefined;
+  }
+
+  return combineReducers({
     post: postReducer,
     notification: notifiReducer,
     chat: chatReducer,
     user: userReducer,
-  },
+  })(state, action);
+};
+
+const store = configureStore({
+  reducer: rootReducer,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,

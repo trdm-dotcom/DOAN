@@ -44,10 +44,12 @@ const SafeAreaApp = () => {
   const socket = getSocket();
 
   setupAxiosInterceptors(() => {
-    removeToken().then(() => {
-      dispatch({
-        type: 'userLogoutSuccess',
-      });
+    removeToken();
+    dispatch({
+      type: 'userLogout',
+    });
+    dispatch({
+      type: 'logout',
     });
   });
 

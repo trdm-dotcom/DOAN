@@ -38,7 +38,14 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
         pageSize: Pagination.PAGE_SIZE,
       })
         .then(res => {
-          setBlockedUsers([...blockedUsers, ...res.datas]);
+          if (page === 0) {
+            setBlockedUsers(res.datas);
+          } else {
+            const newUsers = res.datas.filter(
+              user => !blockedUsers.some(item => item.id === user.id),
+            );
+            setBlockedUsers([...blockedUsers, ...newUsers]);
+          }
           setNextPage(res.nextPage + 1);
           setTotalPages(res.totalPages);
         })
@@ -79,7 +86,6 @@ const BlockListBottomSheet: React.FC<BlockListBottomSheetProps> = forwardRef(
             </>
           )}
           buttonStyle={{
-            backgroundColor: ThemeStatic.white,
             paddingHorizontal: IconSizes.x1,
           }}
           indicatorColor={ThemeStatic.accent}

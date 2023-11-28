@@ -394,18 +394,6 @@ const Friend = () => {
                     Suggestions
                   </Text>
                 </View>
-                <IconButton
-                  Icon={() => (
-                    <Ionicons
-                      name="sync-outline"
-                      size={IconSizes.x6}
-                      color={ThemeStatic.accent}
-                    />
-                  )}
-                  onPress={() => {
-                    fetchListSuggestFriend(search, 0);
-                  }}
-                />
               </View>
               {listfriendSuggest.map(item => (
                 <UserCardPress

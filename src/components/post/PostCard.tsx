@@ -17,6 +17,7 @@ import {NativeImage} from '../shared/NativeImage';
 import LikeBounceAnimation from './LikeBounceAnimation';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import renderValue from '../shared/MentionText';
+import IconButton from '../control/IconButton';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -65,7 +66,6 @@ const PostCard = ({
       };
       postLike(body);
       setIsLiked(!liked);
-      likes.push(user.id);
     }
     // @ts-ignore
     return likeBounceAnimationRef.current.animate();
@@ -253,6 +253,16 @@ const PostCard = ({
               </Text>
             </View>
           </View>
+          <IconButton
+            Icon={() => (
+              <Ionicons
+                name="share-social-outline"
+                color={ThemeStatic.unlike}
+                size={IconSizes.x6}
+              />
+            )}
+            onPress={() => {}}
+          />
         </View>
       </View>
     </View>

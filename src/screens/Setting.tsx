@@ -245,20 +245,13 @@ const Setting = ({navigation}: props) => {
   };
 
   const logOut = async () => {
-    try {
-      dispatch({
-        type: 'userLogoutRequest',
-      });
-      await signOut();
-      dispatch({
-        type: 'userLogoutSuccess',
-      });
-    } catch (err: any) {
-      dispatch({
-        type: 'userLogoutFailed',
-        payload: err.message,
-      });
-    }
+    signOut();
+    dispatch({
+      type: 'userLogout',
+    });
+    dispatch({
+      type: 'logout',
+    });
   };
 
   const getOtp = async () => {

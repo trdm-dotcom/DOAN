@@ -99,12 +99,12 @@ export const biometric = async (body: IBiometricLoginRequest) => {
 
 export const signOut = async () => {
   const token = await getToken();
-  await apiPost<any>(
+  apiPost<any>(
     '/revokeToken',
     {data: {refresh_token: token.refreshToken}},
     {
       'Content-Type': 'application/json',
     },
   );
-  await removeToken();
+  removeToken();
 };

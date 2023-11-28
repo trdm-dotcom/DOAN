@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {RefreshControl, View} from 'react-native';
 import {space, styles} from '../components/style';
 import {AppContext} from '../context';
@@ -6,16 +6,11 @@ import {IconSizes, Pagination, SCREEN_WIDTH} from '../constants/Constants';
 import NotificationScreenPlaceholder from '../components/placeholder/NotificationScreen.Placeholder';
 import {FlatGrid} from 'react-native-super-grid';
 import NotificationCard from '../components/notification/NotificationCard';
-import {
-  getNotifications,
-  remarkNotification,
-} from '../reducers/action/notification';
-import {useFocusEffect} from '@react-navigation/native';
+import {getNotifications} from '../reducers/action/notification';
 import Header from '../components/header/Header';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
-import {showError} from '../utils/Toast';
 
 const Notifi = () => {
   const dispatch = useDispatch();
@@ -23,19 +18,6 @@ const Notifi = () => {
   const {notifications, isLoading, error, nextPage, totalPages} = useSelector(
     (state: any) => state.notification,
   );
-
-  useFocusEffect(
-    useCallback(() => {
-      remarkNotification();
-    }, []),
-  );
-
-  useEffect(() => {
-    if (error) {
-      showError(error.message);
-      dispatch({type: 'clearErrors'});
-    }
-  }, [error]);
 
   useEffect(() => {
     fetchNotifications(0);
