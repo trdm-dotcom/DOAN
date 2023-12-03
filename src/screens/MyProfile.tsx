@@ -67,21 +67,19 @@ const MyProfile = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
-  const {myPost, myPostHide, myPostTag} = useSelector(
+  const {myPost, myPostHide, myPostTag, totalMyPost} = useSelector(
     (state: any) => state.post,
   );
+  const {friends, totalFriends} = useSelector((state: any) => state.friend);
   const navigation = useNavigation();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [friends, setFriends] = useState<any[]>([]);
   const [name, setName] = useState<string>(user.name);
   const [about, setAbout] = useState<string>(user.about);
   const [avatar, setAvatar] = useState<any>(user.avatar);
   const [avatarFilename, setAvatarFilename] = useState<any>(null);
   const [autoUploadImage, setAutoUploadImage] = useState<boolean>(false);
-  const [countFriends, setCountFriends] = useState<number>(0);
-  const [countPosts, setCountPosts] = useState<number>(0);
   const [nextPage, setNextPage] = useState<number>(0);
   const [nextPageTagged, setNextPageTagged] = useState<number>(0);
   const [nextPageHiden, setNextPageHiden] = useState<number>(0);
@@ -102,7 +100,7 @@ const MyProfile = () => {
   );
 
   useEffect(() => {
-    fetchData();
+    fetchData(false);
   }, []);
 
   useEffect(() => {
@@ -141,14 +139,17 @@ const MyProfile = () => {
     return avatarOptionsBottomSheetRef.current.close();
   };
 
-  const fetchData = () => {
+  const fetchData = (force: boolean) => {
     setLoading(true);
-    Promise.all([
+    const promiseArray: Promise<void>[] = [
       fetchPosts(0),
-      fetchFriends(0),
       fetchPostTags(0),
       fetchPostHiden(0),
-    ])
+    ];
+    if (force || friends.length < 1) {
+      promiseArray.push(fetchFriends(0));
+    }
+    Promise.all(promiseArray)
       .catch(() => {
         setError(true);
       })
@@ -156,19 +157,16 @@ const MyProfile = () => {
   };
 
   const fetchFriends = async (page: number) => {
-    const res = await getFriendList({
-      pageNumber: page,
-      pageSize: Pagination.PAGE_SIZE,
-    });
-    if (res.page === 0) {
-      setFriends(res.datas);
-    } else {
-      const newUser = res.datas.filter(
-        item => !friends.some(it => it.id === item.id),
-      );
-      setFriends([...friends, ...newUser]);
+    try {
+      dispatch({type: 'getFriendRequest'});
+      const res = await getFriendList({
+        pageNumber: page,
+        pageSize: Pagination.PAGE_SIZE,
+      });
+      dispatch({type: 'getFriendSuccess', payload: res});
+    } catch (err: any) {
+      dispatch({type: 'getFriendFailed', payload: err.message});
     }
-    setCountFriends(res.total);
   };
 
   const requestImageModeration = async (imageData: string, filename: string) =>
@@ -335,7 +333,6 @@ const MyProfile = () => {
       pageNumber: page,
       pageSize: Pagination.PAGE_SIZE,
     });
-    setCountPosts(res.total);
     dispatch({type: 'addMyPost', payload: res});
     setNextPage(res.page + 1);
     setTotalPages(res.totalPages);
@@ -368,8 +365,14 @@ const MyProfile = () => {
   };
 
   const handleStateChange = (friend: any) => {
-    setFriends(friends.filter(item => item.id !== friend.id));
-    setCountFriends(countFriends - 1);
+    dispatch({
+      type: 'removeFriend',
+      payload: {
+        id: friend.id,
+      },
+    });
+    dispatch({type: 'decrementTotalFriend'});
+    dispatch({type: 'removePostByUserId', payload: {id: friend.id}});
   };
 
   const PostRoute = () => (
@@ -506,8 +509,8 @@ const MyProfile = () => {
           avatar={user.avatar}
           name={user.name}
           about={user.about}
-          posts={countPosts}
-          friends={countFriends}
+          posts={totalMyPost}
+          friends={totalFriends}
           onFriendsOpen={onFriendsOpen}
           onOptionPress={modalizeOpen}
           editable
@@ -691,18 +694,18 @@ const MyProfile = () => {
                 </Text>
               )}
             </TouchableOpacity>
+            {Object.values(validError).map((errMessage: any, i: number) => (
+              <Text
+                key={i}
+                style={{
+                  ...FontWeights.Regular,
+                  ...FontSizes.Caption,
+                  color: 'red',
+                }}>
+                {errMessage}
+              </Text>
+            ))}
           </View>
-          {Object.values(validError).map((errMessage: any, i: number) => (
-            <Text
-              key={i}
-              style={{
-                ...FontWeights.Regular,
-                ...FontSizes.Caption,
-                color: 'red',
-              }}>
-              {errMessage}
-            </Text>
-          ))}
         </KeyboardAvoidingView>
       </Modalize>
       <Modalize

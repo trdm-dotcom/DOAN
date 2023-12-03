@@ -31,7 +31,7 @@ import {Text, TouchableOpacity, View} from 'react-native';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import Typography from '../theme/Typography';
 import {showError} from '../utils/Toast';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
 import {
   NavigationState,
@@ -53,6 +53,7 @@ type State = NavigationState<Route>;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 const Profile = ({navigation, route}: props) => {
+  const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
   const {userId} = route.params;
@@ -179,13 +180,22 @@ const Profile = ({navigation, route}: props) => {
     toggleBlockConfirmationModal();
     setProgressLoading(true);
     blockUser(userId)
-      .then(res => {
-        setFriendStatus({
-          isFriend: false,
-          status: 'BLOCKED',
-          friendId: res.id,
-          targetId: userId,
-        });
+      .then(() => {
+        navigation.goBack();
+        if (friendStatus.status === 'FRIENDED') {
+          dispatch({
+            type: 'removePostByUserId',
+            payload: {
+              id: userId,
+            },
+          });
+          dispatch({
+            type: 'removeFriend',
+            payload: {
+              id: userId,
+            },
+          });
+        }
       })
       .catch(err => {
         showError(err.message);
@@ -199,7 +209,21 @@ const Profile = ({navigation, route}: props) => {
     setProgressLoading(true);
     rejectFriend(friendStatus.friendId)
       .then(() => {
-        setFriendStatus({});
+        navigation.goBack();
+        if (friendStatus.status === 'FRIENDED') {
+          dispatch({
+            type: 'removePostByUserId',
+            payload: {
+              id: userId,
+            },
+          });
+          dispatch({
+            type: 'removeFriend',
+            payload: {
+              id: userId,
+            },
+          });
+        }
       })
       .catch(err => {
         showError(err.message);

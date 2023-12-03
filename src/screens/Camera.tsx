@@ -119,6 +119,9 @@ const Camera = ({navigation}: props) => {
           source: body.source,
         },
       });
+      dispatch({
+        type: 'incrementTotalMyPost',
+      });
       setCaption(null);
       setImageSource(null);
       setSuggestions([]);

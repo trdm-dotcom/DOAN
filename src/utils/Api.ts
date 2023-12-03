@@ -108,6 +108,7 @@ function apiReq<T>(
         resolve(logResponseAndReturnJson(result));
       })
       .catch(error => {
+        console.log(error);
         reject(new Error(error.response.data.code || error.message));
       });
   });

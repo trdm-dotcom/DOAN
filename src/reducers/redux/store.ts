@@ -9,6 +9,7 @@ import {postReducer} from './post.reducer';
 import {notifiReducer} from './notification.reducer';
 import {chatReducer} from './chat.reducer';
 import {userReducer} from './user.reducer';
+import {friendReducer} from './friend.reducer';
 
 const rootReducer = (state, action) => {
   if (action.type === 'logout') {
@@ -20,6 +21,7 @@ const rootReducer = (state, action) => {
     notification: notifiReducer,
     chat: chatReducer,
     user: userReducer,
+    friend: friendReducer,
   })(state, action);
 };
 

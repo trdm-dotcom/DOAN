@@ -88,3 +88,12 @@ export const deleteComment = async (params: IParam) =>
 
 export const getPostDetail = async (params: IParam) =>
   await apiGet<any>('/social/post/detail', {params: params});
+
+export const reportPost = async (data: IParam) =>
+  await apiPost<any>(
+    '/report',
+    {data: data},
+    {
+      'Content-Type': 'application/json',
+    },
+  );

@@ -264,19 +264,19 @@ const SignIn = ({navigation}: props) => {
                 </Text>
               )}
             </TouchableOpacity>
+            {Object.values(validError).map((errMessage: any, index: number) => (
+              <Text
+                key={index}
+                style={{
+                  ...FontWeights.Regular,
+                  ...FontSizes.Caption,
+                  color: 'red',
+                }}>
+                {errMessage}
+              </Text>
+            ))}
           </View>
         </Animated.View>
-        {Object.values(validError).map((errMessage: any, index: number) => (
-          <Text
-            key={index}
-            style={{
-              ...FontWeights.Regular,
-              ...FontSizes.Caption,
-              color: 'red',
-            }}>
-            {errMessage}
-          </Text>
-        ))}
       </KeyboardAvoidingView>
     </View>
   );

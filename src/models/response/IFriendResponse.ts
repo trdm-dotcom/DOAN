@@ -1,7 +1,7 @@
 import {IUserInfoResponse} from './IUserInfoResponse';
 
 export default interface IFriendResponse extends IUserInfoResponse {
-  statusFriend: string;
+  friendStatus: string;
   friendId: number;
   isAccept: boolean;
 }

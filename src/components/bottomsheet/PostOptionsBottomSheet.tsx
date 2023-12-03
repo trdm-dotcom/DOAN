@@ -10,38 +10,53 @@ import {useSelector} from 'react-redux';
 interface PostOptionsBottomSheetProps {
   ref: React.Ref<any>;
   post: any;
+  friendStatus: any;
   onPostEdit: () => void;
   onPostDelete: () => void;
   onPostDiable: () => void;
   onPostUnDiable: () => void;
+  onReportPost: () => void;
+  onUnfriend: () => void;
+  onBlock: () => void;
 }
 
 const PostOptionsBottomSheet: React.FC<PostOptionsBottomSheetProps> =
   React.forwardRef(
-    ({post, onPostEdit, onPostDelete, onPostDiable, onPostUnDiable}, ref) => {
+    (
+      {
+        post,
+        friendStatus,
+        onPostEdit,
+        onPostDelete,
+        onPostDiable,
+        onPostUnDiable,
+        onReportPost,
+        onUnfriend,
+        onBlock,
+      },
+      ref,
+    ) => {
       const {theme} = useContext(AppContext);
       const {user} = useSelector((state: any) => state.user);
 
       const isOwnPost = user.id === post.author!.id;
 
-      const onPostUnfriend = () => {
-        // @ts-ignore
-        return ref.current.close();
-      };
-
-      const onPostBlock = () => {
-        // @ts-ignore
-        return ref.current.close();
-      };
-
       let content = (
         <>
+          {friendStatus.status === 'FRIENDED' && (
+            <Option
+              label="Unfriend"
+              iconName="person-remove-outline"
+              onPress={onUnfriend}
+            />
+          )}
+          <Option label="Block" iconName="ban-outline" onPress={onBlock} />
           <Option
-            label="Unfriend"
-            iconName="person-remove-outline"
-            onPress={onPostUnfriend}
+            label="Report"
+            iconName="alert-circle-outline"
+            color={ThemeStatic.delete}
+            onPress={onReportPost}
           />
-          <Option label="Block" iconName="ban-outline" onPress={onPostBlock} />
         </>
       );
 

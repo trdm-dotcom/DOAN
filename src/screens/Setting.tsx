@@ -1125,18 +1125,18 @@ const Setting = ({navigation}: props) => {
               </Text>
             )}
           </TouchableOpacity>
+          {Object.values(validError).map((errMessage: any, index: number) => (
+            <Text
+              key={index}
+              style={{
+                ...FontWeights.Regular,
+                ...FontSizes.Caption,
+                color: 'red',
+              }}>
+              {errMessage}
+            </Text>
+          ))}
         </View>
-        {Object.values(validError).map((errMessage: any, index: number) => (
-          <Text
-            key={index}
-            style={{
-              ...FontWeights.Regular,
-              ...FontSizes.Caption,
-              color: 'red',
-            }}>
-            {errMessage}
-          </Text>
-        ))}
       </Modalize>
       <Modalize
         ref={avatarOptionsBottomSheetRef}

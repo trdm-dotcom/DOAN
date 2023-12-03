@@ -34,21 +34,22 @@ import {ThemeStatic} from '../theme/Colors';
 import UserCardPress from '../components/user/UserCardPress';
 import {showError} from '../utils/Toast';
 import ConnectionsBottomSheet from '../components/bottomsheet/ConnectionsBottomSheet';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 const {FontWeights, FontSizes} = Typography;
 
 const Friend = () => {
+  const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
+  const {friends: listFriend} = useSelector((state: any) => state.friend);
   const [listfriendSuggest, setListFriendSuggest] = useState<IFriendResponse[]>(
     [],
   );
   const [listRequestFriend, setListRequestFriend] = useState<IFriendResponse[]>(
     [],
   );
-  const [listFriend, setListFriend] = useState<IFriendResponse[]>([]);
   const [search, setSearch] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [friendRejected, setFriendRejected] = useState<any>(null);
@@ -72,16 +73,19 @@ const Friend = () => {
   };
 
   useEffect(() => {
-    fetchInit();
+    fetchInit(false);
   }, []);
 
-  const fetchInit = () => {
-    setLoading(true);
-    Promise.all([
+  const fetchInit = (force: boolean) => {
+    const promiseArray: Promise<void>[] = [
       fetchListRequestFriend(0),
-      fetchListFriend(0),
       fetchListSuggestFriend(null, 0),
-    ])
+    ];
+    if (force || listFriend.length < 1) {
+      promiseArray.push(fetchListFriend(0));
+    }
+    setLoading(true);
+    Promise.all(promiseArray)
       .catch(() => {
         setError(true);
       })
@@ -129,43 +133,50 @@ const Friend = () => {
     return null;
   };
 
-  const fetchListSuggestFriend = (searchFriend: any, page: number) => {
+  const fetchListSuggestFriend = async (searchFriend: any, page: number) => {
     setIsLoading(true);
-    getContacts().then(listPhone => {
-      getSuggestFriend({
+    try {
+      const listPhone = await getContacts();
+      const res = await getSuggestFriend({
         phone: searchFriend == null ? listPhone : null,
         search: searchFriend,
         pageNumber: page,
         pageSize: Pagination.PAGE_SIZE,
-      })
-        .then(response => {
-          if (response.page === 0) {
-            setListFriendSuggest(response.datas);
-          } else {
-            const newUser = response.datas.filter(
-              item => !listfriendSuggest.some(it => it.id === item.id),
-            );
-            setListFriendSuggest([...listfriendSuggest, ...newUser]);
-          }
-          setNextPage(response.page + 1);
-          setTotalPages(response.totalPages);
-        })
-        .finally(() => setIsLoading(false));
+      });
+      if (res.page === 0) {
+        setListFriendSuggest(res.datas);
+      } else {
+        const newUser = res.datas.filter(
+          item => !listfriendSuggest.some(it => it.id === item.id),
+        );
+        setListFriendSuggest([...listfriendSuggest, ...newUser]);
+      }
+      setNextPage(res.page + 1);
+      setTotalPages(res.totalPages);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchListRequestFriend = async (page: number) => {
+    const res = await getFriendRequest({
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
     });
+    setListRequestFriend(res.datas);
   };
 
-  const fetchListRequestFriend = (page: number) => {
-    getFriendRequest({
-      pageNumber: page,
-      pageSize: Pagination.PAGE_SIZE,
-    }).then(response => setListRequestFriend(response.datas));
-  };
-
-  const fetchListFriend = (page: number) => {
-    getFriendList({
-      pageNumber: page,
-      pageSize: Pagination.PAGE_SIZE,
-    }).then(response => setListFriend(response.datas));
+  const fetchListFriend = async (page: number) => {
+    try {
+      dispatch({type: 'getFriendRequest'});
+      const res = await getFriendList({
+        pageNumber: page,
+        pageSize: Pagination.PAGE_SIZE,
+      });
+      dispatch({type: 'getFriendSuccess', payload: res});
+    } catch (err: any) {
+      dispatch({type: 'getFriendFailed', payload: err.message});
+    }
   };
 
   const handleOnChangeText = async (text: string) => {
@@ -181,7 +192,14 @@ const Friend = () => {
     setShowModal(false);
     rejectFriend(friendRejected)
       .then(() => {
-        setListFriend(listFriend.filter(item => item.id !== friendRejected));
+        dispatch({
+          type: 'removeFriend',
+          payload: {
+            id: friendRejected,
+          },
+        });
+        dispatch({type: 'decrementTotalFriend'});
+        dispatch({type: 'removePostByUserId', payload: {id: friendRejected}});
       })
       .catch(err => {
         showError(err.message);
@@ -256,7 +274,13 @@ const Friend = () => {
                   handlerOnPress={async () => {
                     if (item.isAccept) {
                       await acceptFriendRequest(item.id);
-                      setListFriend([...listFriend, item]);
+                      item.isAccept = false;
+                      item.friendStatus = 'FRIENDED';
+                      dispatch({
+                        type: 'addFriend',
+                        payload: [item],
+                      });
+                      dispatch({type: 'incrementTotalFriend'});
                     } else {
                       await rejectFriend(item.id);
                     }
@@ -455,7 +479,7 @@ const Friend = () => {
 
   const refreshControl = () => {
     const onRefresh = () => {
-      fetchInit();
+      fetchInit(true);
     };
 
     return (
@@ -481,11 +505,10 @@ const Friend = () => {
             placeholder="Search"
             onBlur={() => {
               setSearch(null);
-              fetchInit();
+              fetchInit(false);
             }}
             onFocus={() => {
               setListFriendSuggest([]);
-              setListFriend([]);
               setListRequestFriend([]);
             }}
             onChangeText={handleOnChangeText}
@@ -506,7 +529,14 @@ const Friend = () => {
         datas={listFriend}
         name={user.name}
         onStateChange={(friend: any) => {
-          setListFriend(listFriend.filter(item => item.id !== friend.id));
+          dispatch({
+            type: 'removeFriend',
+            payload: {
+              id: friend.id,
+            },
+          });
+          dispatch({type: 'decrementTotalFriend'});
+          dispatch({type: 'removePostByUserId', payload: {id: friend.id}});
         }}
         fetchMore={(page: number) =>
           getFriendList({
@@ -519,7 +549,15 @@ const Friend = () => {
         ref={friendRequestBottomSheetRef}
         datas={listRequestFriend}
         name={user.name}
-        onStateChange={(friend: any) => setListFriend([...listFriend, friend])}
+        onStateChange={(friend: any) => {
+          friend.isAccept = false;
+          friend.friendStatus = 'FRIENDED';
+          dispatch({
+            type: 'addFriend',
+            payload: [friend],
+          });
+          dispatch({type: 'incrementTotalFriend'});
+        }}
         fetchMore={(page: number) =>
           getFriendRequest({
             pageNumber: page,

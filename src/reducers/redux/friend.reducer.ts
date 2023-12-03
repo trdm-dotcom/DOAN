@@ -1,12 +1,15 @@
 import {createReducer} from '@reduxjs/toolkit';
 
 const initialState: any = {
+  totalFriends: 0,
   friends: [],
   requisitions: [],
   suggestions: [],
   blocks: [],
   isLoading: true,
   error: null,
+  nextPage: 0,
+  totalPages: 0,
 };
 
 export const friendReducer = createReducer(initialState, {
@@ -28,23 +31,42 @@ export const friendReducer = createReducer(initialState, {
   },
   getFriendSuccess: (state, action) => {
     state.isLoading = false;
-    state.friends.push(...action.payload);
+    state.nextPage = action.payload.page + 1;
+    state.totalPages = action.payload.totalPages;
+    state.totalFriends = action.payload.total;
+    if (action.payload.page === 0) {
+      state.friends = action.payload.datas;
+    } else {
+      const newFriends = action.payload.filter(
+        newFriend =>
+          !state.friends.datas.some(friend => friend.id === newFriend.id),
+      );
+      state.friends = [...state.friends, ...newFriends];
+    }
   },
   getFriendFailed: (state, action) => {
     state.isLoading = false;
     state.error = action.payload;
   },
-  getRequestFriendRequest: state => {
-    state.error = null;
-    state.isLoading = true;
+  removeFriend: (state, action) => {
+    const existingIndex = state.friends.findIndex(
+      friend => friend.id === action.payload.id,
+    );
+    if (existingIndex !== -1) {
+      state.friends.splice(existingIndex, 1);
+    }
   },
-  getRequestFriendSuccess: (state, action) => {
-    state.isLoading = false;
-    state.requisitions.push(...action.payload);
+  addFriend: (state, action) => {
+    const newFriends = action.payload.filter(
+      newFriend => !state.friends.some(friend => friend.id === newFriend.id),
+    );
+    state.friends = [...state.friends, ...newFriends];
   },
-  getRequestFriendFailed: (state, action) => {
-    state.isLoading = false;
-    state.error = action.payload;
+  incrementTotalFriend: state => {
+    state.totalFriends++;
+  },
+  decrementTotalFriend: state => {
+    state.totalFriends--;
   },
   clearErrors: state => {
     state.error = null;

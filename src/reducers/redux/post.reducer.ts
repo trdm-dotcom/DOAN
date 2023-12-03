@@ -1,12 +1,15 @@
 import {createReducer} from '@reduxjs/toolkit';
 
 const initialState: any = {
+  totalMyPost: 0,
   posts: [],
   myPost: [],
   myPostHide: [],
   myPostTag: [],
   error: null,
   isLoading: true,
+  nextPage: 0,
+  totalPages: 0,
 };
 
 export const postReducer = createReducer(initialState, {
@@ -66,16 +69,17 @@ export const postReducer = createReducer(initialState, {
     const newPosts = action.payload.filter(
       newPost => !state.posts.some(post => post.id === newPost.id),
     );
-    state.posts = [...state.posts, ...newPosts];
+    state.posts = [...newPosts, ...state.posts];
   },
   addMyPost: (state, action) => {
+    state.totalMyPost = action.payload.total;
     if (action.payload.page === 0) {
       state.myPost = action.payload.datas;
     } else {
       const newPosts = action.payload.filter(
         newPost => !state.myPost.some(post => post.id === newPost.id),
       );
-      state.myPost = [...state.myPost, ...newPosts];
+      state.myPost = [...newPosts, ...state.myPost];
     }
   },
   addMyPostHide: (state, action) => {
@@ -115,6 +119,17 @@ export const postReducer = createReducer(initialState, {
     state.myPostHide = state.myPostHide.filter(
       post => post.id !== action.payload.id,
     );
+  },
+  removePostByUserId: (state, action) => {
+    state.posts = state.posts.filter(
+      post => post.author.userId !== action.payload.id,
+    );
+  },
+  incrementTotalMyPost: state => {
+    state.totalMyPost++;
+  },
+  decrementTotalMyPost: state => {
+    state.totalMyPost--;
   },
   clearErrors: state => {
     state.error = null;

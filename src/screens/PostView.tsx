@@ -6,6 +6,7 @@ import {
   Platform,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -29,6 +30,7 @@ import {
   disablePost,
   getPostDetail,
   postLike,
+  reportPost,
 } from '../reducers/action/post';
 import {
   GestureHandlerRootView,
@@ -46,8 +48,9 @@ import renderValue from '../components/shared/MentionText';
 import Feather from 'react-native-vector-icons/Feather';
 import {Modalize} from 'react-native-modalize';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
-import {checkFriend} from '../reducers/action/friend';
+import {blockUser, checkFriend, rejectFriend} from '../reducers/action/friend';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
+import Share from 'react-native-share';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -71,16 +74,23 @@ const PostView = ({navigation, route}: props) => {
     useState(false);
   const [isConfirmModalHideVisible, setIsConfirmModalHideVisible] =
     useState(false);
+  const [blockConfirmationModal, setBlockConfirmationModal] =
+    useState<boolean>(false);
+  const [unfriendConfirmationModal, setUnfriendConfirmationModal] =
+    useState<boolean>(false);
   const [comments, setComments] = useState<any>([]);
   const [friendStatus, setFriendStatus] = useState<any>({});
   const [like, setLike] = useState<any[]>([]);
   const [comment, setComment] = useState<any>({});
+  const [smElseReason, setSmElseReason] = useState<any>(null);
 
   const postOptionsBottomSheetRef = useRef();
   const likesBottomSheetRef = useRef();
   const doubleTapRef = useRef();
   const likeBounceAnimationRef = createRef();
   const taggedBottomSheetRef = useRef();
+  const reportOptionsBottomSheetRef = useRef();
+  const somethingelseBottomSheetRef = useRef();
   const socket = getSocket();
 
   const {readableTime} = parseTimeElapsed(post.createdAt);
@@ -144,6 +154,16 @@ const PostView = ({navigation, route}: props) => {
     setIsConfirmModalHideVisible(previousState => !previousState);
   };
 
+  const toggleBlockConfirmationModal = () => {
+    // @ts-ignore
+    setBlockConfirmationModal(previousState => !previousState);
+  };
+
+  const toggleUnfriendConfirmationModal = () => {
+    // @ts-ignore
+    setUnfriendConfirmationModal(previousState => !previousState);
+  };
+
   const openTagged = () => {
     // @ts-ignore
     return taggedBottomSheetRef.current.open();
@@ -164,6 +184,26 @@ const PostView = ({navigation, route}: props) => {
     return likesBottomSheetRef.current.open();
   };
 
+  const openReportOptions = () => {
+    // @ts-ignore
+    return reportOptionsBottomSheetRef.current.open();
+  };
+
+  const closeReportOptions = () => {
+    // @ts-ignore
+    return reportOptionsBottomSheetRef.current.close();
+  };
+
+  const openSomethingElse = () => {
+    // @ts-ignore
+    return somethingelseBottomSheetRef.current.open();
+  };
+
+  const closeSomethingElse = () => {
+    // @ts-ignore
+    return somethingelseBottomSheetRef.current.close();
+  };
+
   const onPostDelete = () => {
     closeOptions();
     confirmationDeleteToggle();
@@ -175,8 +215,23 @@ const PostView = ({navigation, route}: props) => {
   };
 
   const onPostUndisable = () => {
-    doUndisablePost();
     closeOptions();
+    doUndisablePost();
+  };
+
+  const onReportPost = () => {
+    closeOptions();
+    openReportOptions();
+  };
+
+  const onUnfriend = () => {
+    closeOptions();
+    toggleUnfriendConfirmationModal();
+  };
+
+  const onBlock = () => {
+    closeOptions();
+    toggleBlockConfirmationModal();
   };
 
   const likeInteractionHandler = (liked: boolean) => {
@@ -216,6 +271,9 @@ const PostView = ({navigation, route}: props) => {
           },
         });
       }
+      dispatch({
+        type: 'decrementTotalMyPost',
+      });
       navigation.goBack();
     } catch (err: any) {
       showError(err.message);
@@ -223,6 +281,19 @@ const PostView = ({navigation, route}: props) => {
   };
 
   const doUndisablePost = async () => {
+    dispatch({
+      type: 'removeMyPostHide',
+      payload: {
+        id: post.id,
+      },
+    });
+    dispatch({
+      type: 'addOneMyPost',
+      payload: {
+        id: post.id,
+        source: post.source,
+      },
+    });
     try {
       const body: IParam = {
         post: post.id,
@@ -230,19 +301,6 @@ const PostView = ({navigation, route}: props) => {
         disable: false,
       };
       await disablePost(body);
-      dispatch({
-        type: 'removeMyPostHide',
-        payload: {
-          id: post.id,
-        },
-      });
-      dispatch({
-        type: 'addOneMyPost',
-        payload: {
-          id: post.id,
-          source: post.source,
-        },
-      });
       navigation.goBack();
     } catch (err: any) {
       showError(err.message);
@@ -251,6 +309,19 @@ const PostView = ({navigation, route}: props) => {
 
   const doDisablePost = async () => {
     confirmationHideToggle();
+    dispatch({
+      type: 'removeMyPost',
+      payload: {
+        id: post.id,
+      },
+    });
+    dispatch({
+      type: 'addOneMyPostHide',
+      payload: {
+        id: post.id,
+        source: post.source,
+      },
+    });
     try {
       const body: IParam = {
         post: post.id,
@@ -258,20 +329,80 @@ const PostView = ({navigation, route}: props) => {
         disable: true,
       };
       await disablePost(body);
-      dispatch({
-        type: 'removeMyPost',
-        payload: {
-          id: post.id,
-        },
-      });
-      dispatch({
-        type: 'addOneMyPostHide',
-        payload: {
-          id: post.id,
-          source: post.source,
-        },
-      });
       navigation.goBack();
+    } catch (err: any) {
+      showError(err.message);
+    }
+  };
+
+  const onShare = () => {
+    Share.open({});
+  };
+
+  const doBlock = () => {
+    toggleBlockConfirmationModal();
+    blockUser(friendStatus.targetId)
+      .then(() => {
+        navigation.goBack();
+        if (friendStatus.status === 'FRIENDED') {
+          dispatch({
+            type: 'removePostByUserId',
+            payload: {
+              id: friendStatus.targetId,
+            },
+          });
+          dispatch({
+            type: 'removeFriend',
+            payload: {
+              id: friendStatus.targetId,
+            },
+          });
+          dispatch({
+            type: 'deleteChat',
+            payload: {data: {id: friendStatus.targetId}},
+          });
+        }
+      })
+      .catch(err => {
+        showError(err.message);
+      });
+  };
+
+  const doUnfriend = () => {
+    toggleUnfriendConfirmationModal();
+    rejectFriend(friendStatus.friendId)
+      .then(() => {
+        navigation.goBack();
+        if (friendStatus.status === 'FRIENDED') {
+          dispatch({
+            type: 'removePostByUserId',
+            payload: {
+              id: friendStatus.targetId,
+            },
+          });
+          dispatch({
+            type: 'removeFriend',
+            payload: {
+              id: friendStatus.targetId,
+            },
+          });
+        }
+      })
+      .catch(err => {
+        showError(err.message);
+      });
+  };
+
+  const doReportPost = async (reason: string) => {
+    closeReportOptions();
+    try {
+      const bodyReport: IParam = {
+        sourceId: post.id,
+        reason: reason,
+      };
+      await reportPost(bodyReport);
+      navigation.goBack();
+      dispatch({type: 'deleteOrDisablePost', payload: {data: {id: post.id}}});
     } catch (err: any) {
       showError(err.message);
     }
@@ -309,19 +440,17 @@ const PostView = ({navigation, route}: props) => {
                 <Feather name="tag" size={IconSizes.x6} color={theme.text01} />
               )}
             />
-            {post.author.id === user.id && (
-              <IconButton
-                style={[space(IconSizes.x1).ml]}
-                onPress={openOptions}
-                Icon={() => (
-                  <Ionicons
-                    name="ellipsis-horizontal"
-                    size={IconSizes.x6}
-                    color={theme.text01}
-                  />
-                )}
-              />
-            )}
+            <IconButton
+              style={[space(IconSizes.x1).ml]}
+              onPress={openOptions}
+              Icon={() => (
+                <Ionicons
+                  name="ellipsis-horizontal"
+                  size={IconSizes.x6}
+                  color={theme.text01}
+                />
+              )}
+            />
           </View>
         </View>
         <TapGestureHandler
@@ -368,6 +497,18 @@ const PostView = ({navigation, route}: props) => {
               {parseLikes(post.reactions.length)}
             </Text>
           </View>
+          {post.author.id === user.id && (
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="share-social-outline"
+                  color={ThemeStatic.unlike}
+                  size={IconSizes.x6}
+                />
+              )}
+              onPress={onShare}
+            />
+          )}
         </View>
         <Text
           style={[
@@ -408,6 +549,8 @@ const PostView = ({navigation, route}: props) => {
         <Comments postId={post.id} comments={comments} />
       </>
     );
+
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   let bottomSheets = (
     <>
@@ -450,6 +593,7 @@ const PostView = ({navigation, route}: props) => {
       <PostOptionsBottomSheet
         ref={postOptionsBottomSheetRef}
         post={post}
+        friendStatus={friendStatus}
         onPostEdit={() => {
           closeOptions();
           navigation.navigate('EditPost', {postId: postId});
@@ -457,7 +601,261 @@ const PostView = ({navigation, route}: props) => {
         onPostDelete={onPostDelete}
         onPostDiable={onPostDisable}
         onPostUnDiable={onPostUndisable}
+        onReportPost={onReportPost}
+        onUnfriend={onUnfriend}
+        onBlock={onBlock}
       />
+      <Modalize
+        ref={reportOptionsBottomSheetRef}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
+        <BottomSheetHeader
+          heading="Report"
+          subHeading={'Why are you reporting this post?'}
+        />
+        <View
+          style={[
+            {
+              flex: 1,
+              paddingTop: 20,
+              paddingBottom: 16,
+            },
+          ]}>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost("I just don't like it")}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              I just don't like it
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost('Nudity or sexual activity')}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              Nudity or sexual activity
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost('Hate speech or symbols')}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              Hate speech or symbols
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost('Bullying or harassment')}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              Bullying or harassment
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost('Violence or dangerous organizations')}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              Violence or dangerous organizations
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost('False information')}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              False information
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => doReportPost('Suicide or self-injury')}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              Suicide or self-injury
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: IconSizes.x1,
+              },
+            ]}
+            activeOpacity={0.9}
+            onPress={() => {
+              closeReportOptions();
+              openSomethingElse();
+            }}>
+            <Text
+              style={[
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  marginLeft: 10,
+                  color: theme.text01,
+                },
+              ]}>
+              Something else
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modalize>
+      <Modalize
+        ref={somethingelseBottomSheetRef}
+        modalStyle={[styles(theme).modalizeContainer]}
+        adjustToContentHeight>
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={keyboardBehavior}
+          keyboardVerticalOffset={20}>
+          <BottomSheetHeader
+            heading="Report"
+            subHeading={'Help us understand the problem'}
+          />
+          <View style={[styles(theme).inputContainer, styles(theme).row]}>
+            <TextInput
+              onChangeText={(text: string) => {
+                setSmElseReason(text);
+              }}
+              style={[
+                styles(theme).inputField,
+                {
+                  ...FontWeights.Regular,
+                  ...FontSizes.Body,
+                  color: theme.text01,
+                },
+              ]}
+              placeholder="Your reason"
+              placeholderTextColor={theme.text02}
+            />
+          </View>
+          <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => {
+                setSmElseReason(null);
+                closeSomethingElse();
+                doReportPost(smElseReason);
+              }}
+              disabled={smElseReason === null}
+              style={[styles(theme).button, styles(theme).buttonPrimary]}>
+              <Text
+                style={[
+                  styles(theme).centerText,
+                  {
+                    ...FontWeights.Bold,
+                    ...FontSizes.Body,
+                    color: ThemeStatic.white,
+                  },
+                ]}>
+                Report
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modalize>
       <ConfirmationModal
         label="Delete"
         title="Delete this post?"
@@ -474,11 +872,25 @@ const PostView = ({navigation, route}: props) => {
         toggle={confirmationHideToggle}
         onConfirm={doDisablePost}
       />
+      <ConfirmationModal
+        label="Ok"
+        title="Block this user?"
+        color={ThemeStatic.delete}
+        isVisible={blockConfirmationModal}
+        toggle={toggleBlockConfirmationModal}
+        onConfirm={doBlock}
+      />
+      <ConfirmationModal
+        label="Ok"
+        title="Unfriend this user?"
+        color={ThemeStatic.delete}
+        isVisible={unfriendConfirmationModal}
+        toggle={toggleUnfriendConfirmationModal}
+        onConfirm={doUnfriend}
+      />
       <LikesBottomSheet ref={likesBottomSheetRef} postId={post.id} />
     </>
   );
-
-  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
     <GestureHandlerRootView
