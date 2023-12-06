@@ -12,13 +12,6 @@ export const userReducer = createReducer(intialState, {
   authenticated: state => {
     state.isAuthenticated = true;
   },
-  userRegisterRequest: state => {
-    state.error = null;
-    state.loading = true;
-  },
-  userRegisterSuccess: state => {
-    state.loading = false;
-  },
   userRegisterFailed: (state, action) => {
     state.loading = false;
     state.error = action.payload;
@@ -43,14 +36,14 @@ export const userReducer = createReducer(intialState, {
   },
   updateUserRequest: state => {
     state.error = null;
-    state.isLoading = true;
+    state.loading = true;
   },
   updateUserSuccess: (state, action) => {
-    state.isLoading = false;
+    state.loading = false;
     state.user = action.payload;
   },
   updateUserFailed: (state, action) => {
-    state.isLoading = false;
+    state.loading = false;
     state.error = action.payload;
   },
   getUsersRequest: state => {

@@ -43,18 +43,17 @@ const Friend = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
   const {user} = useSelector((state: any) => state.user);
-  const {friends: listFriend} = useSelector((state: any) => state.friend);
   const [listfriendSuggest, setListFriendSuggest] = useState<IFriendResponse[]>(
     [],
   );
   const [listRequestFriend, setListRequestFriend] = useState<IFriendResponse[]>(
     [],
   );
+  const [listFriend, setListFriend] = useState<IFriendResponse[]>([]);
   const [search, setSearch] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [friendRejected, setFriendRejected] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [nextPage, setNextPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
@@ -73,23 +72,18 @@ const Friend = () => {
   };
 
   useEffect(() => {
-    fetchInit(false);
+    fetchInit();
   }, []);
 
-  const fetchInit = (force: boolean) => {
-    const promiseArray: Promise<void>[] = [
+  const fetchInit = () => {
+    setLoading(true);
+    Promise.all([
       fetchListRequestFriend(0),
       fetchListSuggestFriend(null, 0),
-    ];
-    if (force || listFriend.length < 1) {
-      promiseArray.push(fetchListFriend(0));
-    }
-    setLoading(true);
-    Promise.all(promiseArray)
-      .catch(() => {
-        setError(true);
-      })
-      .finally(() => setLoading(false));
+      fetchListFriend(0),
+    ]).catch(() => {
+      setError(true);
+    });
   };
 
   const requestPermission = async () => {
@@ -134,28 +128,23 @@ const Friend = () => {
   };
 
   const fetchListSuggestFriend = async (searchFriend: any, page: number) => {
-    setIsLoading(true);
-    try {
-      const listPhone = await getContacts();
-      const res = await getSuggestFriend({
-        phone: searchFriend == null ? listPhone : null,
-        search: searchFriend,
-        pageNumber: page,
-        pageSize: Pagination.PAGE_SIZE,
-      });
-      if (res.page === 0) {
-        setListFriendSuggest(res.datas);
-      } else {
-        const newUser = res.datas.filter(
-          item => !listfriendSuggest.some(it => it.id === item.id),
-        );
-        setListFriendSuggest([...listfriendSuggest, ...newUser]);
-      }
-      setNextPage(res.page + 1);
-      setTotalPages(res.totalPages);
-    } finally {
-      setIsLoading(false);
+    const listPhone = await getContacts();
+    const res = await getSuggestFriend({
+      phone: searchFriend == null ? listPhone : null,
+      search: searchFriend,
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    });
+    if (res.page === 0) {
+      setListFriendSuggest(res.datas);
+    } else {
+      const newUser = res.datas.filter(
+        item => !listfriendSuggest.some(it => it.id === item.id),
+      );
+      setListFriendSuggest([...listfriendSuggest, ...newUser]);
     }
+    setNextPage(res.page + 1);
+    setTotalPages(res.totalPages);
   };
 
   const fetchListRequestFriend = async (page: number) => {
@@ -164,19 +153,16 @@ const Friend = () => {
       pageSize: Pagination.PAGE_SIZE,
     });
     setListRequestFriend(res.datas);
+    setLoading(false);
   };
 
   const fetchListFriend = async (page: number) => {
-    try {
-      dispatch({type: 'getFriendRequest'});
-      const res = await getFriendList({
-        pageNumber: page,
-        pageSize: Pagination.PAGE_SIZE,
-      });
-      dispatch({type: 'getFriendSuccess', payload: res});
-    } catch (err: any) {
-      dispatch({type: 'getFriendFailed', payload: err.message});
-    }
+    const res = await getFriendList({
+      pageNumber: page,
+      pageSize: Pagination.PAGE_SIZE,
+    });
+    setListFriend(res.datas);
+    setLoading(false);
   };
 
   const handleOnChangeText = async (text: string) => {
@@ -192,6 +178,7 @@ const Friend = () => {
     setShowModal(false);
     rejectFriend(friendRejected)
       .then(() => {
+        setListFriend(listFriend.filter(item => item.id !== friendRejected));
         dispatch({
           type: 'removeFriend',
           payload: {
@@ -276,6 +263,7 @@ const Friend = () => {
                       await acceptFriendRequest(item.id);
                       item.isAccept = false;
                       item.friendStatus = 'FRIENDED';
+                      setListFriend([...listFriend, item]);
                       dispatch({
                         type: 'addFriend',
                         payload: [item],
@@ -451,7 +439,7 @@ const Friend = () => {
                   onPress={() => {
                     fetchListSuggestFriend(search, nextPage);
                   }}
-                  disabled={nextPage >= totalPages || isLoading}
+                  disabled={nextPage >= totalPages}
                   containerStyle={{
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -479,7 +467,7 @@ const Friend = () => {
 
   const refreshControl = () => {
     const onRefresh = () => {
-      fetchInit(true);
+      fetchInit();
     };
 
     return (
@@ -505,7 +493,7 @@ const Friend = () => {
             placeholder="Search"
             onBlur={() => {
               setSearch(null);
-              fetchInit(false);
+              fetchInit();
             }}
             onFocus={() => {
               setListFriendSuggest([]);

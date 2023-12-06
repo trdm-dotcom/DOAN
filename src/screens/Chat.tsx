@@ -59,7 +59,7 @@ const Chat = ({navigation}: props) => {
 
   useEffect(() => {
     if (error) {
-      showError(error.message);
+      showError(error);
       dispatch({type: 'clearErrors'});
     }
   }, [error]);

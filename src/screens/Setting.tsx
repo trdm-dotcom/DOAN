@@ -13,28 +13,17 @@ import {
 } from 'react-native';
 import {Theme, ThemeStatic} from '../theme/Colors';
 import {signOut} from '../reducers/action/authentications';
-import {
-  CONTENT_SPACING,
-  FULLNAME_REGEX,
-  IconSizes,
-  PASSWORD_REGEX,
-} from '../constants/Constants';
+import {IconSizes, PASSWORD_REGEX} from '../constants/Constants';
 import AppOption from '../components/shared/AppOption';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Typography from '../theme/Typography';
 import ConfirmationModal from '../components/shared/ConfirmationModal';
-import AppButton from '../components/control/AppButton';
 import {Modalize} from 'react-native-modalize';
 import LoadingIndicator from '../components/shared/LoadingIndicator';
 import {showError} from '../utils/Toast';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import Header from '../components/header/Header';
-import {
-  confirmUser,
-  disableUser,
-  putUserInfo,
-  updateMode,
-} from '../reducers/action/user';
+import {updateMode} from '../reducers/action/user';
 import CheckBox from 'react-native-check-box';
 import {getHash} from '../utils/Crypto';
 import IChangePasswordRequest from '../models/request/IChangePasswordRequest';
@@ -43,8 +32,6 @@ import {OtpTxtType} from '../models/enum/OtpTxtType';
 import {OtpIdType} from '../models/enum/OtpIdType';
 import IOtpResponse from '../models/response/IOtpResponse';
 import IVerifyOtpResponse from '../models/response/IVerifyOtpResponse';
-import BottomSheetHeader from '../components/header/BottomSheetHeader';
-import ImagePicker, {Image} from 'react-native-image-crop-picker';
 import {NativeImage} from '../components/shared/NativeImage';
 import {RootStackParamList} from '../navigators/RootStack';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -53,16 +40,23 @@ import IconButton from '../components/control/IconButton';
 import {checkEmpty, checkRegex} from '../utils/Validate';
 import {useDispatch, useSelector} from 'react-redux';
 import BlockListBottomSheet from '../components/bottomsheet/BlockListBottomSheet';
-import Option from '../components/shared/Option';
-import {Image as ImageCompressor} from 'react-native-compressor';
 import {settingReceiveNotification} from '../reducers/action/notification';
+import {
+  getFcmToken,
+  registerAppWithFCM,
+  unRegisterAppWithFCM,
+} from '../utils/PushNotification';
 
 const {FontWeights, FontSizes} = Typography;
 
 type props = NativeStackScreenProps<RootStackParamList, 'Setting'>;
 const Setting = ({navigation}: props) => {
   const dispatch = useDispatch();
-  const {user, isLoading, error} = useSelector((state: any) => state.user);
+  const {
+    user,
+    error,
+    loading: userLoading,
+  } = useSelector((state: any) => state.user);
   const {
     theme,
     themeType,
@@ -71,24 +65,19 @@ const Setting = ({navigation}: props) => {
     deviceId,
     onNotification,
     setOnNotification,
+    setFcmToken,
   } = useContext(AppContext);
-  const [name, setName] = useState<string>(user.name);
-  const [about, setAbout] = useState<string>(user.about);
-  const [avatar, setAvatar] = useState<any>(user.avatar);
-  const [progess, setProgess] = useState<
-    null | 'changePass' | 'editInfo' | 'verifyOtp' | 'confirm' | 'deleteAccount'
-  >(null);
+  const [progess, setProgess] = useState<null | 'changePass' | 'verifyOtp'>(
+    null,
+  );
   const [isPasswordVisible, setPasswordVisible] = useState<boolean>(false);
   const [oldPassword, setOldPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
   const [otpId, setOtpId] = useState<any>(null);
   const [otpValue, setOtpValue] = useState<any>(null);
   const [signoutConfirmationModal, setSignoutConfirmationModal] =
     useState<boolean>(false);
   const [privateModeConfirmationModal, setPrivateModeConfirmationModal] =
-    useState<boolean>(false);
-  const [deleteAccountConfirmationModal, setDeleteAccountConfirmationModal] =
     useState<boolean>(false);
   const [turnOffNotificationModal, setTurnOffNotificationModal] =
     useState<boolean>(false);
@@ -103,8 +92,6 @@ const Setting = ({navigation}: props) => {
   }, [error]);
 
   const modalizeRef = useRef();
-  const deleteAccountBottomSheetRef = useRef();
-  const avatarOptionsBottomSheetRef = useRef();
   const blockListBottomSheetRef = useRef();
 
   const modalizeOpen = () => {
@@ -115,26 +102,6 @@ const Setting = ({navigation}: props) => {
   const modalizeClose = () => {
     // @ts-ignore
     return modalizeRef.current.close();
-  };
-
-  const deleteAccountOpen = () => {
-    // @ts-ignore
-    return deleteAccountBottomSheetRef.current.open();
-  };
-
-  const deleteAccountClose = () => {
-    // @ts-ignore
-    return deleteAccountBottomSheetRef.current.close();
-  };
-
-  const openOptions = () => {
-    // @ts-ignore
-    return avatarOptionsBottomSheetRef.current.open();
-  };
-
-  const closeOptions = () => {
-    // @ts-ignore
-    return avatarOptionsBottomSheetRef.current.close();
   };
 
   const onBlockListOpen = () => {
@@ -150,77 +117,8 @@ const Setting = ({navigation}: props) => {
     setPrivateModeConfirmationModal(previousState => !previousState);
   };
 
-  const deleteAccountConfirmationToggle = () => {
-    setDeleteAccountConfirmationModal(previousState => !previousState);
-  };
-
   const turnOffNotificationModalToggle = () => {
     setTurnOffNotificationModal(previousState => !previousState);
-  };
-
-  const requestImageModeration = async (imageData: string, filename: string) =>
-    await apiPost<any>('/moderation/image', {
-      data: {imageData: imageData, filename: filename},
-    });
-
-  const requestTextModeration = async (text: string) =>
-    await apiPost<any>('/moderation/text', {
-      data: {text: text},
-    });
-
-  const onOpenCamera = async () => {
-    try {
-      closeOptions();
-      const image: Image = await ImagePicker.openCamera({
-        compressImageQuality: 0.6,
-        includeBase64: true,
-        writeTempFile: false,
-        useFrontCamera: true,
-      });
-      if (image.data != null) {
-        const compressedImage = await ImageCompressor.compress(image.path, {
-          maxWidth: 480,
-          maxHeight: 480,
-          input: 'uri',
-          compressionMethod: 'auto',
-          quality: 0.6,
-          returnableOutputType: 'base64',
-        });
-        setAvatar(`data:${image.mime};base64,${compressedImage}`);
-        editInfo(name, `data:${image.mime};base64,${compressedImage}`, about);
-      }
-    } catch (err: any) {
-      console.log(err);
-    }
-  };
-
-  const onOpenGallery = async () => {
-    try {
-      closeOptions();
-      const image: Image = await ImagePicker.openPicker({
-        compressImageQuality: 0.6,
-        includeBase64: true,
-        writeTempFile: false,
-      });
-      if (image.data != null) {
-        const compressedImage = ImageCompressor.compress(image.path, {
-          maxWidth: 480,
-          maxHeight: 480,
-          input: 'uri',
-          compressionMethod: 'auto',
-          quality: 0.6,
-          returnableOutputType: 'base64',
-        });
-        setAvatar(`data:${image.mime};base64,${compressedImage}`);
-        await editInfo(
-          name,
-          `data:${image.mime};base64,${compressedImage}`,
-          about,
-        );
-      }
-    } catch (err: any) {
-      console.log(err);
-    }
   };
 
   const updateAccountMode = async () => {
@@ -246,6 +144,7 @@ const Setting = ({navigation}: props) => {
 
   const logOut = async () => {
     signOut();
+    unRegisterAppWithFCM();
     dispatch({
       type: 'userLogout',
     });
@@ -279,59 +178,14 @@ const Setting = ({navigation}: props) => {
     }
   };
 
-  const editInfo = async (nameEdit: any, avatarEdit: any, aboutEdit: any) => {
-    let errors = {};
-    const validName =
-      checkEmpty(name, 'Name is required.') ||
-      checkRegex(name, 'Name is invalid.', FULLNAME_REGEX);
-    if (validName) {
-      errors['name'] = validName;
-    }
-    if (Object.keys(errors).length === 0) {
-      showError(validError);
-      return;
-    }
-    try {
-      dispatch({
-        type: 'updateUserRequest',
-      });
-      if (avatarEdit != null) {
-        await requestImageModeration(avatarEdit, 'image.jpg');
-      }
-      if (about !== user.about) {
-        await requestTextModeration(about);
-      }
-      await putUserInfo({
-        name: nameEdit,
-        avatar: avatarEdit,
-        about: aboutEdit,
-      });
-      dispatch({
-        type: 'updateUserSuccess',
-        payload: {
-          ...user,
-          name: nameEdit,
-          avatar: avatarEdit,
-          about: aboutEdit,
-        },
-      });
-      modalizeClose();
-    } catch (err: any) {
-      dispatch({
-        type: 'updateUserFailed',
-        payload: err.message,
-      });
-    }
-  };
-
   const verifyOtp = async () => {
     let errors = {};
-    const validCode = checkEmpty(name, 'Please enter code');
+    const validCode = checkEmpty(otpValue, 'Please enter code');
     if (validCode) {
       errors['otp'] = validCode;
     }
     setValidError(errors);
-    if (Object.keys(errors).length === 0) {
+    if (Object.keys(errors).length > 0) {
       return;
     }
     setLoading(true);
@@ -350,10 +204,15 @@ const Setting = ({navigation}: props) => {
         newPassword: newPassword,
         hash: getHash('PASSWORD'),
       };
-      await apiPost<any>('/user/changePassword', body, {
-        'Content-Type': 'application/json',
-      });
+      await apiPost<any>(
+        '/user/changePassword',
+        {data: body},
+        {
+          'Content-Type': 'application/json',
+        },
+      );
       modalizeClose();
+      logOut();
     } catch (err: any) {
       showError(err.message);
     } finally {
@@ -363,13 +222,13 @@ const Setting = ({navigation}: props) => {
 
   const changePass = () => {
     let errors = {};
-    const validPassword = checkEmpty(password, 'Password is required.');
+    const validPassword = checkEmpty(oldPassword, 'Old password is required.');
     if (validPassword) {
       errors['password'] = validPassword;
     }
     const validNewPassword =
       checkEmpty(newPassword, 'New password is required.') ||
-      password === newPassword
+      newPassword === oldPassword
         ? 'New password must be different from old password.'
         : null ||
           checkRegex(newPassword, 'New password is invalid.', PASSWORD_REGEX);
@@ -377,7 +236,7 @@ const Setting = ({navigation}: props) => {
       errors['newPassword'] = validNewPassword;
     }
     setValidError(errors);
-    if (Object.keys(errors).length === 0) {
+    if (Object.keys(errors).length > 0) {
       return;
     }
     setProgess('verifyOtp');
@@ -389,64 +248,13 @@ const Setting = ({navigation}: props) => {
       switch (progess) {
         case 'changePass':
           return changePass();
-        case 'editInfo':
-          return editInfo(name, avatar, about);
         case 'verifyOtp':
           return verifyOtp();
-        case 'confirm':
-          return requestConfirm();
-        case 'deleteAccount':
-          return deleteAccount();
         default:
           break;
       }
     } catch (err: any) {
       showError(err.message);
-    }
-  };
-
-  const deleteAccount = async () => {
-    deleteAccountClose();
-    try {
-      setLoading(true);
-      const bodyVerifyOtp = {otpId: otpId, otpValue: otpValue};
-      const response: IVerifyOtpResponse = await apiPost<IVerifyOtpResponse>(
-        '/otp/verify',
-        {data: bodyVerifyOtp},
-        {
-          'Content-Type': 'application/json',
-        },
-      );
-      const body = {
-        otpKey: response.otpKey,
-        hash: getHash('DELETE_USER'),
-      };
-      await disableUser(body);
-      await logOut();
-    } catch (err: any) {
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const requestConfirm = async () => {
-    try {
-      setLoading(true);
-      const body = {
-        password: password,
-      };
-      const res = await confirmUser(body);
-      if (res.value) {
-        setProgess('deleteAccount');
-        getOtp();
-      } else {
-        showError("Password doesn't match");
-      }
-    } catch (err: any) {
-      showError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -458,6 +266,15 @@ const Setting = ({navigation}: props) => {
         deviceId: deviceId,
         registrationToken: fcmToken,
       };
+      if (isReceive) {
+        const newFcmToken = await getFcmToken();
+        body.registrationToken = newFcmToken;
+        setFcmToken(newFcmToken);
+        registerAppWithFCM();
+      } else {
+        setFcmToken(null);
+        unRegisterAppWithFCM();
+      }
       await settingReceiveNotification(body);
       setOnNotification(isReceive);
     } catch (err: any) {
@@ -506,29 +323,6 @@ const Setting = ({navigation}: props) => {
               borderRadius: 120,
             }}>
             <NativeImage uri={user.avatar} style={styles(theme).avatarImage} />
-            <TouchableOpacity
-              activeOpacity={0.9}
-              disabled={isLoading}
-              onPress={openOptions}
-              style={{
-                position: 'absolute',
-                bottom: -10,
-                alignSelf: 'center',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 40,
-                width: 60,
-                height: 30,
-                borderWidth: 2,
-                borderColor: theme.base,
-                backgroundColor: theme.accent,
-              }}>
-              <Ionicons
-                name="add"
-                size={IconSizes.x6}
-                color={ThemeStatic.white}
-              />
-            </TouchableOpacity>
           </View>
           <View
             style={[
@@ -537,27 +331,6 @@ const Setting = ({navigation}: props) => {
             ]}>
             <Text style={styles(theme).profileUsernameText}>{user.name}</Text>
           </View>
-          <AppButton
-            label="Edit Info"
-            onPress={() => {
-              setProgess('editInfo');
-              modalizeOpen();
-            }}
-            labelStyle={{
-              ...FontWeights.Bold,
-              ...FontSizes.Body,
-              color: theme.text01,
-            }}
-            containerStyle={[
-              {
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
-                paddingHorizontal: IconSizes.x5,
-                borderRadius: 50,
-              },
-            ]}
-          />
         </View>
         <View>
           <View style={[styles(theme).row]}>
@@ -741,20 +514,6 @@ const Setting = ({navigation}: props) => {
                 }
               />
             </TouchableOpacity>
-            {/* <TouchableOpacity onPress={deleteAccountConfirmationToggle}>
-              <AppOption
-                label="Delete Account"
-                iconName="sad-outline"
-                color="red"
-                children={
-                  <Ionicons
-                    name="chevron-forward"
-                    color={theme.base}
-                    size={IconSizes.x6}
-                  />
-                }
-              />
-            </TouchableOpacity> */}
           </View>
         </View>
       </ScrollView>
@@ -762,54 +521,15 @@ const Setting = ({navigation}: props) => {
         ref={modalizeRef}
         scrollViewProps={{showsVerticalScrollIndicator: false}}
         modalStyle={[styles(theme).modalizeContainer]}
+        onClosed={() => {
+          setProgess(null);
+          setValidError({});
+          setPasswordVisible(false);
+        }}
         adjustToContentHeight>
         <KeyboardAvoidingView
           behavior={keyboardBehavior}
-          keyboardVerticalOffset={20}>
-          {progess === 'editInfo' && (
-            <>
-              <BottomSheetHeader
-                heading="Edit profile"
-                subHeading="Edit your personal information"
-              />
-              <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <TextInput
-                  value={name}
-                  onChangeText={(text: string) => {
-                    setName(text);
-                  }}
-                  style={[
-                    styles(theme).inputField,
-                    {
-                      ...FontWeights.Regular,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                  ]}
-                  placeholder="Your name"
-                  placeholderTextColor={theme.text02}
-                />
-              </View>
-              <View style={[styles(theme).inputContainer, styles(theme).row]}>
-                <TextInput
-                  value={about}
-                  onChangeText={(text: string) => {
-                    setAbout(text);
-                  }}
-                  style={[
-                    styles(theme).inputField,
-                    {
-                      ...FontWeights.Regular,
-                      ...FontSizes.Body,
-                      color: theme.text01,
-                    },
-                  ]}
-                  placeholder="About"
-                  placeholderTextColor={theme.text02}
-                />
-              </View>
-            </>
-          )}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
           {progess === 'changePass' && (
             <>
               <Header title="Change password" />
@@ -870,7 +590,7 @@ const Setting = ({navigation}: props) => {
               <Text
                 style={[
                   {
-                    ...FontWeights.Regular,
+                    ...FontWeights.Light,
                     ...FontSizes.Caption,
                     color: theme.text02,
                   },
@@ -937,163 +657,37 @@ const Setting = ({navigation}: props) => {
               </View>
             </>
           )}
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={handleOnPress}
-            disabled={isLoading || loading}
-            style={[styles(theme).button, styles(theme).buttonPrimary]}>
-            {isLoading || loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
-            ) : progess === 'confirm' || progess === 'changePass' ? (
-              <>
-                <Text
-                  style={[
-                    styles(theme).centerText,
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Body,
-                      color: ThemeStatic.white,
-                    },
-                  ]}>
-                  Next step
-                </Text>
-                <Ionicons
-                  name="arrow-forward"
-                  size={IconSizes.x6}
+          <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={handleOnPress}
+              disabled={loading || userLoading}
+              style={[styles(theme).button, styles(theme).buttonPrimary]}>
+              {loading || userLoading ? (
+                <LoadingIndicator
+                  size={IconSizes.x1}
                   color={ThemeStatic.white}
                 />
-              </>
-            ) : (
-              <Text
-                style={[
-                  styles(theme).centerText,
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Body,
-                    color: ThemeStatic.white,
-                  },
-                ]}>
-                Done
-              </Text>
-            )}
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </Modalize>
-      <Modalize
-        ref={deleteAccountBottomSheetRef}
-        scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight
-        onClosed={() => {
-          setValidError({});
-        }}>
-        {progess === 'confirm' && (
-          <>
-            <Header title="Verify password" />
-            <View style={[styles(theme).inputContainer, styles(theme).row]}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={IconSizes.x6}
-                color={theme.text02}
-              />
-              <TextInput
-                onChangeText={(text: string) => setPassword(text.trim())}
-                style={[
-                  styles(theme).inputField,
-                  {
-                    ...FontWeights.Regular,
-                    ...FontSizes.Body,
-                    color: theme.text01,
-                  },
-                  {flex: 1},
-                ]}
-                secureTextEntry={!isPasswordVisible}
-                placeholder="Password"
-                placeholderTextColor={theme.text02}
-              />
-              <IconButton
-                onPress={() => {
-                  setPasswordVisible(!isPasswordVisible);
-                }}
-                style={{marginHorizontal: CONTENT_SPACING}}
-                Icon={() => (
+              ) : progess === 'changePass' ? (
+                <>
+                  <Text
+                    style={[
+                      styles(theme).centerText,
+                      {
+                        ...FontWeights.Bold,
+                        ...FontSizes.Body,
+                        color: ThemeStatic.white,
+                      },
+                    ]}>
+                    Next step
+                  </Text>
                   <Ionicons
-                    name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                    name="arrow-forward"
                     size={IconSizes.x6}
-                    color={theme.text01}
+                    color={ThemeStatic.white}
                   />
-                )}
-              />
-            </View>
-          </>
-        )}
-        {progess === 'deleteAccount' && (
-          <>
-            <Header title="OTP sent" />
-            <Text
-              style={[
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Caption,
-                  color: theme.text02,
-                },
-              ]}>
-              Enter the code sent to your phone
-            </Text>
-            <View style={[styles(theme).inputContainer]}>
-              <TextInput
-                onChangeText={(text: string) => setOtpValue(text.trim())}
-                style={[
-                  styles(theme).inputField,
-                  {
-                    ...FontWeights.Regular,
-                    ...FontSizes.Body,
-                    color: theme.text01,
-                  },
-                ]}
-                autoFocus
-                keyboardType="numeric"
-                placeholder="OTP"
-                placeholderTextColor={theme.text02}
-              />
-            </View>
-            <View style={styles(theme).row}>
-              <Text
-                style={[
-                  {
-                    ...FontWeights.Regular,
-                    ...FontSizes.Caption,
-                    color: theme.text01,
-                  },
-                  space(IconSizes.x00).mr,
-                ]}>
-                Didn't receive the code?{' '}
-              </Text>
-              <TouchableOpacity onPress={getOtp} style={styles(theme).button}>
-                <Text
-                  style={[
-                    {
-                      ...FontWeights.Bold,
-                      ...FontSizes.Caption,
-                      color: theme.text01,
-                    },
-                  ]}>
-                  Resend OTP
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-        <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={handleOnPress}
-            disabled={isLoading || loading}
-            style={[styles(theme).button, styles(theme).buttonPrimary]}>
-            {isLoading || loading ? (
-              <LoadingIndicator size={IconSizes.x1} color={ThemeStatic.white} />
-            ) : progess === 'confirm' || progess === 'changePass' ? (
-              <>
+                </>
+              ) : (
                 <Text
                   style={[
                     styles(theme).centerText,
@@ -1103,73 +697,23 @@ const Setting = ({navigation}: props) => {
                       color: ThemeStatic.white,
                     },
                   ]}>
-                  Next step
+                  Done
                 </Text>
-                <Ionicons
-                  name="arrow-forward"
-                  size={IconSizes.x6}
-                  color={ThemeStatic.white}
-                />
-              </>
-            ) : (
+              )}
+            </TouchableOpacity>
+            {Object.values(validError).map((errMessage: any, index: number) => (
               <Text
-                style={[
-                  styles(theme).centerText,
-                  {
-                    ...FontWeights.Bold,
-                    ...FontSizes.Body,
-                    color: ThemeStatic.white,
-                  },
-                ]}>
-                Done
+                key={index}
+                style={{
+                  ...FontWeights.Regular,
+                  ...FontSizes.Caption,
+                  color: 'red',
+                }}>
+                {errMessage}
               </Text>
-            )}
-          </TouchableOpacity>
-          {Object.values(validError).map((errMessage: any, index: number) => (
-            <Text
-              key={index}
-              style={{
-                ...FontWeights.Regular,
-                ...FontSizes.Caption,
-                color: 'red',
-              }}>
-              {errMessage}
-            </Text>
-          ))}
-        </View>
-      </Modalize>
-      <Modalize
-        ref={avatarOptionsBottomSheetRef}
-        scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight>
-        <View
-          style={[
-            {
-              flex: 1,
-              paddingTop: 20,
-              paddingBottom: 16,
-            },
-          ]}>
-          <Option
-            label="Take a photo"
-            iconName="camera-outline"
-            color={theme.text01}
-            onPress={onOpenCamera}
-          />
-          <Option
-            label="Choose from gallery"
-            iconName="images-outline"
-            color={theme.text01}
-            onPress={onOpenGallery}
-          />
-          <Option
-            label="Delete"
-            iconName="close-circle-outline"
-            color="red"
-            onPress={() => editInfo(name, null, about)}
-          />
-        </View>
+            ))}
+          </View>
+        </KeyboardAvoidingView>
       </Modalize>
       <ConfirmationModal
         label="Sign Out"
@@ -1177,14 +721,20 @@ const Setting = ({navigation}: props) => {
         color="red"
         isVisible={signoutConfirmationModal}
         toggle={signoutConfirmationToggle}
-        onConfirm={logOut}
+        onConfirm={() => {
+          signoutConfirmationToggle();
+          logOut();
+        }}
       />
       <ConfirmationModal
         label="Ok"
         title="Switch to private account?"
         isVisible={privateModeConfirmationModal}
         toggle={privateModeConfirmationToggle}
-        onConfirm={updateAccountMode}
+        onConfirm={() => {
+          privateModeConfirmationToggle();
+          updateAccountMode();
+        }}
       />
       <ConfirmationModal
         label="Ok"
@@ -1192,20 +742,8 @@ const Setting = ({navigation}: props) => {
         isVisible={turnOffNotificationModal}
         toggle={turnOffNotificationModalToggle}
         onConfirm={() => {
-          requestSettingReceiveNotification(false);
           turnOffNotificationModalToggle();
-        }}
-      />
-      <ConfirmationModal
-        label="Continue deleting account"
-        title="Delete your Fotei account?"
-        color="red"
-        isVisible={deleteAccountConfirmationModal}
-        toggle={deleteAccountConfirmationToggle}
-        onConfirm={() => {
-          setProgess('confirm');
-          deleteAccountConfirmationToggle();
-          deleteAccountOpen();
+          requestSettingReceiveNotification(false);
         }}
       />
       <BlockListBottomSheet ref={blockListBottomSheetRef} />

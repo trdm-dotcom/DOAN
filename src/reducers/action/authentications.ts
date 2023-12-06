@@ -55,13 +55,6 @@ export const checkExist = async (
 
 export const register = async (body: IRegisterRequest) => {
   await registerNewAccount(body);
-  await password({
-    username: body.phoneNumber,
-    password: body.password,
-    hash: body.hash,
-    grant_type: 'password',
-    client_secret: 'secret',
-  });
 };
 
 export const password = async (body: ILoginRequest) => {

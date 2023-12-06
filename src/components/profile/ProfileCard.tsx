@@ -21,7 +21,6 @@ type ProfileCardProps = {
   onOptionPress: any;
   renderInteractions?: any;
   editable?: boolean;
-  onEdit?: any;
   about?: string;
 };
 
@@ -34,7 +33,6 @@ const ProfileCard = ({
   onOptionPress,
   renderInteractions,
   editable,
-  onEdit,
   about,
 }: ProfileCardProps) => {
   const {theme} = useContext(AppContext);
@@ -50,18 +48,6 @@ const ProfileCard = ({
         ]}>
         <View style={styles(theme).avatar}>
           <NativeImage uri={avatar} style={styles(theme).avatarImage} />
-          {editable && (
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={onEdit}
-              style={styles(theme).editProfile}>
-              <Ionicons
-                name="add"
-                size={IconSizes.x4}
-                color={ThemeStatic.white}
-              />
-            </TouchableOpacity>
-          )}
         </View>
         <View style={{flex: 1}}>
           <View style={space(IconSizes.x5).ml}>

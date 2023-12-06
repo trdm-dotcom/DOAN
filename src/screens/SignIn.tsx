@@ -123,27 +123,28 @@ const SignIn = ({navigation}: props) => {
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
-    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        contentLeft={
-          <IconButton
-            Icon={() => (
-              <Ionicons
-                name="arrow-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
-              />
-            )}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-        }
-      />
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={keyboardBehavior}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+      <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <HeaderBar
+          contentLeft={
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="arrow-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+          }
+        />
+
         <Header title="Sign In" />
         <Text
           style={[
@@ -169,10 +170,11 @@ const SignIn = ({navigation}: props) => {
               style={[
                 styles(theme).inputField,
                 {
-                  ...FontWeights.Bold,
+                  ...FontWeights.Regular,
                   ...FontSizes.Body,
                   color: theme.text01,
                 },
+                {flex: 1},
               ]}
               autoFocus
               placeholder="Phone Or Email"
@@ -190,7 +192,7 @@ const SignIn = ({navigation}: props) => {
               style={[
                 styles(theme).inputField,
                 {
-                  ...FontWeights.Bold,
+                  ...FontWeights.Regular,
                   ...FontSizes.Body,
                   color: theme.text01,
                 },
@@ -235,15 +237,11 @@ const SignIn = ({navigation}: props) => {
               </Text>
             </TouchableOpacity>
           </View>
-          <View style={[styles(theme).row, space(IconSizes.x5).mt]}>
+          <View style={[{flex: 1}, space(IconSizes.x5).mt]}>
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={handleContinue}
-              style={[
-                styles(theme).button,
-                styles(theme).buttonPrimary,
-                {flex: 1},
-              ]}
+              style={[styles(theme).button, styles(theme).buttonPrimary]}
               disabled={loading || isLoading}>
               {loading || isLoading ? (
                 <LoadingIndicator
@@ -277,8 +275,8 @@ const SignIn = ({navigation}: props) => {
             ))}
           </View>
         </Animated.View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

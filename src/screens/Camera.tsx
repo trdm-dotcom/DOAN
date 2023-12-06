@@ -100,7 +100,7 @@ const Camera = ({navigation}: props) => {
             id: res.id,
             caption: body.caption,
             source: body.source,
-            tags: body.tags,
+            tags: choose,
             reactions: [],
             comments: [],
             createdAt: res.createdAt,
@@ -205,33 +205,43 @@ const Camera = ({navigation}: props) => {
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
-    <GestureHandlerRootView
-      style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        contentLeft={
-          <IconButton
-            Icon={() => (
-              <Ionicons
-                name="arrow-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
-              />
-            )}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-        }
-      />
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={keyboardBehavior}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+      <GestureHandlerRootView
+        style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <HeaderBar
+          contentLeft={
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="arrow-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+          }
+        />
         <TouchableOpacity
           onPress={openOptions}
           style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}>
           {imageSource == null ? (
-            <>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Ionicons
+                name="image-outline"
+                size={IconSizes.x12}
+                color={ThemeStatic.accent}
+              />
               <Text
                 style={[
                   {
@@ -239,11 +249,10 @@ const Camera = ({navigation}: props) => {
                     ...FontSizes.SubHeading,
                     color: ThemeStatic.accent,
                   },
-                  space(IconSizes.x5).mt,
                 ]}>
                 Upload your photo
               </Text>
-            </>
+            </View>
           ) : (
             <NativeImage
               uri={imageSource}
@@ -370,106 +379,110 @@ const Camera = ({navigation}: props) => {
             onPress={openTagBottomSheet}
           />
         </View>
-      </KeyboardAvoidingView>
-      <Modalize
-        ref={tagBottomSheetRef}
-        onOpen={() => {
-          fetchFriends(0);
-        }}
-        modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight
-        HeaderComponent={
-          <BottomSheetHeader
-            heading="Your friends"
-            subHeading={'Below are the people you can tag.'}
-          />
-        }
-        flatListProps={{
-          data: friends,
-          renderItem: ({item}) => (
-            <View
-              style={[styles(theme).userCardContainer, space(IconSizes.x1).mt]}>
-              <View style={[styles(theme).row]}>
-                <NativeImage
-                  uri={item.avatar}
-                  style={styles(theme).tinyImage}
+        <Modalize
+          ref={tagBottomSheetRef}
+          onOpen={() => {
+            fetchFriends(0);
+          }}
+          modalStyle={[styles(theme).modalizeContainer]}
+          adjustToContentHeight
+          HeaderComponent={
+            <BottomSheetHeader
+              heading="Your friends"
+              subHeading={'Below are the people you can tag.'}
+            />
+          }
+          flatListProps={{
+            data: friends,
+            renderItem: ({item}) => (
+              <View
+                style={[
+                  styles(theme).userCardContainer,
+                  space(IconSizes.x1).mt,
+                ]}>
+                <View style={[styles(theme).row]}>
+                  <NativeImage
+                    uri={item.avatar}
+                    style={styles(theme).tinyImage}
+                  />
+                  <Text
+                    style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
+                    {item.name}
+                  </Text>
+                </View>
+                <CheckBox
+                  onClick={() => {
+                    const index = tags.indexOf(item.friendId);
+                    if (index > -1) {
+                      setTags(tags.filter(tag => tag !== item.friendId));
+                      setChoose(
+                        choose.filter(it => it.friendId !== item.friendId),
+                      );
+                    } else {
+                      setTags([...tags, item.friendId]);
+                      setChoose([...choose, item]);
+                    }
+                  }}
+                  isChecked={tags.includes(item.friendId)}
+                  checkBoxColor={theme.text02}
+                  checkedCheckBoxColor={ThemeStatic.accent}
                 />
-                <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
-                  {item.name}
-                </Text>
               </View>
-              <CheckBox
-                onClick={() => {
-                  const index = tags.indexOf(item.friendId);
-                  if (index > -1) {
-                    setTags(tags.filter(tag => tag !== item.friendId));
-                    setChoose(
-                      choose.filter(it => it.friendId !== item.friendId),
-                    );
-                  } else {
-                    setTags([...tags, item.friendId]);
-                    setChoose([...choose, item]);
-                  }
-                }}
-                isChecked={tags.includes(item.friendId)}
-                checkBoxColor={theme.text02}
-                checkedCheckBoxColor={ThemeStatic.accent}
-              />
-            </View>
-          ),
-          keyExtractor: item => item.id,
-          onEndReachedThreshold: 0.8,
-          onEndReached: () => {
-            if (nextPage < totalPages) {
-              fetchFriends(nextPage);
-            }
-          },
-          showsVerticalScrollIndicator: false,
-          ListEmptyComponent: () =>
-            isLoading ? (
-              <ConnectionsPlaceholder />
-            ) : (
-              <ListEmptyComponent listType="users" spacing={30} />
             ),
-        }}
-      />
-      <Modalize
-        ref={cameraOptionsBottomSheetRef}
-        scrollViewProps={{showsVerticalScrollIndicator: false}}
-        modalStyle={[styles(theme).modalizeContainer]}
-        adjustToContentHeight>
-        <View
-          style={[
-            {
-              flex: 1,
-              paddingTop: 20,
-              paddingBottom: 16,
+            keyExtractor: item => item.id,
+            onEndReachedThreshold: 0.8,
+            onEndReached: () => {
+              if (nextPage < totalPages) {
+                fetchFriends(nextPage);
+              }
             },
-          ]}>
-          <Option
-            label="Take a photo"
-            iconName="camera-outline"
-            color={theme.text01}
-            onPress={onOpenCamera}
-          />
-          <Option
-            label="Choose from gallery"
-            iconName="images-outline"
-            color={theme.text01}
-            onPress={onOpenGallery}
-          />
-          <Option
-            label="Delete"
-            iconName="close-circle-outline"
-            color="red"
-            onPress={() => {
-              setImageSource(null);
-              closeOptions();
-            }}
-          />
-        </View>
-      </Modalize>
-    </GestureHandlerRootView>
+            showsVerticalScrollIndicator: false,
+            ListEmptyComponent: () =>
+              isLoading ? (
+                <ConnectionsPlaceholder />
+              ) : (
+                <ListEmptyComponent listType="users" spacing={30} />
+              ),
+          }}
+        />
+        <Modalize
+          ref={cameraOptionsBottomSheetRef}
+          scrollViewProps={{showsVerticalScrollIndicator: false}}
+          modalStyle={[styles(theme).modalizeContainer]}
+          adjustToContentHeight>
+          <View
+            style={[
+              {
+                flex: 1,
+                paddingTop: 20,
+                paddingBottom: 16,
+              },
+            ]}>
+            <Option
+              label="Take a photo"
+              iconName="camera-outline"
+              color={theme.text01}
+              onPress={onOpenCamera}
+            />
+            <Option
+              label="Choose from gallery"
+              iconName="images-outline"
+              color={theme.text01}
+              onPress={onOpenGallery}
+            />
+            <Option
+              label="Delete"
+              iconName="close-circle-outline"
+              color="red"
+              onPress={() => {
+                setImageSource(null);
+                closeOptions();
+              }}
+            />
+          </View>
+        </Modalize>
+      </GestureHandlerRootView>
+    </KeyboardAvoidingView>
   );
 };
 

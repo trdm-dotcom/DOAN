@@ -151,7 +151,7 @@ const SignUp = ({navigation}: props) => {
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
         <Header title="Create your account" />
         <Text
           style={[
@@ -177,7 +177,7 @@ const SignUp = ({navigation}: props) => {
               style={[
                 styles(theme).inputField,
                 {
-                  ...FontWeights.Bold,
+                  ...FontWeights.Regular,
                   ...FontSizes.Body,
                   color: theme.text01,
                 },
@@ -198,7 +198,7 @@ const SignUp = ({navigation}: props) => {
               style={[
                 styles(theme).inputField,
                 {
-                  ...FontWeights.Bold,
+                  ...FontWeights.Regular,
                   ...FontSizes.Body,
                   color: theme.text01,
                 },
@@ -219,7 +219,7 @@ const SignUp = ({navigation}: props) => {
               style={[
                 styles(theme).inputField,
                 {
-                  ...FontWeights.Bold,
+                  ...FontWeights.Regular,
                   ...FontSizes.Body,
                   color: theme.text01,
                 },

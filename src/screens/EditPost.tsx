@@ -23,7 +23,6 @@ import {
 import {NativeImage} from '../components/shared/NativeImage';
 import {MaterialIndicator} from 'react-native-indicators';
 import {ThemeStatic} from '../theme/Colors';
-import Feather from 'react-native-vector-icons/Feather';
 import ConnectionsPlaceholder from '../components/placeholder/Connections.Placeholder';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
@@ -140,134 +139,115 @@ const EditPost = ({navigation, route}: props) => {
       <EditPostScreenPlaceholder />
     ) : user.id === post.author.id ? (
       <>
-        <KeyboardAvoidingView
-          style={{flex: 1}}
-          behavior={keyboardBehavior}
-          keyboardVerticalOffset={20}>
-          <NativeImage
-            uri={post.source}
-            style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}
-          />
-          <View
+        <NativeImage
+          uri={post.source}
+          style={[styles(theme).cameraContainer, space(IconSizes.x5).mt]}
+        />
+        <MentionInput
+          containerStyle={[styles(theme).inputField]}
+          style={[
+            {
+              ...FontWeights.Bold,
+              ...FontSizes.Body,
+              color: theme.text01,
+            },
+          ]}
+          placeholderTextColor={theme.text02}
+          value={caption}
+          placeholder="Add a caption..."
+          onChange={(text: string) => {
+            identifyKeyword(text);
+            setCaption(text);
+          }}
+          partTypes={[
+            {
+              trigger: '@',
+              textStyle: {
+                ...FontWeights.Regular,
+                ...FontSizes.Body,
+                color: '#244dc9',
+              },
+              renderSuggestions: Suggestions(suggestions),
+            },
+          ]}
+        />
+        <TouchableOpacity onPress={openTagBottomSheet}>
+          <Text
             style={[
-              styles(theme).inputContainer,
-              {borderRadius: 40},
-              space(IconSizes.x8).mt,
+              {
+                ...FontWeights.Bold,
+                ...FontSizes.Body,
+                color: theme.text01,
+              },
+              space(IconSizes.x1).mv,
             ]}>
-            <MentionInput
-              containerStyle={[styles(theme).inputField]}
-              style={[
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Body,
-                  color: theme.text01,
-                },
-              ]}
-              placeholderTextColor={theme.text02}
-              value={caption}
-              placeholder="Add a caption..."
-              onChange={(text: string) => {
-                identifyKeyword(text);
-                setCaption(text);
-              }}
-              partTypes={[
-                {
-                  trigger: '@',
-                  textStyle: {
-                    ...FontWeights.Regular,
-                    ...FontSizes.Body,
-                    color: '#244dc9',
-                  },
-                  renderSuggestions: Suggestions(suggestions),
-                },
-              ]}
-            />
-          </View>
-          <View>
-            <Text
-              style={[
-                {
-                  ...FontWeights.Bold,
-                  ...FontSizes.Body,
-                  color: theme.text01,
-                },
-                space(IconSizes.x1).mv,
-              ]}>
-              {choose.length > 0
-                ? `You tagged ${choose.length} friends`
-                : 'Tag friends'}
-            </Text>
-            <View
-              style={[
-                styles(theme).row,
-                {
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                },
-              ]}>
-              <FlatList
-                data={choose}
-                keyExtractor={item => item.id.toString()}
-                horizontal
-                renderItem={({item}) => (
-                  <NativeImage
-                    uri={item.avatar}
-                    style={[
-                      {
-                        height: 40,
-                        width: 40,
-                        borderRadius: 40,
-                        backgroundColor: theme.placeholder,
-                      },
-                      space(IconSizes.x1).ml,
-                    ]}
-                  />
-                )}
-              />
-            </View>
-          </View>
+            {choose.length > 0
+              ? `You tagged ${choose.length} friends`
+              : 'Tag friends'}
+          </Text>
           <View
             style={[
               styles(theme).row,
               {
-                justifyContent: 'space-around',
+                justifyContent: 'flex-start',
                 alignItems: 'center',
               },
-              space(IconSizes.x8).mv,
             ]}>
-            <View />
-            <TouchableOpacity
-              onPress={doUpdatePost}
-              activeOpacity={0.9}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: theme.placeholder,
-                padding: IconSizes.x7,
-                borderRadius: 50,
-              }}
-              disabled={loading}>
-              {loading ? (
-                <MaterialIndicator
-                  size={IconSizes.x9}
-                  color={ThemeStatic.white}
-                />
-              ) : (
-                <Ionicons
-                  name="paper-plane"
-                  size={IconSizes.x9}
-                  color={theme.text01}
+            <FlatList
+              data={choose}
+              keyExtractor={item => item.id.toString()}
+              horizontal
+              renderItem={({item}) => (
+                <NativeImage
+                  uri={item.avatar}
+                  style={[
+                    {
+                      height: 40,
+                      width: 40,
+                      borderRadius: 40,
+                      backgroundColor: theme.placeholder,
+                    },
+                    space(IconSizes.x1).ml,
+                  ]}
                 />
               )}
-            </TouchableOpacity>
-            <IconButton
-              Icon={() => (
-                <Feather name="tag" size={IconSizes.x9} color={theme.text01} />
-              )}
-              onPress={openTagBottomSheet}
             />
           </View>
-        </KeyboardAvoidingView>
+        </TouchableOpacity>
+        <View
+          style={[
+            styles(theme).row,
+            {
+              justifyContent: 'space-around',
+              alignItems: 'center',
+            },
+            space(IconSizes.x8).mv,
+          ]}>
+          <TouchableOpacity
+            onPress={doUpdatePost}
+            activeOpacity={0.9}
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              padding: IconSizes.x7,
+              borderRadius: 50,
+            }}
+            disabled={loading}>
+            {loading ? (
+              <MaterialIndicator
+                size={IconSizes.x9}
+                color={ThemeStatic.white}
+              />
+            ) : (
+              <Ionicons
+                name="paper-plane"
+                size={IconSizes.x9}
+                color={theme.text01}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
         <Modalize
           ref={tagBottomSheetRef}
           onOpen={() => {
@@ -364,26 +344,31 @@ const EditPost = ({navigation, route}: props) => {
     );
 
   return (
-    <GestureHandlerRootView
-      style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        contentLeft={
-          <IconButton
-            Icon={() => (
-              <Ionicons
-                name="arrow-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
-              />
-            )}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-        }
-      />
-      {content}
-    </GestureHandlerRootView>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={keyboardBehavior}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+      <GestureHandlerRootView
+        style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <HeaderBar
+          contentLeft={
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="arrow-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+          }
+        />
+        {content}
+      </GestureHandlerRootView>
+    </KeyboardAvoidingView>
   );
 };
 

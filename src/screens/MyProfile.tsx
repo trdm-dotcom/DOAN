@@ -66,7 +66,7 @@ type State = NavigationState<Route>;
 const MyProfile = () => {
   const dispatch = useDispatch();
   const {theme} = useContext(AppContext);
-  const {user} = useSelector((state: any) => state.user);
+  const {user, loading: userLoading} = useSelector((state: any) => state.user);
   const {myPost, myPostHide, myPostTag, totalMyPost} = useSelector(
     (state: any) => state.post,
   );
@@ -100,12 +100,12 @@ const MyProfile = () => {
   );
 
   useEffect(() => {
-    fetchData(false);
+    fetchData();
   }, []);
 
   useEffect(() => {
     if (errorRedux) {
-      showError(errorRedux.message);
+      showError(errorRedux);
       dispatch({type: 'clearErrors'});
     }
   }, [errorRedux]);
@@ -139,21 +139,20 @@ const MyProfile = () => {
     return avatarOptionsBottomSheetRef.current.close();
   };
 
-  const fetchData = (force: boolean) => {
+  const fetchData = () => {
     setLoading(true);
-    const promiseArray: Promise<void>[] = [
+    Promise.all([
       fetchPosts(0),
       fetchPostTags(0),
       fetchPostHiden(0),
-    ];
-    if (force || friends.length < 1) {
-      promiseArray.push(fetchFriends(0));
-    }
-    Promise.all(promiseArray)
+      fetchFriends(0),
+    ])
       .catch(() => {
         setError(true);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const fetchFriends = async (page: number) => {
@@ -176,13 +175,16 @@ const MyProfile = () => {
 
   const requestTextModeration = async (text: string) =>
     await apiPost<any>('/moderation/text', {
-      data: {text: text},
+      data: {text: text, mode: 'ml'},
     });
 
   const onOpenCamera = async (autoUpdate: boolean) => {
     try {
       closeOptions();
       const image: Image = await ImagePicker.openCamera({
+        width: 480,
+        height: 480,
+        cropping: true,
         compressImageQuality: 0.6,
         includeBase64: true,
         writeTempFile: false,
@@ -206,8 +208,6 @@ const MyProfile = () => {
             showError('Content is not allowed');
             return;
           }
-          setAvatar(`data:${image.mime};base64,${compressedImage}`);
-          setAvatarFilename(image.filename);
           await editInfo(
             name,
             `data:${image.mime};base64,${compressedImage}`,
@@ -229,6 +229,9 @@ const MyProfile = () => {
     try {
       closeOptions();
       const image: Image = await ImagePicker.openPicker({
+        width: 480,
+        height: 480,
+        cropping: true,
         compressImageQuality: 0.6,
         includeBase64: true,
         writeTempFile: false,
@@ -251,8 +254,6 @@ const MyProfile = () => {
             showError('Content is not allowed');
             return;
           }
-          setAvatar(`data:${image.mime};base64,${compressedImage}`);
-          setAvatarFilename(image.filename);
           await editInfo(
             name,
             `data:${image.mime};base64,${compressedImage}`,
@@ -305,6 +306,7 @@ const MyProfile = () => {
     } catch (err: any) {
       dispatch({
         type: 'updateUserFailed',
+        payload: err.message,
       });
     }
   };
@@ -514,10 +516,6 @@ const MyProfile = () => {
           onFriendsOpen={onFriendsOpen}
           onOptionPress={modalizeOpen}
           editable
-          onEdit={() => {
-            openOptions();
-            setAutoUploadImage(true);
-          }}
         />
         <TabView
           navigationState={{index, routes}}
@@ -585,7 +583,7 @@ const MyProfile = () => {
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={keyboardBehavior}
-          keyboardVerticalOffset={20}>
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
           <BottomSheetHeader
             heading="Edit profile"
             subHeading="Edit your personal information"
@@ -597,7 +595,7 @@ const MyProfile = () => {
                 width: 80,
               }}>
               <NativeImage
-                uri={user.avatar}
+                uri={avatar}
                 style={{
                   flex: 1,
                   backgroundColor: theme.placeholder,
@@ -673,9 +671,9 @@ const MyProfile = () => {
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={handleOnPress}
-              disabled={isLoading}
+              disabled={userLoading}
               style={[styles(theme).button, styles(theme).buttonPrimary]}>
-              {isLoading ? (
+              {userLoading ? (
                 <LoadingIndicator
                   size={IconSizes.x1}
                   color={ThemeStatic.white}

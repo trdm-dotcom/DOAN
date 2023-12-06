@@ -90,27 +90,27 @@ const NewPassword = ({navigation, route}: props) => {
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : undefined;
 
   return (
-    <View style={[styles(theme).container, styles(theme).defaultBackground]}>
-      <HeaderBar
-        contentLeft={
-          <IconButton
-            Icon={() => (
-              <Ionicons
-                name="arrow-back-outline"
-                size={IconSizes.x8}
-                color={theme.text01}
-              />
-            )}
-            onPress={() => {
-              navigation.goBack();
-            }}
-          />
-        }
-      />
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={keyboardBehavior}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+      <View style={[styles(theme).container, styles(theme).defaultBackground]}>
+        <HeaderBar
+          contentLeft={
+            <IconButton
+              Icon={() => (
+                <Ionicons
+                  name="arrow-back-outline"
+                  size={IconSizes.x8}
+                  color={theme.text01}
+                />
+              )}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            />
+          }
+        />
         <Header title="Pick a new Password" />
         <Text
           style={[
@@ -130,7 +130,7 @@ const NewPassword = ({navigation, route}: props) => {
             style={[
               styles(theme).inputField,
               {
-                ...FontWeights.Bold,
+                ...FontWeights.Regular,
                 ...FontSizes.Body,
                 color: theme.text01,
                 flex: 1,
@@ -150,7 +150,7 @@ const NewPassword = ({navigation, route}: props) => {
             style={[
               styles(theme).inputField,
               {
-                ...FontWeights.Bold,
+                ...FontWeights.Regular,
                 ...FontSizes.Body,
                 color: theme.text01,
                 flex: 1,
@@ -182,7 +182,7 @@ const NewPassword = ({navigation, route}: props) => {
         <Text
           style={[
             {
-              ...FontWeights.Bold,
+              ...FontWeights.Light,
               ...FontSizes.Caption,
               color: theme.text02,
             },
@@ -224,8 +224,8 @@ const NewPassword = ({navigation, route}: props) => {
             </Text>
           ))}
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

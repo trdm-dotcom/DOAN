@@ -50,7 +50,6 @@ import {Modalize} from 'react-native-modalize';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
 import {blockUser, checkFriend, rejectFriend} from '../reducers/action/friend';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
-import Share from 'react-native-share';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -335,10 +334,6 @@ const PostView = ({navigation, route}: props) => {
     }
   };
 
-  const onShare = () => {
-    Share.open({});
-  };
-
   const doBlock = () => {
     toggleBlockConfirmationModal();
     blockUser(friendStatus.targetId)
@@ -497,18 +492,6 @@ const PostView = ({navigation, route}: props) => {
               {parseLikes(post.reactions.length)}
             </Text>
           </View>
-          {post.author.id === user.id && (
-            <IconButton
-              Icon={() => (
-                <Ionicons
-                  name="share-social-outline"
-                  color={ThemeStatic.unlike}
-                  size={IconSizes.x6}
-                />
-              )}
-              onPress={onShare}
-            />
-          )}
         </View>
         <Text
           style={[
@@ -809,7 +792,7 @@ const PostView = ({navigation, route}: props) => {
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={keyboardBehavior}
-          keyboardVerticalOffset={20}>
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
           <BottomSheetHeader
             heading="Report"
             subHeading={'Help us understand the problem'}
@@ -940,7 +923,7 @@ const PostView = ({navigation, route}: props) => {
           <KeyboardAvoidingView
             style={{flex: 1, justifyContent: 'flex-end'}}
             behavior={keyboardBehavior}
-            keyboardVerticalOffset={20}>
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
             <ScrollView
               showsVerticalScrollIndicator={false}
               style={[{flex: 1}, space(IconSizes.x1).pt]}>

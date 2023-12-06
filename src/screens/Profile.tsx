@@ -89,7 +89,6 @@ const Profile = ({navigation, route}: props) => {
 
   const fetchData = (id: number) => {
     setLoading(true);
-    setIsLoading(true);
     Promise.all([
       getUserInfo({userId: id}),
       checkFriend({friend: id}),
@@ -106,7 +105,6 @@ const Profile = ({navigation, route}: props) => {
       })
       .finally(() => {
         setLoading(false);
-        setIsLoading(false);
       });
   };
 

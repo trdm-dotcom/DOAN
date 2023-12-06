@@ -78,7 +78,7 @@ const PostCard = ({
           style={{
             height: 40,
             width: 40,
-            backgroundColor: ThemeStatic.placeholder,
+            backgroundColor: theme.placeholder,
             borderRadius: 40,
           }}
         />
@@ -104,7 +104,7 @@ const PostCard = ({
                   marginTop: 3,
                   height: 30,
                   width: 30,
-                  backgroundColor: ThemeStatic.placeholder,
+                  backgroundColor: theme.placeholder,
                   borderRadius: 30,
                 }}
               />

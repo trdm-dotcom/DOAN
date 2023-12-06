@@ -4,9 +4,14 @@ import {Provider} from 'react-redux';
 import getStore from './src/reducers/redux/store';
 import {fetchToken, setupAxiosInterceptors} from './src/utils/Api';
 import {
-  getFcmTokenFromLocalStorage,
-  notificationListener,
-  requestUserPermission,
+  getFcmToken,
+  checkApplicationNotificationPermission,
+  listenToBackgroundNotifications,
+  onNotificationOpenedAppFromQuit,
+  listenToForegroundNotifications,
+  onNotificationOpenedAppFromBackground,
+  unRegisterAppWithFCM,
+  registerAppWithFCM,
 } from './src/utils/PushNotification';
 import {AppContext, AppContextProvider} from './src/context';
 import {SafeAreaView} from 'react-native';
@@ -45,6 +50,7 @@ const SafeAreaApp = () => {
 
   setupAxiosInterceptors(() => {
     removeToken();
+    unRegisterAppWithFCM();
     dispatch({
       type: 'userLogout',
     });
@@ -61,7 +67,7 @@ const SafeAreaApp = () => {
     });
 
   const getFcmtoken = () =>
-    getFcmTokenFromLocalStorage().then(fcmToken => {
+    getFcmToken().then(fcmToken => {
       setFcmToken(fcmToken);
     });
 
@@ -79,6 +85,9 @@ const SafeAreaApp = () => {
   const notificationSetting = async () => {
     try {
       const res = await getNotificationSetting({deviceId: deviceId});
+      if (res.receive) {
+        registerAppWithFCM();
+      }
       setOnNotification(res.receive);
     } catch (err: any) {
       setOnNotification(false);
@@ -108,17 +117,19 @@ const SafeAreaApp = () => {
 
   const initializeApp = () => {
     setLoading(true);
-    Promise.all([
-      checkLoginCredentials(),
-      getFcmtoken(),
-      initializeTheme(),
-      setDeviceId(getDeviceId()),
-    ]).finally(() => {
+    setDeviceId(getDeviceId());
+    Promise.all([checkLoginCredentials(), initializeTheme()]).finally(() => {
       setLoading(false);
     });
   };
 
   useEffect(() => {
+    getFcmtoken();
+    checkApplicationNotificationPermission();
+    onNotificationOpenedAppFromQuit();
+    listenToBackgroundNotifications();
+    listenToForegroundNotifications();
+    onNotificationOpenedAppFromBackground();
     initializeApp();
     socket.on('show.room', (data: any) => {
       if (data.to === user.id) {
@@ -180,15 +191,10 @@ const SafeAreaApp = () => {
   );
 };
 
-const Main = () => {
+const App = () => {
   const store = getStore();
 
   connectSocket();
-
-  useEffect(() => {
-    requestUserPermission();
-    notificationListener();
-  }, []);
 
   return (
     <Provider store={store}>
@@ -199,4 +205,4 @@ const Main = () => {
   );
 };
 
-export default Main;
+export default App;

@@ -158,7 +158,7 @@ const Otp = ({navigation, route}: props) => {
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={keyboardBehavior}
-        keyboardVerticalOffset={20}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
         <Header title="OTP sent" />
         <Text
           style={[
@@ -176,7 +176,7 @@ const Otp = ({navigation, route}: props) => {
             style={[
               styles(theme).inputField,
               {
-                ...FontWeights.Bold,
+                ...FontWeights.Regular,
                 ...FontSizes.Body,
                 color: theme.text01,
               },

@@ -15,6 +15,7 @@ import {useNavigation} from '@react-navigation/native';
 import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 import {useDispatch, useSelector} from 'react-redux';
 import {showError} from '../utils/Toast';
+import {sortPostDescendingTime} from '../utils/shared';
 
 const Feed = () => {
   const dispatch = useDispatch();
@@ -26,7 +27,7 @@ const Feed = () => {
 
   useEffect(() => {
     if (error) {
-      showError(error.message);
+      showError(error);
       dispatch({type: 'clearErrors'});
     }
   }, [error]);
@@ -79,7 +80,7 @@ const Feed = () => {
         refreshControl={refreshControl()}
         showsVerticalScrollIndicator={false}
         itemDimension={SCREEN_WIDTH}
-        data={posts}
+        data={sortPostDescendingTime(posts)}
         ListEmptyComponent={() => (
           <ListEmptyComponent listType="posts" spacing={30} />
         )}
