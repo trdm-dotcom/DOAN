@@ -129,11 +129,15 @@ const ConnectionsUserCard = ({
               marginLeft: 10,
             },
           ]}>
-          <Ionicons
-            name="checkmark"
-            size={IconSizes.x6}
-            color={ThemeStatic.accent}
-          />
+          {loading ? (
+            <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+          ) : (
+            <Ionicons
+              name="checkmark"
+              size={IconSizes.x6}
+              color={ThemeStatic.accent}
+            />
+          )}
         </TouchableOpacity>
       )}
     </View>

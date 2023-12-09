@@ -41,6 +41,7 @@ import {
   TabView,
 } from 'react-native-tab-view';
 import Feather from 'react-native-vector-icons/Feather';
+import {apiGet} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -301,6 +302,35 @@ const Profile = ({navigation, route}: props) => {
             friendStatus: 'FRIENDED',
           },
         ]);
+        dispatch({
+          type: 'addFriend',
+          payload: [
+            {
+              id: friendStatus.friendId,
+              email: userProfile.email,
+              name: userProfile.name,
+              avatar: userProfile.avatar,
+              status: 'ACTIVE',
+              phoneNumber: userProfile.phoneNumber,
+              about: userProfile.about,
+              friendId: userProfile.id,
+              friendStatus: 'FRIENDED',
+              isAccept: false,
+              privateMode: userProfile.privateMode,
+            },
+          ],
+        });
+        apiGet<any>('/social/post', {
+          params: {
+            pageNumber: 0,
+            pageSize: Pagination.PAGE_SIZE,
+          },
+        }).then(resp => {
+          dispatch({
+            type: 'getAllPostsSuccess',
+            payload: resp,
+          });
+        });
       })
       .catch(err => {
         showError(err.message);

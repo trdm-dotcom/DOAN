@@ -39,7 +39,15 @@ export const postReducer = createReducer(initialState, {
       post => post.id === action.payload.to,
     );
     if (existingIndex !== -1) {
-      state.posts[existingIndex].reactions.push(action.payload.data.reactions);
+      action.payload.data.reactions.forEach(reaction => {
+        if (
+          !state.posts[existingIndex].reactions.some(
+            r => r === action.payload.data.reaction,
+          )
+        ) {
+          state.posts[existingIndex].reactions.push(reaction);
+        }
+      });
     }
   },
   updatePostsComments: (state, action) => {
@@ -47,7 +55,13 @@ export const postReducer = createReducer(initialState, {
       post => post.id === action.payload.to,
     );
     if (existingIndex !== -1) {
-      state.posts[existingIndex].comments.push(action.payload.data.comments);
+      if (
+        !state.posts[existingIndex].comments.some(
+          comment => comment === action.payload.data.comments,
+        )
+      ) {
+        state.posts[existingIndex].comments.push(action.payload.data.comments);
+      }
     }
   },
   deletePostsComments: (state, action) => {

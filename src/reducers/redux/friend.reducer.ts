@@ -54,6 +54,16 @@ export const friendReducer = createReducer(initialState, {
     );
     if (existingIndex !== -1) {
       state.friends.splice(existingIndex, 1);
+      state.totalFriends = state.totalFriends - 1;
+    }
+  },
+  removeFriendByUserId: (state, action) => {
+    const existingIndex = state.friends.findIndex(
+      friend => friend.friendId === action.payload.userId,
+    );
+    if (existingIndex !== -1) {
+      state.friends.splice(existingIndex, 1);
+      state.totalFriends = state.totalFriends - 1;
     }
   },
   addFriend: (state, action) => {
@@ -61,12 +71,7 @@ export const friendReducer = createReducer(initialState, {
       newFriend => !state.friends.some(friend => friend.id === newFriend.id),
     );
     state.friends = [...state.friends, ...newFriends];
-  },
-  incrementTotalFriend: state => {
-    state.totalFriends++;
-  },
-  decrementTotalFriend: state => {
-    state.totalFriends--;
+    state.totalFriends = state.totalFriends + newFriends.length;
   },
   clearErrors: state => {
     state.error = null;

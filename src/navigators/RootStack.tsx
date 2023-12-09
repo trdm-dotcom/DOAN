@@ -20,10 +20,13 @@ import SignUp from '../screens/SignUp';
 import {ThemeStatic} from '../theme/Colors';
 import Profile from '../screens/Profile';
 import MyProfile from '../screens/MyProfile';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import NewPassword from '../screens/NewPassword';
 import {useNavigation} from '@react-navigation/native';
 import EditPost from '../screens/EditPost';
+import {getSocket} from '../utils/Socket';
+import {Pagination} from '../constants/Constants';
+import {apiGet} from '../utils/Api';
 
 export type RootStackParamList = {
   Start: undefined;
@@ -72,9 +75,97 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
 const RootStack = () => {
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+
   const {isAuthenticated} = useSelector((state: any) => state.user);
   const {theme} = useContext(AppContext);
-  const navigation = useNavigation();
+  const {user} = useSelector((state: any) => state.user);
+  const socket = getSocket();
+
+  useEffect(() => {
+    socket.on('show.room', (data: any) => {
+      if (data.to === user.id) {
+        dispatch({
+          type: 'updateChats',
+          payload: data.data,
+        });
+      }
+    });
+    socket.on('delete.room', (data: any) => {
+      if (data.to === user.id) {
+        dispatch({
+          type: 'deleteChat',
+          payload: data.data,
+        });
+      }
+    });
+    socket.on('post.deleteOrDisable', (data: any) => {
+      dispatch({
+        type: 'deleteOrDisablePost',
+        payload: data,
+      });
+    });
+    socket.on('post.reaction', (data: any) => {
+      dispatch({
+        type: 'updatePostsReactions',
+        payload: data,
+      });
+    });
+    socket.on('post.comment', (data: any) => {
+      dispatch({
+        type: 'updatePostsComments',
+        payload: data,
+      });
+    });
+    socket.on('delete.comment', (data: any) => {
+      dispatch({
+        type: 'deletePostsComments',
+        payload: data,
+      });
+    });
+    socket.on('friend.accept', (data: any) => {
+      if (data.to === user.id) {
+        dispatch({
+          type: 'addFriend',
+          payload: [data.data],
+        });
+        apiGet<any>('/social/post', {
+          params: {
+            pageNumber: 0,
+            pageSize: Pagination.PAGE_SIZE,
+          },
+        }).then(res => {
+          dispatch({
+            type: 'getAllPostsSuccess',
+            payload: res,
+          });
+        });
+      }
+    });
+    socket.on('friend.reject', (data: any) => {
+      if (data.to === user.id && data.data.status === 'FRIENDED') {
+        dispatch({
+          type: 'removeFriendByUserId',
+          payload: {
+            userId: data.data.userId,
+          },
+        });
+        dispatch({type: 'removePostByUserId', payload: {id: data.data.userId}});
+      }
+    });
+    socket.on('friend.block', (data: any) => {
+      if (data.to === user.id) {
+        dispatch({
+          type: 'removeFriendByUserId',
+          payload: {
+            userId: data.data.userId,
+          },
+        });
+        dispatch({type: 'removePostByUserId', payload: {id: data.data.userId}});
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {

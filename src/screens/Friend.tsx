@@ -36,8 +36,157 @@ import {showError} from '../utils/Toast';
 import ConnectionsBottomSheet from '../components/bottomsheet/ConnectionsBottomSheet';
 import {useDispatch, useSelector} from 'react-redux';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {MaterialIndicator} from 'react-native-indicators';
+import {NativeImage} from '../components/shared/NativeImage';
+import {useNavigation} from '@react-navigation/native';
+import {getSocket} from '../utils/Socket';
+import {apiGet} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
+
+type UserCardProps = {
+  userId: number;
+  avatar: string;
+  name: string;
+  handlerOnPress: () => Promise<void>;
+  friendStatus: string;
+  viewMode?: boolean;
+  isAccept: boolean;
+  handlerOnAccept: () => Promise<void>;
+};
+
+const ConnectionsUserCard = ({
+  userId,
+  avatar,
+  name,
+  handlerOnPress,
+  friendStatus,
+  viewMode,
+  isAccept,
+  handlerOnAccept,
+}: UserCardProps) => {
+  const {theme} = useContext(AppContext);
+  const {user} = useSelector((state: any) => state.user);
+  const navigation = useNavigation();
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  const navigateToProfile = () => {
+    if (userId === user.id) {
+      navigation.navigate('MyProfile');
+    }
+    navigation.navigate('Profile', {userId: userId});
+  };
+
+  const buttonControl = viewMode ? (
+    friendStatus === null &&
+    userId !== user.id && (
+      <TouchableOpacity
+        onPress={() => {
+          setLoading(true);
+          handlerOnPress().finally(() => setLoading(false));
+        }}
+        disabled={loading}
+        activeOpacity={0.9}
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.placeholder,
+            padding: IconSizes.x1,
+            borderRadius: 50,
+            width: 50,
+          },
+        ]}>
+        {loading ? (
+          <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+        ) : (
+          <Ionicons name="add" size={IconSizes.x6} color={ThemeStatic.accent} />
+        )}
+      </TouchableOpacity>
+    )
+  ) : (
+    <View style={[styles(theme).row]}>
+      <TouchableOpacity
+        onPress={() => {
+          setLoading(true);
+          handlerOnPress().finally(() => setLoading(false));
+        }}
+        disabled={loading}
+        activeOpacity={0.9}
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.placeholder,
+            padding: IconSizes.x1,
+            borderRadius: 50,
+            width: 50,
+          },
+        ]}>
+        {loading ? (
+          <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+        ) : friendStatus !== null ||
+          (friendStatus !== 'PENDING' && !isAccept) ? (
+          <Ionicons
+            name="close"
+            size={IconSizes.x6}
+            color={ThemeStatic.accent}
+          />
+        ) : (
+          <Ionicons name="add" size={IconSizes.x6} color={ThemeStatic.accent} />
+        )}
+      </TouchableOpacity>
+      {friendStatus !== null && friendStatus === 'PENDING' && isAccept && (
+        <TouchableOpacity
+          onPress={() => {
+            setLoading(true);
+            handlerOnAccept().finally(() => setLoading(false));
+          }}
+          disabled={loading}
+          activeOpacity={0.9}
+          style={[
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.placeholder,
+              padding: IconSizes.x1,
+              borderRadius: 50,
+              width: 50,
+              marginLeft: 10,
+            },
+          ]}>
+          {loading ? (
+            <MaterialIndicator size={IconSizes.x6} color={ThemeStatic.accent} />
+          ) : (
+            <Ionicons
+              name="checkmark"
+              size={IconSizes.x6}
+              color={ThemeStatic.accent}
+            />
+          )}
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  return (
+    <View style={[styles(theme).userCardContainer, space(IconSizes.x1).mt]}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={navigateToProfile}
+        style={[styles(theme).row]}>
+        <NativeImage uri={avatar} style={styles(theme).tinyImage} />
+        <Text style={[styles(theme).nameText, space(IconSizes.x1).ml]}>
+          {name}
+        </Text>
+      </TouchableOpacity>
+      {buttonControl}
+    </View>
+  );
+};
 
 const Friend = () => {
   const dispatch = useDispatch();
@@ -57,6 +206,7 @@ const Friend = () => {
   const [error, setError] = useState<boolean>(false);
   const [nextPage, setNextPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
+  const socket = getSocket();
 
   const friendListBottomSheetRef = useRef();
   const friendRequestBottomSheetRef = useRef();
@@ -73,6 +223,52 @@ const Friend = () => {
 
   useEffect(() => {
     fetchInit();
+    socket.on('friend.request', (data: any) => {
+      if (data.to === user.id) {
+        if (!listRequestFriend.some(it => it.friendId === data.data.friendId)) {
+          setListRequestFriend([data.data, ...listRequestFriend]);
+          setListFriendSuggest(
+            listfriendSuggest.filter(it => it.friendId !== data.data.friendId),
+          );
+        }
+      }
+    });
+    socket.on('friend.accept', (data: any) => {
+      if (data.to === user.id) {
+        if (!listFriend.some(it => it.friendId === data.data.friendId)) {
+          setListFriend([data.data, ...listFriend]);
+          setListRequestFriend(
+            listRequestFriend.filter(it => it.friendId !== data.data.friendId),
+          );
+        }
+      }
+    });
+    socket.on('friend.reject', (data: any) => {
+      if (data.to === user.id) {
+        if (data.data.status === 'FRIENDED') {
+          setListFriend(
+            listFriend.filter(it => it.friendId !== data.data.userId),
+          );
+        } else {
+          setListRequestFriend(
+            listRequestFriend.filter(it => it.friendId !== data.data.userId),
+          );
+        }
+      }
+    });
+    socket.on('friend.block', (data: any) => {
+      if (data.to === user.id) {
+        setListFriend(
+          listFriend.filter(it => it.friendId !== data.data.userId),
+        );
+        setListRequestFriend(
+          listRequestFriend.filter(it => it.friendId !== data.data.userId),
+        );
+        setListFriendSuggest(
+          listfriendSuggest.filter(it => it.friendId !== data.data.userId),
+        );
+      }
+    });
   }, []);
 
   const fetchInit = () => {
@@ -185,7 +381,6 @@ const Friend = () => {
             id: friendRejected,
           },
         });
-        dispatch({type: 'decrementTotalFriend'});
         dispatch({type: 'removePostByUserId', payload: {id: friendRejected}});
       })
       .catch(err => {
@@ -202,6 +397,8 @@ const Friend = () => {
       listfriendSuggest.filter(item => item.friendId !== friend.friendId),
     );
     friend.id = response.id;
+    friend.isAccept = false;
+    friend.friendStatus = 'PENDING';
     setListRequestFriend([...listRequestFriend, friend]);
   };
 
@@ -252,56 +449,47 @@ const Friend = () => {
                 </TouchableOpacity>
               </View>
               {listRequestFriend.map(item => (
-                <UserCardPress
+                <ConnectionsUserCard
                   key={item.id}
                   userId={item.friendId}
                   avatar={item.avatar}
                   name={item.name}
-                  style={[space(IconSizes.x1).mt]}
+                  friendStatus={item.friendStatus}
                   handlerOnPress={async () => {
-                    if (item.isAccept) {
-                      await acceptFriendRequest(item.id);
-                      item.isAccept = false;
-                      item.friendStatus = 'FRIENDED';
-                      setListFriend([...listFriend, item]);
-                      dispatch({
-                        type: 'addFriend',
-                        payload: [item],
-                      });
-                      dispatch({type: 'incrementTotalFriend'});
-                    } else {
-                      await rejectFriend(item.id);
-                    }
+                    await rejectFriend(item.id);
                     setListRequestFriend(
                       listRequestFriend.filter(
                         request => request.id !== item.id,
                       ),
                     );
                   }}
-                  buttonStyle={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.placeholder,
-                    padding: IconSizes.x1,
-                    borderRadius: 50,
-                    width: 50,
+                  isAccept={item.isAccept}
+                  handlerOnAccept={async () => {
+                    await acceptFriendRequest(item.id);
+                    item.isAccept = false;
+                    item.friendStatus = 'FRIENDED';
+                    setListFriend([...listFriend, item]);
+                    dispatch({
+                      type: 'addFriend',
+                      payload: [item],
+                    });
+                    setListRequestFriend(
+                      listRequestFriend.filter(
+                        request => request.id !== item.id,
+                      ),
+                    );
+                    apiGet<any>('/social/post', {
+                      params: {
+                        pageNumber: 0,
+                        pageSize: Pagination.PAGE_SIZE,
+                      },
+                    }).then(res => {
+                      dispatch({
+                        type: 'getAllPostsSuccess',
+                        payload: res,
+                      });
+                    });
                   }}
-                  ChildrenButton={() =>
-                    item.isAccept ? (
-                      <Ionicons
-                        name="checkmark"
-                        size={IconSizes.x6}
-                        color={ThemeStatic.accent}
-                      />
-                    ) : (
-                      <Ionicons
-                        name="close"
-                        size={IconSizes.x6}
-                        color={ThemeStatic.accent}
-                      />
-                    )
-                  }
-                  indicatorColor={ThemeStatic.accent}
                 />
               ))}
             </>
@@ -523,7 +711,6 @@ const Friend = () => {
               id: friend.id,
             },
           });
-          dispatch({type: 'decrementTotalFriend'});
           dispatch({type: 'removePostByUserId', payload: {id: friend.id}});
         }}
         fetchMore={(page: number) =>
@@ -544,7 +731,6 @@ const Friend = () => {
             type: 'addFriend',
             payload: [friend],
           });
-          dispatch({type: 'incrementTotalFriend'});
         }}
         fetchMore={(page: number) =>
           getFriendRequest({

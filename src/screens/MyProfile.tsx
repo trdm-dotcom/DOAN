@@ -52,7 +52,7 @@ import {
   TabView,
 } from 'react-native-tab-view';
 import Feather from 'react-native-vector-icons/Feather';
-import {apiPost} from '../utils/Api';
+import {localApiPost} from '../utils/Api';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -169,12 +169,12 @@ const MyProfile = () => {
   };
 
   const requestImageModeration = async (imageData: string, filename: string) =>
-    await apiPost<any>('/moderation/image', {
+    await localApiPost<any>('/moderation/image', {
       data: {imageData: imageData, filename: filename},
     });
 
   const requestTextModeration = async (text: string) =>
-    await apiPost<any>('/moderation/text', {
+    await localApiPost<any>('/moderation/text', {
       data: {text: text, mode: 'ml'},
     });
 
@@ -373,7 +373,6 @@ const MyProfile = () => {
         id: friend.id,
       },
     });
-    dispatch({type: 'decrementTotalFriend'});
     dispatch({type: 'removePostByUserId', payload: {id: friend.id}});
   };
 

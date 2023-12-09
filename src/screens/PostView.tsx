@@ -4,6 +4,7 @@ import React, {createRef, useContext, useEffect, useRef, useState} from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -50,6 +51,7 @@ import {Modalize} from 'react-native-modalize';
 import BottomSheetHeader from '../components/header/BottomSheetHeader';
 import {blockUser, checkFriend, rejectFriend} from '../reducers/action/friend';
 import {responsiveHeight} from 'react-native-responsive-dimensions';
+import ListEmptyComponent from '../components/shared/ListEmptyComponent';
 
 const {FontWeights, FontSizes} = Typography;
 
@@ -570,6 +572,9 @@ const PostView = ({navigation, route}: props) => {
               </View>
             </TouchableOpacity>
           ),
+          ListEmptyComponent: () => (
+            <ListEmptyComponent listType="users tagged" spacing={30} />
+          ),
           showsVerticalScrollIndicator: false,
         }}
       />
@@ -875,6 +880,20 @@ const PostView = ({navigation, route}: props) => {
     </>
   );
 
+  const refreshControl = () => {
+    const onRefresh = () => {
+      fetchData(postId);
+    };
+
+    return (
+      <RefreshControl
+        tintColor={theme.text02}
+        refreshing={loading}
+        onRefresh={onRefresh}
+      />
+    );
+  };
+
   return (
     <GestureHandlerRootView
       style={[styles(theme).container, styles(theme).defaultBackground]}>
@@ -926,7 +945,8 @@ const PostView = ({navigation, route}: props) => {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
             <ScrollView
               showsVerticalScrollIndicator={false}
-              style={[{flex: 1}, space(IconSizes.x1).pt]}>
+              style={[{flex: 1}, space(IconSizes.x1).pt]}
+              refreshControl={refreshControl()}>
               {content}
             </ScrollView>
             <CommentInput postId={post.id} />

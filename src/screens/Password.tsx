@@ -39,7 +39,7 @@ import Option from '../components/shared/Option';
 import {Image as ImageCompressor} from 'react-native-compressor';
 import {settingReceiveNotification} from '../reducers/action/notification';
 import {CLIENT_SECRET} from '@env';
-import {apiPost} from '../utils/Api';
+import {localApiPost} from '../utils/Api';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 const {FontWeights, FontSizes} = Typography;
@@ -88,7 +88,7 @@ const Password = ({navigation, route}: props) => {
   };
 
   const requestImageModeration = async (imageData: string, filename: string) =>
-    await apiPost<any>('/moderation/image', {
+    await localApiPost<any>('/moderation/image', {
       data: {imageData: imageData, filename: filename},
     });
 
@@ -144,18 +144,19 @@ const Password = ({navigation, route}: props) => {
             showError('Content is not allowed');
             return;
           }
-          await Promise.all([
-            putUserInfo({
-              name: name,
-              avatar: avatarData,
-            }),
-            requestSettingReceiveNotification(true),
-          ]);
         } catch (err: any) {
+          console.log(err);
           showError(err.message);
-          return;
+          navigation.navigate('Main');
         }
       }
+      await Promise.all([
+        putUserInfo({
+          name: name,
+          avatar: avatarData,
+        }),
+        requestSettingReceiveNotification(true),
+      ]);
       dispatch({
         type: 'getUsersRequest',
       });

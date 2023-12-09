@@ -15,6 +15,14 @@ const instance: AxiosInstance = axios.create({
   },
 });
 
+const localInstance: AxiosInstance = axios.create({
+  baseURL: 'http://192.168.43.190:3000/api/v1',
+  headers: {
+    Accept: 'application/json',
+    'Cache-Control': 'no-cache',
+  },
+});
+
 export const fetchToken = async () => {
   const credential: CredentialType | null = await loadToken();
   if (credential != null) {
@@ -113,6 +121,41 @@ function apiReq<T>(
   });
 }
 
+function localApiReq<T>(
+  endPoint: string,
+  method: string,
+  requestOptions = {},
+  headers = {},
+): Promise<T> {
+  const rId: string = Math.floor(Math.random() * Date.now()).toString(8);
+  headers = {
+    ...headers,
+    rId: rId,
+  };
+
+  if (token.accessToken != null) {
+    headers['Authorization'] = `jwt ${token.accessToken}`;
+  }
+
+  return new Promise((resolve, reject) => {
+    const options: AxiosRequestConfig = {
+      ...{
+        url: endPoint,
+        method: method,
+        headers: headers,
+      },
+      ...requestOptions,
+    };
+    localInstance(options)
+      .then((result: AxiosResponse) => {
+        resolve(logResponseAndReturnJson(result));
+      })
+      .catch(error => {
+        reject(new Error(error.response.data.code || error.message));
+      });
+  });
+}
+
 const logResponseAndReturnJson = async <T>(
   response: AxiosResponse,
 ): Promise<T> => {
@@ -152,4 +195,20 @@ function apiPut<T>(
   return apiReq(endPoint, 'put', requestOptions, headers);
 }
 
-export {apiDelete, apiGet, apiPut, apiPost, setupAxiosInterceptors, getToken};
+function localApiPost<T>(
+  endPoint: string,
+  requestOptions = {},
+  headers = {},
+): Promise<T> {
+  return localApiReq(endPoint, 'post', requestOptions, headers);
+}
+
+export {
+  apiDelete,
+  apiGet,
+  apiPut,
+  apiPost,
+  setupAxiosInterceptors,
+  getToken,
+  localApiPost,
+};

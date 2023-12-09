@@ -1,6 +1,12 @@
 import {Dispatch} from 'react';
 import {IParam} from '../../models/IParam';
-import {apiDelete, apiGet, apiPost, apiPut} from '../../utils/Api';
+import {
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPut,
+  localApiPost,
+} from '../../utils/Api';
 
 export const addComment = async (data: IParam) =>
   await apiPost<any>(
@@ -21,7 +27,7 @@ export const postLike = async (data: IParam) =>
   );
 
 export const upPost = (data: IParam) =>
-  apiPost<any>(
+  localApiPost<any>(
     '/social/post',
     {data: data},
     {

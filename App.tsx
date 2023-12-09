@@ -26,7 +26,7 @@ import Loading from './src/screens/Loading';
 import {styles} from './src/components/style';
 import {getUserInfo} from './src/reducers/action/user';
 import {IUserInfoResponse} from './src/models/response/IUserInfoResponse';
-import {connectSocket, getSocket} from './src/utils/Socket';
+import {connectSocket} from './src/utils/Socket';
 import {useDispatch, useSelector} from 'react-redux';
 import {getDeviceId} from 'react-native-device-info';
 import {getNotificationSetting} from './src/reducers/action/notification';
@@ -35,18 +35,10 @@ import {NavigationContainer} from '@react-navigation/native';
 const SafeAreaApp = () => {
   const dispatch = useDispatch();
 
-  const {
-    theme,
-    toggleTheme,
-    setFcmToken,
-    setDeviceId,
-    deviceId,
-    setOnNotification,
-  } = useContext(AppContext);
+  const {theme, toggleTheme, setFcmToken, setDeviceId, setOnNotification} =
+    useContext(AppContext);
   const [loading, setLoading] = useState<boolean>(true);
   const {isLoading} = useSelector((state: any) => state.user);
-  const {user} = useSelector((state: any) => state.user);
-  const socket = getSocket();
 
   setupAxiosInterceptors(() => {
     removeToken();
@@ -84,7 +76,7 @@ const SafeAreaApp = () => {
 
   const notificationSetting = async () => {
     try {
-      const res = await getNotificationSetting({deviceId: deviceId});
+      const res = await getNotificationSetting({deviceId: getDeviceId()});
       if (res.receive) {
         registerAppWithFCM();
       }
@@ -117,13 +109,13 @@ const SafeAreaApp = () => {
 
   const initializeApp = () => {
     setLoading(true);
-    setDeviceId(getDeviceId());
     Promise.all([checkLoginCredentials(), initializeTheme()]).finally(() => {
       setLoading(false);
     });
   };
 
   useEffect(() => {
+    setDeviceId(getDeviceId());
     getFcmtoken();
     checkApplicationNotificationPermission();
     onNotificationOpenedAppFromQuit();
@@ -131,46 +123,6 @@ const SafeAreaApp = () => {
     listenToForegroundNotifications();
     onNotificationOpenedAppFromBackground();
     initializeApp();
-    socket.on('show.room', (data: any) => {
-      if (data.to === user.id) {
-        dispatch({
-          type: 'updateChats',
-          payload: data.data,
-        });
-      }
-    });
-    socket.on('delete.room', (data: any) => {
-      if (data.to === user.id) {
-        dispatch({
-          type: 'deleteChat',
-          payload: data.data,
-        });
-      }
-    });
-    socket.on('post.deleteOrDisable', (data: any) => {
-      dispatch({
-        type: 'deleteOrDisablePost',
-        payload: data,
-      });
-    });
-    socket.on('post.reaction', (data: any) => {
-      dispatch({
-        type: 'updatePostsReactions',
-        payload: data,
-      });
-    });
-    socket.on('post.comment', (data: any) => {
-      dispatch({
-        type: 'updatePostsComments',
-        payload: data,
-      });
-    });
-    socket.on('delete.comment', (data: any) => {
-      dispatch({
-        type: 'deletePostsComments',
-        payload: data,
-      });
-    });
   }, []);
 
   return (
